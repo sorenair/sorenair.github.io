@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>INFØ</title>
+        <!-- Link CSS Files -->
+        <link rel="stylesheet" href="contact.css">
+        <link rel="stylesheet" href="nav.css">
+        <!-- Link JavaScript Files -->
+        <script defer src="navbar.js"></script>
+        <!-- Import Box Icons -->
+        <script src=https://unpkg.com/boxicons@2.1.4/dist/boxicons.js></script>
+        <!-- Load Google Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
+    </head>
+
+    <body>
+        <!-- Box Icon Scaling Classes -->
+        <i class='bx bxs-like bx-xs'></i>
+        <i class='bx bxs-like bx-sm'></i>
+        <i class='bx bxs-like bx-md'></i>
+        <i class='bx bxs-like bx-lg'></i>
+
+        <div id="navbar">
+            <p>Soren Gabor</p>
+            <a id="home" href="index.html"></a>
+            <div id="navmenu">
+                <a href="projects.html">PROJECTS</a>
+                <a href="info.html">INFO</a>
+                <a href="contact.html">CONTACT</a>
+            </div>
+        </div>
+        <div id="nav_mobile">
+            <div id="home" onclick="showDiv()"></div>
+        </div>
+        <div id="nav_mobile_options">
+            <a id="home" href="index.html"></a>
+            <a href="projects.html">PROJECTS</a>
+            <a href="info.html">INFO</a>
+            <a href="contact.html">CONTACT</a>
+            <div id="exit" onclick="showDiv()"><box-icon name='x' size="lg"></box-icon></div>
+        </div>
+
+        <div id="info_text" style="padding-top: 15vh;">
+            <p style="font-weight:normal; font-size: 5vmin;">Contact</p>
+            <p>sorengabor55@gmail.com</p>
+        </div>
+        <div id="socials">
+            <a href="https://www.youtube.com/@soren_air"><box-icon type='logo' name='youtube' size="lg"></box-icon></a>
+            <a href="https://www.instagram.com/gaborsoren/"><box-icon type='logo' name='instagram' size="lg"></box-icon></a>
+            <a href="https://www.linkedin.com/in/soren-gabor/"><box-icon type='logo' name='linkedin' size="lg"></box-icon></a>
+        </div>
+    </body>
+</html>
