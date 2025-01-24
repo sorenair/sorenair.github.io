@@ -1,0 +1,53 @@
+body {
+    scroll-snap-type: y mandatory;
+}
+
+#navbar {
+    z-index: 2;
+    display: flex;
+    position: fixed;
+    width: 100vw;
+    height: 12vh;
+    align-items: center;
+    justify-content: center;
+}
+#navbar #home {
+    height: 100%;
+    width: auto;
+    aspect-ratio: 1/1;
+    background-image: url("../images/o.png");
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    /*filter: invert();*/
+
+    animation-name: home;
+    animation-duration: 3s;
+    animation-iteration-count: infinite;
+}
+@keyframes home {
+    0%   {background-image: url("../images/o.png")}
+    50%  {background-image: url("../images/o_blur.png")}
+  }
+
+#track {
+    width: 100vw;
+}
+#track .slide {
+    position: relative;
+    scroll-snap-align: start;
+}
+#track .slide img {
+    width: 100%;
+    height: 100vh;
+    object-fit: cover;
+}
+#track .slide p {
+    position: absolute;
+    left: 50%;
+    top: 40%;
+    transform: translate(-50%, -40%);
+    bottom:50%;
+    font-size: 6vmin;
+    font-weight: bold;
+    color: white;
+}

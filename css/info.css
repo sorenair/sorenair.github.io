@@ -1,0 +1,32 @@
+@media screen and (max-width:900px) {
+    .full {
+        margin-top: 16vh;
+        margin-bottom: 4vh;
+        margin-left: 4vw;
+        margin-right: 4vw;
+        background-image: url("../images/info_splash_mobile.png");
+    }
+}
+@media screen and (min-width:901px) {
+    .full {
+        margin-top: 12vh;
+        background-image: url("../images/info_splash.jpg");
+    }
+}
+.full {
+    height: 88vh;
+    width: auto;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+#info_text {
+    position: absolute;
+    top: 20vh;
+    left: 50vw;
+    padding-right: 5vw;
+
+    font-size: 3vmin;
+
+    color: white;
+}

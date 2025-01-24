@@ -1,0 +1,21 @@
+#info_text {
+    text-align: center;
+    font-size: 3vmin;
+    font-weight: lighter;
+}
+
+#socials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4vw
+}
+
+#socials a {
+    opacity: 100%;
+
+    transition: opacity 300ms;
+}
+#socials a:hover {
+    opacity: 50%;
+}
