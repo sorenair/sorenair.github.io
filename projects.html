@@ -7,6 +7,8 @@
         <!-- Link CSS Files -->
         <link rel="stylesheet" href="css/projects.css">
         <link rel="stylesheet" href="css/default.css">
+        <!-- Link JavaScript Files -->
+        <script defer src="js/navbar.js"></script>
         <!-- Load Google Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,6 +19,16 @@
         <!-- Nav Bar -->
         <div id="navbar">
             <a id="home" href="index.html"></a>
+        </div>
+        <div id="nav_mobile">
+            <div id="home" onclick="showDiv()"></div>
+        </div>
+        <div id="nav_mobile_options">
+                <a id="home" href="index.html"></a>
+                <a href="projects.html">PROJECTS</a>
+                <a href="info.html">INFO</a>
+                <a href="contact.html">CONTACT</a>
+                <div id="exit" onclick="showDiv()"><box-icon name='x' size="lg"></box-icon></div>
         </div>
 
         <!-- Content -->
