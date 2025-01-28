@@ -9,6 +9,8 @@
 
     .board {
         text-align: center;
+        margin-left: 10vw;
+        margin-right: 10vw;
     }
     .section {
         margin-bottom: 6vh;
@@ -55,6 +57,7 @@
     }
     .info {
         text-align: right;
+        margin-left: 20vw;
     }
     .info .header {
         font-size: 1.5vw;
@@ -64,7 +67,7 @@
     .info .footer {
         font-size: 1vw;
         color: gray;
-        margin-bottom: 4vh;
+        margin-bottom: 2vh;
     }
 }
 .full {

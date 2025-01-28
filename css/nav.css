@@ -16,6 +16,8 @@
 }
 
 #navbar {
+    z-index: 9;
+
     position: fixed;
     width: 100vw;
     height: 12vh;
@@ -88,7 +90,7 @@
     50%  {background-image: url("../images/o_blur.png")}
   }
 #nav_mobile_options {
-    z-index: 3;
+    z-index: 10;
 
     position: absolute;
     width:100%;
