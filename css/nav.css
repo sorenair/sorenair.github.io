@@ -67,6 +67,7 @@
 }
 
 #nav_mobile {
+    z-index: 9;
     position: fixed;
     width: 100vw;
     height: 12vh;
@@ -74,6 +75,7 @@
     justify-content: center;
 }
 #nav_mobile #home {
+    z-index: 10;
     height: 100%;
     width: auto;
     aspect-ratio: 1/1;
@@ -90,7 +92,7 @@
     50%  {background-image: url("../images/o_blur.png")}
   }
 #nav_mobile_options {
-    z-index: 10;
+    z-index: 11;
 
     position: absolute;
     width:100%;
