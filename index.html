@@ -50,14 +50,24 @@
         <!-- Content -->
         <div class="hero-video">
             <!-- <img src="images/o_title2.png"> -->
-            <video autoplay muted loop playsinline class="hero-video">
-                <source src="videos/hero.mp4" type="video/mp4">
+            <!-- Desktop video -->
+            <video id="desktop-video" autoplay muted loop playsinline class="hero-video desktop-only">
+                <source src="videos/hero_desktop.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <!-- Mobile video -->
+            <video id="mobile-video" autoplay muted loop playsinline class="hero-video mobile-only">
+                <source src="videos/hero_mobile.mp4" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
         </div>
+        <!-- Centered Splash Text -->
+        <div class="splash-text mobile-only">
+            <h1>SOREN<br>GABOR</h1>
+        </div>
         <div class="hero-overlay">
-            <!-- <p>Welcome!</p> -->
-            <p>© 2025 by Soren Gabor</p>
+            <p class="mobile-only">TAP THE Ø TO GET STARTED</p>
+            <!-- <p>© 2025 by Soren Gabor</p> -->
         </div>
         <!--
         <div class="popup hidden" style="margin-top: -15vh;">
