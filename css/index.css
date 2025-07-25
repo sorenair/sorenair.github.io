@@ -1,13 +1,30 @@
+/* NAVBAR */
+#navbar p {
+    color: black;
+}
+#navbar #navmenu a {
+    color: black;
+}
+#nav_mobile_options a {
+    color: black;
+}
+
+/* FOOTER */
+footer {
+    color: rgb(150, 150, 150);
+}
+
 .full {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 100vw;
-    height: 100vh;
-    margin-bottom: 0;
+    height: 80vh;
+    margin-top: 8vh;
+    margin-bottom: 8vh;
 }
 .full img {
-    height: 80vmin;
+    height: 100%;
     width: auto;
 }
 

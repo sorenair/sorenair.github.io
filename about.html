@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>ABØUT</title>
+        <!-- Link CSS Files -->
+        <link rel="stylesheet" href="css/about.css">
+        <link rel="stylesheet" href="css/default.css">
+        <link rel="stylesheet" href="css/nav.css">
+        <!-- Link JavaScript Files -->
+        <script defer src="js/index.js"></script>
+        <script defer src="js/navbar.js"></script>
+        <!-- Import Box Icons -->
+        <script src=https://unpkg.com/boxicons@2.1.4/dist/boxicons.js></script>
+        <!-- Load Google Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
+    </head>
+
+    <body>
+        <!-- Box Icon Scaling Classes -->
+        <i class='bx bxs-like bx-xs'></i>
+        <i class='bx bxs-like bx-sm'></i>
+        <i class='bx bxs-like bx-md'></i>
+        <i class='bx bxs-like bx-lg'></i>
+
+        <!-- Nav Bar -->
+        <div id="navbar">
+            <p>Soren Gabor</p>
+            <a id="home" href="index.html"></a>
+            <div id="navmenu">
+                <a href="work.html">WORK</a>
+                <a href="about.html">ABOUT</a>
+                <a href="contact.html">CONTACT</a>
+            </div>
+        </div>
+        <div id="nav_mobile">
+            <div id="home" onclick="showDiv()"></div>
+        </div>
+        <div id="nav_mobile_options">
+                <a id="home" href="index.html"></a>
+                <a href="work.html">WORK</a>
+                <a href="about.html">ABOUT</a>
+                <a href="contact.html">CONTACT</a>
+                <div id="exit" onclick="showDiv()"><box-icon name='x' size="lg"></box-icon></div>
+        </div>
+
+        <!-- Content -->
+        <div class="full"></div>
+        
+        <div class="board"> 
+            <div class="section">
+                <p class="title hidden">About</p>
+                <div class="info">
+                    <div class="hidden">
+                        <p class="header">Hello, my name is Soren Gabor.</p>
+                        <p class="bio">I'm currently studying Electrical Engineering and Physics at the University of St. Thomas in St. Paul, Minnesota.
+                            While my work often focuses on designing and improving electronic systems, I love creative endeavors of every kind.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <p class="title hidden">Working Experience</p>
+                <div class="info">
+                    <div class="hidden">
+                        <p class="header">Embedded Systems Research and Development Intern</p>
+                        <p class="header">Lockheed Martin Advanced Technology Laboratories</p>
+                        <p class="footer"> 2024 - Present</p>
+                    </div>  
+
+                    <div class="hidden">
+                        <p class="header">Nuclear Research Assistant</p>
+                        <p class="header">University of St. Thomas - Physics Department</p>
+                        <p class="footer"> 2022 - 2025</p>
+                    </div>
+
+                    <div class="hidden">
+                        <p class="header">Freelance Multimedia Designer</p>
+                        <p class="footer"> 2022 - 2024</p>
+                    </div>
+                </div>
+            </div>
+            <div class="section">
+                <p class="title hidden">Awards and Recognition</p>
+                <div class="info">
+                    <div class="hidden">
+                        <p class="header">Board of Governors Summit Scholarship</p>
+                        <p class="footer">University of St. Thomas - Engineering Department</p>
+                    </div>
+
+                    <div class="hidden">
+                        <p class="header">Samuel M. Paine Navy V-12 Memorial Scholarship</p>
+                        <p class="footer">University of St. Thomas - Engineering Department</p>
+                    </div>
+
+                    <div class="hidden">
+                        <p class="header">Aquinas Honors Scholar</p>
+                        <p class="footer">University of St. Thomas</p>
+                    </div>
+
+                    <div class="hidden">
+                        <p class="header">Book Award for Community Leadership</p>
+                        <p class="footer">Saint Michael’s College</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <footer>© 2025 Soren Gabor. All rights reserved.</footer>
+    </body>
+</html>
