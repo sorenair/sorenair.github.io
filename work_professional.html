@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>WØRK - Professional</title>
         <!-- Link CSS Files -->
-        <link rel="stylesheet" href="css/contact.css">
+        <link rel="stylesheet" href="css/work_personal.css">
         <link rel="stylesheet" href="css/default.css">
         <link rel="stylesheet" href="css/nav.css">
         <!-- Link JavaScript Files -->
@@ -47,9 +47,40 @@
         </div>
 
         <!-- Content -->
-        <div id = 'contact_container'>
-            <p id="header">Page in development...</p>
-        <!-- Footer -->
-        <footer>© 2025 by Soren Gabor</footer>
+        <div id="image-track" data-prev-percentage="-50" data-percentage="-50">
+            <div class="image-wrapper">
+                <img class="image" src="images/work/professional/lm.jpg" alt="Personal Project 1" draggable="false">
+                <div class="image-label">Lockheed Martin</div>
+
+                <div class="project-detail">
+                    <button class="close-detail">&times;</button>
+                    <div class="vertical-track"></div>
+                </div>
+            </div>
+            <div class="image-wrapper">
+                <img class="image" src="images/work/professional/ust.png" alt="Personal Project 2" draggable="false">
+                <div class="image-label">University of St. Thomas</div>
+
+                <div class="project-detail">
+                    <button class="close-detail">&times;</button>
+                    <div class="vertical-track"></div>
+                </div>
+            </div>
+            <div class="image-wrapper">
+                <img class="image" src="images/work/professional/mm.jpg" alt="Personal Project 3" draggable="false">
+                <div class="image-label">Multimedia Production</div>
+
+                <div class="project-detail">
+                    <button class="close-detail">&times;</button>
+                    <div class="vertical-track"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="track-description">work // professional</div>
+
+        <!-- Scripts -->
+        <script defer src="js/populateVerticalTrack.js"></script>
+        <script defer src="js/work_personal.js"></script>
     </body>
 </html>

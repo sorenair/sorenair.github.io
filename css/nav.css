@@ -74,7 +74,8 @@
     justify-content: center;
 }
 #nav_mobile #home {
-    z-index: 10;
+    position: relative; /* ← needed for z-index to take effect */
+    z-index: 20;
     height: 100%;
     width: auto;
     aspect-ratio: 1/1;
@@ -82,16 +83,17 @@
     background-repeat: no-repeat;
     background-size: 100% 100%;
 
+    /*
     animation-name: home;
     animation-duration: 3s;
-    animation-iteration-count: infinite;
+    animation-iteration-count: infinite;*/
 }
 @keyframes home {
     0%   {background-image: url("../images/o.png")}
     50%  {background-image: url("../images/o_blur.png")}
 }
 #nav_mobile_options {
-    z-index: 11;
+    z-index: 21;
 
     position: absolute;
     width:100%;

@@ -47,30 +47,56 @@
         </div>
 
         <!-- Content -->
-        <div id="image-track" data-mouse-down-at="0" data-prev-percentage="0">
+        <div id="image-track" data-mouse-down-at="0" data-prev-percentage="-50" data-percentage="-50">
             <div class="image-wrapper">
-                <img class="image" src="images/work/personal_1.jpg" alt="Personal Project 1" draggable="false">
+                <img class="image" src="images/work/personal/electronics_alt.jpg" alt="Personal Project 1" draggable="false">
                 <div class="image-label">Electronics</div>
+                <div class="project-detail">
+                    <button class="close-detail">&times;</button>
+                    <div class="vertical-track"></div>
+                </div>
             </div>
             <div class="image-wrapper">
-                <img class="image" src="images/work/personal_2.jpg" alt="Personal Project 2" draggable="false">
+                <img class="image" src="images/work/personal/video_alt.jpg" alt="Personal Project 2" draggable="false">
                 <div class="image-label">Video</div>
+                <div class="project-detail">
+                    <button class="close-detail">&times;</button>
+                    <div class="vertical-track"></div>
+                </div>
             </div>
             <div class="image-wrapper">
-                <img class="image" src="images/work/personal_3.jpg" alt="Personal Project 3" draggable="false">
+                <img class="image" src="images/work/personal/music.jpg" alt="Personal Project 3" draggable="false">
                 <div class="image-label">Music</div>
+
+                <div class="project-detail">
+                    <button class="close-detail">&times;</button>
+                    <div class="vertical-track"></div>
+                </div>
             </div>
             <div class="image-wrapper">
-                <img class="image" src="images/work/personal_4.jpg" alt="Personal Project 4" draggable="false">
+                <img class="image" src="images/work/personal/art.jpg" alt="Personal Project 4" draggable="false">
                 <div class="image-label">Art</div>
+
+                <div class="project-detail">
+                    <button class="close-detail">&times;</button>
+                    <div class="vertical-track"></div>
+                </div>
             </div>
             <div class="image-wrapper">
-                <img class="image" src="images/work/personal_5.jpg" alt="Personal Project 5" draggable="false">
+                <img class="image" src="images/work/personal/gamedev_alt.jpg" alt="Personal Project 5" draggable="false">
                 <div class="image-label">Game Dev</div>
+
+                <div class="project-detail">
+                    <button class="close-detail">&times;</button>
+                    <div class="vertical-track"></div>
+                </div>
             </div>
         </div>
 
+        <div id="track-description">work // personal</div>
+
         <!-- Scripts -->
+        <script defer src="js/populateVerticalTrack.js"></script>
         <script defer src="js/work_personal.js"></script>
     </body>
 </html>
