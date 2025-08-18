@@ -515,7 +515,7 @@ function populateVerticalTrack(wrapper, label) {
       <div class="project-panel-text">
         <h2>UST Sailing Team</h2>
         <p>Competitor on the University of St. Thomas sailing team, representing the school at regional and national regattas across the country in both dinghy and keelboat racing. Beyond competing, I contribute as the team’s media content creator and cinematographer, capturing dynamic footage and producing engaging visual content that showcases our team’s performance and spirit.</p>
-        <a href="https://www.youtube.com/watch?v=c4yCE5CtvcA" style="color: red">Watch on YouTube</a>
+        <a href="https://www.ustsailing.org" style="color: #9300ddff">Learn more about Sailing at UST</a>
       </div>
     `;
     setupDotCarousel(proj1.querySelector(".project-panel-images"));
