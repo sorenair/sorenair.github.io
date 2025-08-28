@@ -1,18 +1,6 @@
 const track = document.getElementById("image-track");
 
 const verticalProjects = {
-  electronics: [
-    {
-      title: "PORTAL",
-      description: "A smart messenger display system with a web interface allowing people to send pictures, animations, and messages to friends and family.",
-      image: "images/work/personal/electronics/portal.png"
-    },
-    {
-      title: "NightEye",
-      description: "A Raspberry Pi-based night vision headset using infrared imaging and machine vision.",
-      image: "images/work/personal/electronics/ne_fd.png"
-    }
-  ]
 };
 
 window.onmousedown = e => {
@@ -47,6 +35,25 @@ window.onmousemove = e => {
             objectPosition: `${nextPercentage + 100}% 50%`
         }, { duration: 1200, fill: "forwards" });
     }
+}
+
+// Add touchmove support for mobile
+window.addEventListener('touchmove', e => {
+    const touchX = e.touches[0].clientX;
+    const percent = touchX / window.innerWidth;
+    images.forEach(img => {
+        img.style.objectPosition = `${100 - percent * 50}% 50%`;
+    });
+}, { passive: true });
+
+// Also update parallax on horizontal scroll
+if (imageTrack) {
+    imageTrack.addEventListener('scroll', () => {
+        const scrollPercent = imageTrack.scrollLeft / (imageTrack.scrollWidth - imageTrack.clientWidth);
+        images.forEach(img => {
+            img.style.objectPosition = `${100 - scrollPercent * 50}% 50%`;
+        });
+    });
 }
 
 window.addEventListener("DOMContentLoaded", () => {

@@ -95,10 +95,13 @@
 #nav_mobile_options {
     z-index: 21;
 
-    position: absolute;
-    width:100%;
-    height:100%;
-    top:0;
+    position: fixed;  /* instead of absolute */
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;    /* cover full mobile viewport */
+    overflow: hidden; /* prevent sideways scrolling while open */
+    
     display: none;
     flex-direction: column;
     gap: 8vh;
