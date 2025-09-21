@@ -56,13 +56,35 @@ body {
 
 /* Background Images */
 .academic {
-  background-image: url('../images/pics/academic_p.png'); /* Replace with your actual image path */
+  background-image: url('../images/work/covers/academic-800.jpg');
 }
 .personal {
-  background-image: url('../images/pics/personal.jpg');
+  background-image: url('../images/work/covers/personal-800.jpg');
 }
 .professional {
-  background-image: url('../images/pics/professional.jpg');
+  background-image: url('../images/work/covers/professional-800.jpg');
+}
+@media (max-width: 600px) {
+  .academic {
+    background-image: url('../images/work/covers/academic-400.jpg');
+  }
+  .personal {
+    background-image: url('../images/work/covers/personal-400.jpg');
+  }
+  .professional {
+    background-image: url('../images/work/covers/professional-400.jpg');
+  }
+}
+@media (min-width: 1200px) {
+  .academic {
+    background-image: url('../images/work/covers/academic-1600.jpg');
+  }
+  .personal {
+    background-image: url('../images/work/covers/personal-1600.jpg');
+  }
+  .professional {
+    background-image: url('../images/work/covers/professional-1600.jpg');
+  }
 }
 
 .overlay {
