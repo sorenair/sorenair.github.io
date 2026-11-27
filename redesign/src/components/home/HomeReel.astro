@@ -210,7 +210,7 @@ const desktopMedia = '(min-width: 56rem)';
     opacity: 0;
   }
 
-  .reel[data-playing] video {
+  .reel[data-playing]:not([data-decode-pending]) video {
     opacity: 1;
   }
 
@@ -256,8 +256,8 @@ const desktopMedia = '(min-width: 56rem)';
     inset: 0;
     pointer-events: none;
     background:
-      linear-gradient(0deg, #080808f2, #08080875 41%, #08080812 74%),
-      linear-gradient(90deg, #080808a6, #08080880 50%, #08080800 85%);
+      linear-gradient(0deg, #080808d9, #0808085c 41%, #08080808 74%),
+      linear-gradient(90deg, #0808088c, #08080866 50%, #08080800 85%);
   }
 
   /* Background reels use bare play/pause glyphs; the button text stays as its accessible name. */
