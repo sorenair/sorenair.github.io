@@ -28,6 +28,12 @@
   --panel-radius: 0.125rem;
 
   --motion-fast: 140ms;
+  --motion-reveal: 520ms;
+  --motion-glitch: 180ms;
+  --ease-artifact: cubic-bezier(0.7, 0, 0.2, 1);
+  /* Artifact grid: one module is the unit for grid lines and large type blocks. */
+  --module: clamp(3rem, 8vw, 7rem);
+  --grain-opacity: 0.05;
   --motion-project: 300ms;
   --ease-out: cubic-bezier(0.2, 0.75, 0.25, 1);
 }
@@ -294,5 +300,137 @@ a {
   :root {
     --motion-fast: 0ms;
     --motion-project: 0ms;
+    --motion-reveal: 0ms;
+    --motion-glitch: 0ms;
   }
+}
+
+/* ===== Artifact kit =====
+   Shared pieces from the chosen identity direction (see SHELL.md). Opt in with these classes. */
+
+/* Fine grain over the whole page. Static, so it needs no reduced-motion variant. */
+body::after {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: screen;
+  opacity: var(--grain-opacity);
+  pointer-events: none;
+  content: '';
+}
+
+/* Oversized display type. Tight tracking, set on the module grid. */
+.display-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(3.5rem, 1rem + 12vw, 13rem);
+  line-height: 0.88;
+  letter-spacing: -0.075em;
+  overflow-wrap: anywhere;
+}
+
+/* Visible Ø module grid behind a section. Put `.module-grid` on a positioned element. */
+.module-grid {
+  position: relative;
+  isolation: isolate;
+}
+
+.module-grid::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: linear-gradient(var(--color-rule) 1px, transparent 1px), linear-gradient(90deg, var(--color-rule) 1px, transparent 1px);
+  background-size: var(--module) var(--module);
+  mask-image: linear-gradient(black, transparent 70%);
+  opacity: 0.35;
+  pointer-events: none;
+  content: '';
+}
+
+/* Corner brackets for panels and media frames. They take the active accent. */
+.bracketed {
+  position: relative;
+}
+
+.bracketed::before,
+.bracketed::after {
+  position: absolute;
+  inline-size: 0.75rem;
+  block-size: 0.75rem;
+  border: 0 solid var(--color-accent);
+  pointer-events: none;
+  content: '';
+  transition: border-color var(--motion-fast) var(--ease-out);
+}
+
+.bracketed::before {
+  inset: -1px auto auto -1px;
+  border-width: 1px 0 0 1px;
+}
+
+.bracketed::after {
+  inset: auto -1px -1px auto;
+  border-width: 0 1px 1px 0;
+}
+
+/* Status line (see components/terminal/StatusLine.astro). */
+.status-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.6em;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.status-line .sep {
+  opacity: 0.4;
+}
+
+.status-line b {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+/* Stepped resolve for media: a short posterized-to-clear change, used when media becomes active. */
+.resolve {
+  animation: terminal-resolve 360ms steps(4, end) both;
+}
+
+/* One reveal (clip wipe) and one glitch (horizontal tear). Both are skipped under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-reveal].is-armed {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+  }
+
+  [data-reveal].is-armed.is-revealed {
+    animation: terminal-reveal var(--motion-reveal) var(--ease-artifact) both;
+  }
+
+  .is-glitch {
+    animation: terminal-glitch var(--motion-glitch) steps(2, end) 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resolve {
+    animation: none;
+  }
+}
+
+@keyframes terminal-reveal {
+  from { clip-path: inset(0 100% 0 0); transform: translateX(-0.4rem); opacity: 0; }
+  to { clip-path: inset(0); transform: none; opacity: 1; }
+}
+
+@keyframes terminal-glitch {
+  0% { transform: translateX(-4px); clip-path: inset(10% 0 55% 0); }
+  50% { transform: translateX(4px); clip-path: inset(50% 0 10% 0); }
+  100% { transform: none; clip-path: inset(0); }
+}
+
+@keyframes terminal-resolve {
+  from { filter: grayscale(1) contrast(1.6) blur(6px); }
+  to { filter: none; }
 }
