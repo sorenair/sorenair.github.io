@@ -445,3 +445,37 @@ body::after {
   from { filter: grayscale(1) contrast(1.6) blur(6px); }
   to { filter: none; }
 }
+
+/* Minimal scrollbar: visible but quiet. Thin gray thumb, no track, white accent on hover. */
+:root {
+  --scrollbar-thumb: #4a4a4a;
+}
+
+@supports selector(::-webkit-scrollbar) {
+  ::-webkit-scrollbar {
+    inline-size: 4px;
+    block-size: 4px;
+  }
+
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border-radius: 2px;
+    background: var(--scrollbar-thumb);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-accent);
+  }
+}
+
+/* Firefox (no WebKit scrollbar pseudo-elements): standard properties. */
+@supports not selector(::-webkit-scrollbar) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
+}
