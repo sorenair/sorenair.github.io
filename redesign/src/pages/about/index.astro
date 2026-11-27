@@ -37,6 +37,28 @@ const awards = [
   { title: 'Book Award for Community Leadership', organization: 'Saint Michael’s College' },
 ];
 
+const activities = [
+  {
+    title: 'UST Sailing Team',
+    role: 'Competitor and media creator',
+    summary: 'Competitor on the University of St. Thomas sailing team, racing dinghies and keelboats at regional and national regattas. Also the team’s content creator and cinematographer.',
+    href: 'https://www.ustsailing.org',
+    link: 'ustsailing.org',
+  },
+  {
+    title: 'Shredders Club',
+    role: 'Founder and president',
+    summary: 'Founder and president of the university’s recreational ski and snowboard club, one of the largest student organizations on campus. Leads group trips, volunteering, and community events.',
+    href: 'https://www.instagram.com/ust_shredders/',
+    link: 'Instagram',
+  },
+  {
+    title: 'Aquinas Honors Scholars',
+    role: 'Member',
+    summary: 'Interdisciplinary seminars, service projects, and leadership development with a cohort of honors students.',
+  },
+];
+
 const socials = [
   { label: 'LinkedIn', href: 'https://www.linkedin.com/in/soren-gabor/' },
   { label: 'YouTube', href: 'https://www.youtube.com/@soren_air' },
@@ -89,6 +111,20 @@ const socials = [
           <li>
             <h3>{title}</h3>
             <p class="lead">{organization}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="about-section" aria-labelledby="activities-heading">
+      <h2 class="section-title" id="activities-heading">Activities</h2>
+      <ul class="details-list">
+        {activities.map(({ title, role, summary, href, link }) => (
+          <li>
+            <h3>{title}</h3>
+            <p class="lead">{role}</p>
+            <p class="experience-summary">{summary}</p>
+            {href && <a class="text-link" href={href}>{link}</a>}
           </li>
         ))}
       </ul>
