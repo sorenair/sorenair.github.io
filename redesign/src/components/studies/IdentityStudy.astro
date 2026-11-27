@@ -37,7 +37,7 @@ const projects = await Promise.all(order.map(async (id, index) => {
     accent: (await getCoverAccent(entry.data.cover.src)) ?? '',
   };
 }));
-const fallback = '#d9fa80';
+const fallback = '#ffffff';
 ---
 
 <div class="study" data-direction={direction} data-study>

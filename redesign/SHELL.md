@@ -43,14 +43,14 @@ Page-specific layout stays in the page. Ask Foundation before adding global clas
 
 ## Content-driven accent
 
-Use one interface accent at a time through `--color-accent`. On a project page, draw the accent from the cover or artwork. On a page with multiple featured projects, let the accent follow the active project. Use the shared yellow-green (`#d9fa80`) when there is no active project or the content is monochrome.
+Use one interface accent at a time through `--color-accent`. On a project page, draw the accent from the cover or artwork. On a page with multiple featured projects, let the accent follow the active project. Use the shared white (`#ffffff`) when there is no active project or the content is monochrome.
 
 Use the accent for focus, active links, and interaction feedback. Check contrast on the surfaces where it appears. Adjust the content color for legibility or use the shared fallback. Keep focus outlines and active underlines visible as the accent changes.
 
 ### Accent usage contract
 
-- **Never set `--color-accent` directly.** It resolves to `--color-active-accent`, then `--color-page-accent`, then `#d9fa80`.
-- **Page accent:** pass `accentSource="/images/..."` to `SiteLayout`. Project pages derive it from the project cover automatically. The layout extracts a contrast-checked colour (at least 7:1 on `--color-surface`) and sets `--color-page-accent` on `<html>`. Monochrome artwork such as PØRTAL yields none and falls back to the yellow-green.
+- **Never set `--color-accent` directly.** It resolves to `--color-active-accent`, then `--color-page-accent`, then `#ffffff`.
+- **Page accent:** pass `accentSource="/images/..."` to `SiteLayout`. Project pages derive it from the project cover automatically. The layout extracts a contrast-checked colour (at least 7:1 on `--color-surface`) and sets `--color-page-accent` on `<html>`. Monochrome artwork such as PØRTAL yields none and falls back to white.
 - **Active item:** a view with several featured projects sets `--color-active-accent` on `document.documentElement` on selection and removes it when nothing is active. For a colour not already in the page, compute it at build time with `getCoverAccent` from `src/cover-accent.ts` and pass it to the client.
 - **Use it for** focus rings, active links and interaction feedback only, never as body text or large fills.
 

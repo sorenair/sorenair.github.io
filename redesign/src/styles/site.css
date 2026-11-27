@@ -7,7 +7,7 @@
   --color-rule: #414141;
   --color-control-edge: #707070;
   /* Interactive views may set --color-active-accent on the document root on selection. */
-  --color-accent: var(--color-active-accent, var(--color-page-accent, #d9fa80));
+  --color-accent: var(--color-active-accent, var(--color-page-accent, #ffffff));
 
   --font-body: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-display: "Helvetica Neue", Arial, sans-serif;
@@ -104,6 +104,7 @@ a {
 }
 
 .page-title {
+  text-transform: uppercase;
   font-size: var(--text-title);
   line-height: 0.98;
   letter-spacing: -0.063em;
@@ -327,6 +328,7 @@ body::after {
   font-size: clamp(3.5rem, 1rem + 12vw, 13rem);
   line-height: 0.88;
   letter-spacing: -0.075em;
+  text-transform: uppercase;
   overflow-wrap: anywhere;
 }
 
