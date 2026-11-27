@@ -1,6 +1,8 @@
 ---
 import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
+import StatusLine from '../../components/terminal/StatusLine.astro';
+import { getCoverAccent } from '../../cover-accent';
 import SiteLayout from '../../layouts/SiteLayout.astro';
 import { loadProjectCover } from '../../project-cover';
 
@@ -10,7 +12,9 @@ const filters = [{ value: 'all', label: 'All' }, ...Object.entries(categoryLabel
 const editorialOrder = [
   'portal', 'wifi-transceiver', 'overclock', 'nighteye', 'astrogolf', 'autonomous-ev-model',
   'puerto-rico-2025', 'dakota', 'soren-music', 'digital-photography',
-  'engr-331-microprocessors', 'engr-342-electromagnetics', 'phys-325-computational-physics', 'engr-230-digital-logic', 'engr-346-analog-electronics', 'engr-340-signals-systems', 'phys-215-modern-physics', 'engr-255-fabrication', 'lockheed-martin-intern', 'nuclear-physics-research', 'multimedia-producer',
+  'lockheed-martin-intern', 'nuclear-physics-research', 'multimedia-producer',
+  'engr-331-microprocessors', 'engr-342-electromagnetics', 'phys-325-computational-physics', 'engr-230-digital-logic',
+  'engr-346-analog-electronics', 'engr-340-signals-systems', 'phys-215-modern-physics', 'engr-255-fabrication',
 ];
 const editorialPosition = (id: string) => {
   const index = editorialOrder.indexOf(id);
@@ -20,11 +24,16 @@ const projects = (await getCollection('projects')).sort((a, b) =>
   editorialPosition(a.id) - editorialPosition(b.id) || a.data.title.localeCompare(b.data.title, 'en'),
 );
 const hasDates = projects.some(({ data }) => Boolean(data.date));
-const cards = await Promise.all(projects.map(async ({ id, data }) => {
+const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
   const cover = await loadProjectCover(data.cover.src);
-  const width = Math.min(960, cover.width);
-  const widths = [360, 540, 720].filter((candidate) => candidate < width).concat(width);
-  return { id, data, cover, width, widths };
+  return {
+    id,
+    data,
+    cover,
+    number: String(index + 1).padStart(2, '0'),
+    // Contrast-checked at build time. Monochrome covers have none and keep the shared accent.
+    accent: (await getCoverAccent(data.cover.src)) ?? '',
+  };
 }));
 ---
 
@@ -34,55 +43,72 @@ const cards = await Promise.all(projects.map(async ({ id, data }) => {
       @view-transition { navigation: auto; }
     }
   </style>
-  <section class="container page-section work-library" data-work-library>
-    <header class="library-heading">
-      <h1 class="page-title">Work</h1>
-      <p class="terminal-label" role="status" data-project-status>{cards.length} {cards.length === 1 ? 'project' : 'projects'} shown</p>
-    </header>
-    <div class="library-controls terminal-panel" data-library-controls hidden>
-      <div class="category-filters" role="group" aria-label="Filter projects by category">
-        {filters.map(({ value, label }) => (
-          <button class="terminal-control" type="button" data-category={value} aria-pressed={value === 'all'}>{label}</button>
-        ))}
+  <section class="work-library module-grid" data-work-library>
+    <div class="container library-top">
+      <StatusLine items={[`NODE ${rows.length}`]} />
+      <header class="library-heading">
+        <h1 class="display-title" data-reveal>Work</h1>
+        <p class="terminal-label" role="status" data-project-status>{rows.length} {rows.length === 1 ? 'project' : 'projects'} shown</p>
+      </header>
+      <div class="library-controls" data-library-controls hidden>
+        <div class="category-filters" role="group" aria-label="Filter projects by category">
+          {filters.map(({ value, label }) => (
+            <button class="terminal-control" type="button" data-category={value} aria-pressed={value === 'all'}>{label}</button>
+          ))}
+        </div>
+        {hasDates && (
+          <label class="project-sort">
+            <span class="terminal-label">Sort by</span>
+            <select class="terminal-control" data-project-sort>
+              <option value="editorial">Portfolio order</option>
+              <option value="recent">Most recent</option>
+            </select>
+          </label>
+        )}
       </div>
-      {hasDates && (
-        <label class="project-sort">
-          <span class="terminal-label">Sort by</span>
-          <select class="terminal-control" data-project-sort>
-            <option value="editorial">Portfolio order</option>
-            <option value="recent">Most recent</option>
-          </select>
-        </label>
-      )}
     </div>
-    <p class="lead" data-empty-projects hidden>No projects in this category yet.</p>
-    <ul class="project-grid" role="list" data-project-grid>
-      {cards.map(({ id, data, cover, width, widths }, index) => (
-        <li data-project-card data-categories={data.categories.join(' ')} data-date={data.date}>
-          <a class="project-card terminal-panel" id={`project-${id}`} href={`/work/${id}/`} aria-labelledby={`title-${id}`}>
-            <div class="project-media" style={`view-transition-name: cover-${id}`}>
-              <Image
-                src={cover}
-                alt={data.cover.alt}
-                width={width}
-                widths={widths}
-                sizes="(min-width: 88rem) 27rem, (min-width: 70rem) 31vw, (min-width: 45rem) 47vw, 94vw"
-                loading={index === 0 ? 'eager' : 'lazy'}
-              />
-            </div>
-            <div class="project-copy">
-              <p class="terminal-label project-discipline">{data.categories.map((category) => categoryLabels[category]).join(' / ')}</p>
-              <h2 class="section-title" id={`title-${id}`}>{data.title}</h2>
-              <p class="lead">{data.summary}</p>
-            </div>
-          </a>
-        </li>
-      ))}
-    </ul>
+
+    <div class="container library-body">
+      <p class="lead" data-empty-projects hidden>No projects in this category yet.</p>
+      <ol class="rows" role="list" data-project-grid>
+        {rows.map(({ id, data, cover, number, accent }, index) => (
+          <li
+            class="row"
+            data-project-card
+            data-id={id}
+            data-categories={data.categories.join(' ')}
+            data-date={data.date}
+            data-accent={accent}
+            data-number={number}
+          >
+            <a class="row-link" id={`project-${id}`} href={`/work/${id}/`} aria-labelledby={`title-${id}`}>
+              <span class="row-number terminal-label" aria-hidden="true">{number}</span>
+              <span class="row-thumb bracketed" style={`view-transition-name: cover-${id}`}>
+                <Image src={cover} alt="" width={240} widths={[160, 240, 360]} sizes="7rem" loading={index < 6 ? 'eager' : 'lazy'} />
+              </span>
+              <span class="row-title" id={`title-${id}`}>{data.title}</span>
+              <span class="row-context terminal-label">{data.context ?? data.categories.map((category) => categoryLabels[category]).join(' / ')}</span>
+              <span class="row-discipline terminal-label">{data.categories.map((category) => categoryLabels[category]).join(' / ')}</span>
+              <span class="row-go" aria-hidden="true">↗</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+      <aside class="preview bracketed" aria-hidden="true" data-preview>
+        {rows.map(({ id, cover, data }) => (
+          <figure class="shot" data-shot={id} style={`view-transition-name: cover-${id}`}>
+            <Image src={cover} alt="" width={960} widths={[480, 720, 960]} sizes="(min-width: 60rem) 40vw, 0px" loading="lazy" />
+          </figure>
+        ))}
+        <p class="preview-meta terminal-label"><span data-preview-number>--</span> <span data-preview-title>Hover or focus a row</span></p>
+      </aside>
+    </div>
   </section>
 </SiteLayout>
 
 <script>
+  import { glitch } from '../../scripts/terminal';
+
   interface ProjectReturnState {
     cardId: string;
     scrollY: number;
@@ -90,15 +116,53 @@ const cards = await Promise.all(projects.map(async ({ id, data }) => {
 
   const library = document.querySelector<HTMLElement>('[data-work-library]');
   if (library) {
+    const root = document.documentElement;
     const controls = library.querySelector<HTMLElement>('[data-library-controls]')!;
-    const grid = library.querySelector<HTMLElement>('[data-project-grid]')!;
+    const list = library.querySelector<HTMLElement>('[data-project-grid]')!;
     const status = library.querySelector<HTMLElement>('[data-project-status]')!;
     const empty = library.querySelector<HTMLElement>('[data-empty-projects]')!;
+    const preview = library.querySelector<HTMLElement>('[data-preview]')!;
+    const previewNumber = library.querySelector<HTMLElement>('[data-preview-number]')!;
+    const previewTitle = library.querySelector<HTMLElement>('[data-preview-title]')!;
     const filters = Array.from(controls.querySelectorAll<HTMLButtonElement>('[data-category]'));
     const sort = controls.querySelector<HTMLSelectElement>('[data-project-sort]');
-    const editorial = Array.from(grid.querySelectorAll<HTMLElement>('[data-project-card]'));
+    const editorial = Array.from(list.querySelectorAll<HTMLElement>('[data-project-card]'));
     const recent = [...editorial].sort((a, b) => (b.dataset.date ?? '').localeCompare(a.dataset.date ?? ''));
+    const shots = Array.from(preview.querySelectorAll<HTMLElement>('[data-shot]'));
+    const nodeCounter = library.querySelector<HTMLElement>('.status-line span:last-child');
+    const idleTitle = previewTitle.textContent;
     let currentSort = 'editorial';
+    let currentCategory = 'all';
+    let activeRow: HTMLElement | undefined;
+
+    function clearActive() {
+      activeRow?.classList.remove('is-active');
+      activeRow = undefined;
+      root.style.removeProperty('--color-active-accent');
+      shots.forEach((shot) => shot.classList.remove('is-on'));
+      previewNumber.textContent = '--';
+      previewTitle.textContent = idleTitle;
+    }
+
+    // Hovering or focusing a row shows its preview, and the interface accent follows the project.
+    function activate(row: HTMLElement) {
+      if (row === activeRow) return;
+      clearActive();
+      activeRow = row;
+      row.classList.add('is-active');
+      if (row.dataset.accent) root.style.setProperty('--color-active-accent', row.dataset.accent);
+      const shot = shots.find((candidate) => candidate.dataset.shot === row.dataset.id);
+      shot?.classList.add('is-on');
+      const image = shot?.querySelector('img');
+      if (image) {
+        image.classList.remove('resolve');
+        void image.offsetWidth;
+        image.classList.add('resolve');
+      }
+      previewNumber.textContent = row.dataset.number ?? '';
+      previewTitle.textContent = row.querySelector('.row-title')?.textContent ?? '';
+      glitch(preview);
+    }
 
     function render(url: URL) {
       const requested = url.searchParams.get('category');
@@ -110,19 +174,25 @@ const cards = await Promise.all(projects.map(async ({ id, data }) => {
       }
       if (sort) sort.value = order;
       if (order !== currentSort) {
-        grid.append(...(order === 'recent' ? recent : editorial));
+        list.append(...(order === 'recent' ? recent : editorial));
         currentSort = order;
       }
 
       let visible = 0;
-      for (const card of editorial) {
-        card.hidden = category !== 'all' && !card.dataset.categories?.split(' ').includes(category);
-        if (!card.hidden) visible += 1;
+      for (const row of editorial) {
+        row.hidden = category !== 'all' && !row.dataset.categories?.split(' ').includes(category);
+        if (!row.hidden) visible += 1;
       }
 
       empty.hidden = visible > 0;
       const result = `${visible} ${visible === 1 ? 'project' : 'projects'} shown`;
       if (status.textContent !== result) status.textContent = result;
+      if (nodeCounter) nodeCounter.textContent = `NODE ${visible}`;
+      if (category !== currentCategory) {
+        currentCategory = category;
+        clearActive();
+        glitch(list);
+      }
     }
 
     function updateView(key: string, value?: string) {
@@ -142,12 +212,23 @@ const cards = await Promise.all(projects.map(async ({ id, data }) => {
     }
     sort?.addEventListener('change', () => updateView('sort', sort.value === 'recent' ? 'recent' : undefined));
 
-    grid.addEventListener('click', (event) => {
-      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      const card = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>('a.project-card') : null;
-      if (!card) return;
+    for (const row of editorial) {
+      row.addEventListener('pointerenter', (event) => { if (event.pointerType === 'mouse') activate(row); });
+      row.addEventListener('focusin', () => activate(row));
+    }
+    list.addEventListener('pointerleave', () => {
+      if (!activeRow?.contains(document.activeElement)) clearActive();
+    });
+    list.addEventListener('focusout', (event) => {
+      if (!(event.relatedTarget instanceof Node) || !list.contains(event.relatedTarget)) clearActive();
+    });
 
-      const workProjectReturn: ProjectReturnState = { cardId: card.id, scrollY: window.scrollY };
+    list.addEventListener('click', (event) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const link = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>('a.row-link') : null;
+      if (!link) return;
+
+      const workProjectReturn: ProjectReturnState = { cardId: link.id, scrollY: window.scrollY };
       history.replaceState({ ...history.state, workProjectReturn }, '');
     });
 
@@ -161,12 +242,12 @@ const cards = await Promise.all(projects.map(async ({ id, data }) => {
 
       const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
       if (!event.persisted && navigation?.type !== 'back_forward') return;
-      const card = document.getElementById(state.cardId);
-      if (!card || !grid.contains(card) || card.closest('[hidden]')) return;
+      const link = document.getElementById(state.cardId);
+      if (!link || !list.contains(link) || link.closest('[hidden]')) return;
 
       requestAnimationFrame(() => {
         window.scrollTo({ top: state.scrollY, behavior: 'instant' });
-        card.focus({ preventScroll: true });
+        link.focus({ preventScroll: true });
       });
     });
   }
@@ -174,13 +255,18 @@ const cards = await Promise.all(projects.map(async ({ id, data }) => {
 
 <style>
   .work-library {
-    padding-block-start: var(--space-4);
+    padding-block: var(--space-4) var(--space-5);
+  }
+
+  .library-top {
+    display: grid;
+    gap: var(--space-2);
   }
 
   .library-heading {
     display: flex;
     flex-wrap: wrap;
-    align-items: baseline;
+    align-items: end;
     justify-content: space-between;
     gap: var(--space-1) var(--space-2);
   }
@@ -196,8 +282,8 @@ const cards = await Promise.all(projects.map(async ({ id, data }) => {
   .library-controls:not([hidden]) {
     justify-content: space-between;
     gap: var(--space-2);
-    margin-block-start: var(--space-2);
-    padding: var(--space-1);
+    padding-block: var(--space-1);
+    border-block-end: 1px solid var(--color-rule);
   }
 
   .project-sort {
@@ -206,95 +292,199 @@ const cards = await Promise.all(projects.map(async ({ id, data }) => {
     gap: var(--space-1);
   }
 
-  [data-empty-projects] {
-    margin-block-start: var(--space-3);
+  .library-body {
+    display: grid;
+    gap: var(--space-3);
+    margin-block-start: var(--space-2);
   }
 
-  .project-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-4) var(--space-3);
+  [data-empty-projects] {
+    margin-block-start: var(--space-2);
+  }
+
+  .rows {
+    margin: 0;
     padding: 0;
-    margin: var(--space-3) 0 0;
     list-style: none;
   }
 
-  .project-card {
-    display: grid;
-    align-content: start;
-    block-size: 100%;
-    color: inherit;
-    text-decoration: none;
-    transition: border-color var(--motion-fast) var(--ease-out);
+  .row {
+    border-block-end: 1px solid var(--color-rule);
+    transition: background-color var(--motion-fast) var(--ease-artifact), color var(--motion-fast) var(--ease-artifact);
   }
 
-  .project-media {
+  .row[hidden] {
+    display: none;
+  }
+
+  /* Phones: each row carries a thumbnail and needs no hover. */
+  .row-link {
     display: grid;
-    place-items: center;
-    aspect-ratio: 8 / 5;
-    padding: var(--space-1);
-    background-color: var(--color-background);
-    background-image: radial-gradient(var(--color-rule) 0.5px, transparent 0.5px);
-    background-size: 0.5rem 0.5rem;
-    border-block-end: 1px solid var(--color-rule);
-    border-start-start-radius: var(--panel-radius);
-    border-start-end-radius: var(--panel-radius);
+    grid-template-columns: 2rem 5rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0 var(--space-2);
+    min-block-size: 5rem;
+    padding-block: var(--space-1);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .row-number {
+    grid-row: span 2;
+  }
+
+  .row-thumb {
+    display: block;
+    grid-row: span 2;
+    inline-size: 5rem;
+    aspect-ratio: 4 / 3;
+    background: var(--color-surface);
     overflow: hidden;
   }
 
-  .project-media img {
+  .row-thumb img {
     inline-size: 100%;
     block-size: 100%;
-    min-block-size: 0;
-    object-fit: contain;
+    object-fit: cover;
   }
 
-  .project-copy {
-    padding: var(--space-2);
+  .row-title {
+    grid-column: 3;
+    font-family: var(--font-display);
+    font-size: clamp(1.25rem, 1rem + 1.2vw, 1.75rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    overflow-wrap: anywhere;
   }
 
-  .project-copy .section-title {
-    font-size: clamp(1.375rem, 1.15rem + 1vw, 2rem);
+  .row-context,
+  .row-discipline {
+    grid-column: 3;
+    font-size: 0.75rem;
   }
 
-  .project-discipline {
-    margin-block-end: var(--space-1);
+  .row-discipline {
+    display: none;
   }
 
-  .project-copy .lead {
-    margin-block-start: var(--space-1);
+  .row-go {
+    grid-column: 4;
+    grid-row: 1 / span 2;
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+    transition: transform var(--motion-fast) var(--ease-artifact), color var(--motion-fast) var(--ease-artifact);
   }
 
-  .project-card:is(:focus-visible, :active) {
-    border-color: var(--color-accent);
-    transition-duration: 0ms;
+  .row-link:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
   }
 
-  .project-card:is(:focus-visible, :active) .section-title {
-    text-decoration: underline;
-    text-underline-offset: 0.22em;
+  .preview {
+    display: none;
   }
 
-  @media (hover: hover) {
-    .project-card:hover {
-      border-color: var(--color-accent);
+  @media (min-width: 60rem) {
+    .library-body {
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      align-items: start;
     }
 
-    .project-card:hover .section-title {
-      text-decoration: underline;
-      text-underline-offset: 0.22em;
+    /* The accent floods the active row; the study's Artifact direction. */
+    .row {
+      margin-inline-start: calc(var(--gutter) * -1);
+      padding-inline-start: var(--gutter);
     }
-  }
 
-  @media (min-width: 45rem) {
-    .project-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+    .row.is-active {
+      background: var(--color-accent);
+      color: var(--color-background);
     }
-  }
 
-  @media (min-width: 70rem) {
-    .project-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+    .row.is-active :is(.row-title, .row-go, .terminal-label) {
+      color: var(--color-background);
+    }
+
+    .row.is-active .row-go {
+      transform: translate(0.15rem, -0.15rem);
+    }
+
+    .row-link {
+      grid-template-columns: 2.5rem minmax(0, 1fr) 11rem 2rem;
+      min-block-size: 6rem;
+    }
+
+    .row-number,
+    .row-title,
+    .row-context,
+    .row-go {
+      grid-row: auto;
+    }
+
+    .row-thumb {
+      display: none;
+    }
+
+    .row-title {
+      grid-column: 2;
+      font-size: clamp(1.6rem, 1rem + 2.4vw, 3.5rem);
+      letter-spacing: -0.06em;
+      line-height: 0.95;
+    }
+
+    .row-context {
+      grid-column: 3;
+    }
+
+    .row-discipline {
+      display: none;
+    }
+
+    .row-go {
+      grid-column: 4;
+    }
+
+    .row-link:focus-visible {
+      outline-color: var(--color-background);
+    }
+
+    .preview {
+      position: sticky;
+      inset-block-start: var(--space-3);
+      display: block;
+      aspect-ratio: 4 / 3;
+      border: 1px solid var(--color-rule);
+      background: var(--color-surface);
+    }
+
+    .shot {
+      position: absolute;
+      inset: 0;
+      margin: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition: opacity var(--motion-fast) var(--ease-artifact);
+    }
+
+    .shot img {
+      inline-size: 100%;
+      block-size: 100%;
+      object-fit: cover;
+    }
+
+    .shot.is-on {
+      opacity: 1;
+    }
+
+    .preview-meta {
+      position: absolute;
+      inset: auto 0 0;
+      z-index: 2;
+      margin: 0;
+      padding: 0.5rem 0.75rem;
+      background: linear-gradient(transparent, rgb(0 0 0 / 0.75));
+      color: var(--color-text);
     }
   }
 </style>
