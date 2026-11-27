@@ -186,10 +186,15 @@
       raf = requestAnimationFrame(draw);
     };
 
+    // Keep the raw footage hidden until the glyph field has drawn over it.
+    const reel = video.closest<HTMLElement>('.reel');
+    const reveal = () => requestAnimationFrame(() => reel?.removeAttribute('data-decode-pending'));
+
     const begin = () => {
       if (startTime) return;
       startTime = performance.now();
       run();
+      reveal();
     };
 
     layout();
@@ -207,6 +212,7 @@
       // Reduced motion: one static composition of the field at rest, no animation.
       if (poster?.complete) stillFrame(); else poster?.addEventListener('load', stillFrame, { once: true });
     } else {
+      reel?.setAttribute('data-decode-pending', '');
       run(); // idle noise until the footage is ready
       video.addEventListener('playing', () => { window.setTimeout(begin, 500); run(); });
       window.setTimeout(begin, 3200);
