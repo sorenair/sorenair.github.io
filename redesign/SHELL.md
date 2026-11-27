@@ -19,6 +19,13 @@ Use one interface accent at a time through `--color-accent`. On a project page, 
 
 Use the accent for focus, active links, and interaction feedback. Check contrast on the surfaces where it appears. Adjust the content color for legibility or use the shared fallback. Keep focus outlines and active underlines visible as the accent changes.
 
+### Accent usage contract
+
+- **Never set `--color-accent` directly.** It resolves to `--color-active-accent`, then `--color-page-accent`, then `#d9fa80`.
+- **Page accent:** pass `accentSource="/images/..."` to `SiteLayout`. Project pages derive it from the project cover automatically. The layout extracts a contrast-checked colour (at least 7:1 on `--color-surface`) and sets `--color-page-accent` on `<html>`. Monochrome artwork such as PØRTAL yields none and falls back to the yellow-green.
+- **Active item:** a view with several featured projects sets `--color-active-accent` on `document.documentElement` on selection and removes it when nothing is active. For a colour not already in the page, compute it at build time with `getCoverAccent` from `src/cover-accent.ts` and pass it to the client.
+- **Use it for** focus rings, active links and interaction feedback only, never as body text or large fills.
+
 ## Motion and navigation
 
 Keep normal links, native scrolling, and direct page entry working. Use `--motion-fast` for short feedback and `--motion-project` for occasional project transitions. Both durations become zero with reduced motion. Gate page-specific motion and video autoplay on the motion preference where applicable. The layout has an optional named `head` slot for page-specific metadata or view-transition opt-in. Agent 3 owns the Work return behavior, including category, scroll, and focus restoration.
