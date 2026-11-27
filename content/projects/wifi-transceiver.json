@@ -1,8 +1,7 @@
 {
   "title": "WiFi Transceiver",
   "categories": [
-    "technical",
-    "academic"
+    "technical"
   ],
   "summary": "A custom ESP32 circuit board built to explore high-frequency PCB design and antenna placement.",
   "context": "ENGR 342 course capstone",

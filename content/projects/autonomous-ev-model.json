@@ -1,8 +1,7 @@
 {
   "title": "Autonomous EV Model",
   "categories": [
-    "technical",
-    "academic"
+    "technical"
   ],
   "summary": "A self-driving electric vehicle model built on an STM32 microcontroller and a network of sensors.",
   "context": "Embedded systems coursework",
