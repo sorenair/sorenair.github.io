@@ -1,0 +1,25 @@
+{
+  "title": "ENGR 255: Fabrication Skills Lab",
+  "categories": [
+    "academic"
+  ],
+  "summary": "Hands-on mechanical fabrication with manual mills, lathes, and woodshop tools.",
+  "context": "University of St. Thomas coursework",
+  "technologies": [
+    "Manual Machining",
+    "Woodworking"
+  ],
+  "cover": {
+    "src": "/images/work/academic/cw.jpg",
+    "alt": "Open purple notebook with a pen beside colour-swatch cards"
+  },
+  "sections": [
+    {
+      "heading": "Overview",
+      "paragraphs": [
+        "Gained practical experience in mechanical fabrication through hands-on training with manual mills, lathes, and various woodshop tools.",
+        "Emphasized workshop safety protocols and precise equipment operation, building foundational skills applicable across mechanical engineering projects."
+      ]
+    }
+  ]
+}

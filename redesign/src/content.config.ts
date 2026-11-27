@@ -18,7 +18,7 @@ const projects = defineCollection({
   loader: glob({ pattern: '*.json', base: '../content/projects' }),
   schema: z.object({
     title: z.string(),
-    categories: z.array(z.enum(['technical', 'creative'])).min(1).max(2),
+    categories: z.array(z.enum(['technical', 'creative', 'academic'])).min(1).max(2),
     summary: z.string(),
     context: z.string().trim().min(1).optional(),
     technologies: z.array(z.string().trim().min(1)).min(1).optional(),

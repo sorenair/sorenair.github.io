@@ -1,9 +1,16 @@
 {
   "title": "WiFi Transceiver",
-  "categories": ["technical"],
+  "categories": [
+    "technical",
+    "academic"
+  ],
   "summary": "A custom ESP32 circuit board built to explore high-frequency PCB design and antenna placement.",
   "context": "ENGR 342 course capstone",
-  "technologies": ["ESP32", "KiCad", "NI Ultiboard"],
+  "technologies": [
+    "ESP32",
+    "KiCad",
+    "NI Ultiboard"
+  ],
   "cover": {
     "src": "/images/work/academic/projects/wifi_pcb.jpg",
     "alt": "Assembled green WiFi Transceiver board with a central ESP32 chip and two push buttons"
