@@ -397,17 +397,23 @@ body::after {
   animation: terminal-resolve 360ms steps(4, end) both;
 }
 
-/* One reveal (clip wipe) and one glitch (horizontal tear). Both are skipped under reduced motion. */
+/* One reveal (text decode, see scripts/terminal.ts) and one glitch (horizontal tear).
+   Both are skipped under reduced motion. Below-the-fold targets are hidden until they start. */
+.is-armed {
+  opacity: 0;
+}
+
+.term-cursor {
+  display: inline-block;
+  inline-size: 0.55em;
+  block-size: 0.95em;
+  margin-inline-start: 0.12em;
+  background: var(--color-accent);
+  vertical-align: -0.1em;
+  animation: terminal-blink 0.8s steps(1, end) infinite;
+}
+
 @media (prefers-reduced-motion: no-preference) {
-  [data-reveal].is-armed {
-    clip-path: inset(0 100% 0 0);
-    opacity: 0;
-  }
-
-  [data-reveal].is-armed.is-revealed {
-    animation: terminal-reveal var(--motion-reveal) var(--ease-artifact) both;
-  }
-
   .is-glitch {
     animation: terminal-glitch var(--motion-glitch) steps(2, end) 1;
   }
@@ -417,11 +423,14 @@ body::after {
   .resolve {
     animation: none;
   }
+
+  .is-armed {
+    opacity: 1;
+  }
 }
 
-@keyframes terminal-reveal {
-  from { clip-path: inset(0 100% 0 0); transform: translateX(-0.4rem); opacity: 0; }
-  to { clip-path: inset(0); transform: none; opacity: 1; }
+@keyframes terminal-blink {
+  50% { opacity: 0; }
 }
 
 @keyframes terminal-glitch {
