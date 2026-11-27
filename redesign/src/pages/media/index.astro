@@ -1,7 +1,9 @@
 ---
 import { Image, getImage } from 'astro:assets';
+import { getEntry } from 'astro:content';
 import SiteLayout from '../../layouts/SiteLayout.astro';
-import { mediaEntries } from '../../media-entries';
+import FeaturedCarousel, { type FeaturedItem } from './_FeaturedCarousel.astro';
+import { featuredPlaceholderProjects, mediaEntries } from '../../media-entries';
 import { loadProjectCover as loadCover } from '../../project-cover';
 
 const mediaLabels = { video: 'Video', photo: 'Photography', artwork: 'Artwork' };
@@ -16,29 +18,35 @@ const entries = await Promise.all(mediaEntries.map(async (entry) => {
   const fullPhoto = await getImage({ src: cover, width: Math.min(1600, cover.width), format: 'webp' });
   return { ...entry, cover, width, widths, fullPhotoHref: fullPhoto.src };
 }));
-const featured = entries.filter((entry) => entry.kind === 'video' || entry.kind === 'artwork');
+// Highlights come from media entries marked `featured`. Until there is enough media, selected
+// Work covers stand in as placeholders so the carousel can be reviewed.
+const featuredMedia: FeaturedItem[] = mediaEntries
+  .filter((entry) => 'featured' in entry && entry.featured && entry.kind !== 'video')
+  .map((entry) => ({
+    id: entry.id,
+    title: entry.title,
+    label: mediaLabels[entry.kind],
+    href: `#${entry.id}`,
+    coverSrc: 'coverSrc' in entry ? entry.coverSrc : '',
+    alt: 'alt' in entry ? entry.alt : entry.title,
+  }));
+const placeholders: FeaturedItem[] = (await Promise.all(
+  featuredPlaceholderProjects.map((slug) => getEntry('projects', slug)),
+)).flatMap((project) => project ? [{
+  id: project.id,
+  title: project.data.title,
+  label: 'Work',
+  href: `/work/${project.id}/`,
+  coverSrc: project.data.cover.src,
+  alt: project.data.cover.alt,
+}] : []);
+const highlights = [...featuredMedia, ...placeholders].slice(0, 5);
 ---
 
 <SiteLayout title="Media" description="Photography, video, and artwork by Soren Gabor.">
   <div class="page-section media-gallery">
     <h1 class="page-title">Media</h1>
-    <section class="featured-media" aria-labelledby="featured-media-title">
-      <h2 class="terminal-label" id="featured-media-title">Featured</h2>
-      <ul class="featured-row" role="list">
-        {featured.map((entry) => (
-          <li>
-            <a href={`#${entry.id}`} class="featured-tile">
-              {entry.kind === 'video' ? (
-                <img src={entry.poster} alt="" width="1280" height="720" />
-              ) : (
-                <Image src={entry.cover} alt="" width={entry.width} widths={entry.widths} sizes="50vw" />
-              )}
-              <span>{entry.title}</span>
-            </a>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <FeaturedCarousel items={highlights} />
     <div class="view-toggle" role="group" aria-label="Media view" data-view-toggle hidden>
       <button class="terminal-control" type="button" data-view="explore" aria-pressed="true" aria-controls="media-wall">Explore</button>
       <button class="terminal-control" type="button" data-view="gallery" aria-pressed="false" aria-controls="media-gallery">Gallery</button>
@@ -167,9 +175,58 @@ const featured = entries.filter((entry) => entry.kind === 'video' || entry.kind 
     for (const link of [...tiles, ...document.querySelectorAll<HTMLAnchorElement>('.featured-tile')]) {
       link.addEventListener('click', (event) => {
         if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        if (!link.hash || link.pathname !== location.pathname) return;
         event.preventDefault();
         if (!wall.contains(link) || !dragged) openItem(link.hash);
       });
+    }
+
+    // The wall keeps one continuous offset. Dragging moves it directly; on release it eases to the
+    // nearest tile, and only then is the move committed to the tile origin (the layout repeats, so
+    // committing at a whole tile does not change what is on screen).
+    let offsetX = 0;
+    let offsetY = 0;
+    let settling = 0;
+
+    function commit() {
+      const cellsX = Math.round(offsetX / stepX);
+      const cellsY = Math.round(offsetY / stepY);
+      originX -= cellsX;
+      originY -= cellsY;
+      offsetX -= cellsX * stepX;
+      offsetY -= cellsY * stepY;
+    }
+
+    function settleTo(cellsX: number, cellsY: number) {
+      cancelAnimationFrame(settling);
+      commit();
+      const targetX = cellsX * stepX;
+      const targetY = cellsY * stepY;
+      const fromX = offsetX;
+      const fromY = offsetY;
+      if (reduced.matches || (fromX === targetX && fromY === targetY)) {
+        offsetX = targetX;
+        offsetY = targetY;
+        commit();
+        draw(offsetX, offsetY);
+        return;
+      }
+      const distance = Math.hypot(targetX - fromX, targetY - fromY);
+      const duration = Math.min(900, 420 + distance * 0.6);
+      const start = performance.now();
+      const step = (now: number) => {
+        const progress = Math.min(1, (now - start) / duration);
+        const eased = 1 - (1 - progress) ** 4;
+        offsetX = fromX + (targetX - fromX) * eased;
+        offsetY = fromY + (targetY - fromY) * eased;
+        draw(offsetX, offsetY);
+        if (progress < 1) settling = requestAnimationFrame(step);
+        else {
+          commit();
+          draw(offsetX, offsetY);
+        }
+      };
+      settling = requestAnimationFrame(step);
     }
 
     wall.addEventListener('keydown', (event) => {
@@ -177,14 +234,21 @@ const featured = entries.filter((entry) => entry.kind === 'video' || entry.kind 
       const step = direction[event.key];
       if (!step) return;
       event.preventDefault();
-      originX += step[0];
-      originY += step[1];
-      draw();
+      // Ease one tile in the arrow's direction; the move is committed when it comes to rest.
+      settleTo(-step[0], -step[1]);
     });
+
+    let velocity = { x: 0, y: 0 };
+    let last = { x: 0, y: 0, time: 0 };
+    let startOffset = { x: 0, y: 0 };
 
     wall.addEventListener('pointerdown', (event) => {
       if (!event.isPrimary || event.button !== 0) return;
+      cancelAnimationFrame(settling);
       dragged = false;
+      startOffset = { x: offsetX, y: offsetY };
+      velocity = { x: 0, y: 0 };
+      last = { x: event.clientX, y: event.clientY, time: event.timeStamp };
       drag = { x: event.clientX, y: event.clientY, id: event.pointerId };
     });
     wall.addEventListener('pointermove', (event) => {
@@ -194,7 +258,17 @@ const featured = entries.filter((entry) => entry.kind === 'video' || entry.kind 
       if (Math.hypot(x, y) < 8 && !dragged) return;
       if (!dragged) wall.setPointerCapture(event.pointerId);
       dragged = true;
-      if (!reduced.matches) draw(x, y);
+      const elapsed = Math.max(1, event.timeStamp - last.time);
+      velocity = {
+        x: 0.75 * velocity.x + 0.25 * ((event.clientX - last.x) / elapsed),
+        y: 0.75 * velocity.y + 0.25 * ((event.clientY - last.y) / elapsed),
+      };
+      last = { x: event.clientX, y: event.clientY, time: event.timeStamp };
+      if (!reduced.matches) {
+        offsetX = startOffset.x + x;
+        offsetY = startOffset.y + y;
+        draw(offsetX, offsetY);
+      }
     });
     wall.addEventListener('pointerup', (event) => {
       if (drag?.id !== event.pointerId) return;
@@ -202,12 +276,23 @@ const featured = entries.filter((entry) => entry.kind === 'video' || entry.kind 
       const y = event.clientY - drag.y;
       drag = undefined;
       if (!dragged) return;
-      originX -= Math.round(x / stepX);
-      originY -= Math.round(y / stepY);
-      draw();
+      // Carry some of the release velocity, then lock onto a tile (at most two tiles of throw).
+      const throwX = reduced.matches ? 0 : Math.max(-2 * stepX, Math.min(2 * stepX, velocity.x * 180));
+      const throwY = reduced.matches ? 0 : Math.max(-2 * stepY, Math.min(2 * stepY, velocity.y * 180));
+      const currentX = reduced.matches ? x : offsetX;
+      const currentY = reduced.matches ? y : offsetY;
+      if (reduced.matches) {
+        offsetX = currentX;
+        offsetY = currentY;
+      }
+      settleTo(Math.round((currentX + throwX) / stepX), Math.round((currentY + throwY) / stepY));
       setTimeout(() => { dragged = false; }, 0);
     });
-    wall.addEventListener('pointercancel', () => { drag = undefined; dragged = false; draw(); });
+    wall.addEventListener('pointercancel', () => {
+      drag = undefined;
+      dragged = false;
+      settleTo(Math.round(offsetX / stepX), Math.round(offsetY / stepY));
+    });
     wall.addEventListener('dragstart', (event) => event.preventDefault());
     const toggle = document.querySelector<HTMLElement>('[data-view-toggle]');
     function setView(view: 'explore' | 'gallery') {
@@ -216,7 +301,7 @@ const featured = entries.filter((entry) => entry.kind === 'video' || entry.kind 
       toggle?.querySelectorAll<HTMLButtonElement>('[data-view]').forEach((button) => {
         button.setAttribute('aria-pressed', String(button.dataset.view === view));
       });
-      if (view === 'explore') draw();
+      if (view === 'explore') draw(offsetX, offsetY);
     }
     toggle?.addEventListener('click', (event) => {
       const button = (event.target as Element).closest<HTMLButtonElement>('[data-view]');
@@ -224,7 +309,7 @@ const featured = entries.filter((entry) => entry.kind === 'video' || entry.kind 
     });
     if (toggle) toggle.hidden = false;
     setView(reduced.matches ? 'gallery' : 'explore');
-    new ResizeObserver(() => draw()).observe(wall);
+    new ResizeObserver(() => draw(offsetX, offsetY)).observe(wall);
     if (location.hash) openItem(location.hash);
   }
 </script>
@@ -273,16 +358,10 @@ const featured = entries.filter((entry) => entry.kind === 'video' || entry.kind 
     padding-block-start: var(--space-4);
   }
 
-  .media-gallery > h1,
-  .featured-media h2 {
+  .media-gallery > h1 {
     margin-inline: var(--gutter);
   }
 
-  .featured-media {
-    margin-block-start: var(--space-3);
-  }
-
-  .featured-row,
   .media-grid {
     display: grid;
     gap: 1px;
@@ -291,45 +370,9 @@ const featured = entries.filter((entry) => entry.kind === 'video' || entry.kind 
     background: var(--color-rule);
   }
 
-  .featured-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    margin: var(--space-1) 0 0;
-  }
-
-  .featured-tile {
-    position: relative;
-    display: flex;
-    align-items: end;
-    min-block-size: clamp(8rem, 17vw, 17rem);
-    padding: var(--space-2) var(--gutter);
-    background: linear-gradient(transparent, #000d);
-    isolation: isolate;
-    font-weight: 700;
-    text-decoration: none;
-  }
-
-  .featured-tile img {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    inline-size: 100%;
-    block-size: 100%;
-    object-fit: cover;
-  }
-
-  .featured-tile span {
-    padding: 0.25rem 0.5rem;
-    background: var(--color-background);
-  }
-
-  .featured-tile:focus-visible,
   .media-entry:focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: -3px;
-  }
-
-  .featured-tile:hover span {
-    text-decoration: underline;
   }
 
   .media-grid {

@@ -1,0 +1,328 @@
+---
+import { Image } from 'astro:assets';
+import { getCoverAccent } from '../../cover-accent';
+import { loadProjectCover } from '../../project-cover';
+
+/** One highlight. `href` is a Work page or a `#media-id` that opens the Media dialog. */
+export interface FeaturedItem {
+  id: string;
+  title: string;
+  label: string;
+  href: string;
+  coverSrc: string;
+  alt: string;
+}
+
+interface Props {
+  items: FeaturedItem[];
+}
+
+const { items } = Astro.props;
+const slides = await Promise.all(items.map(async (item) => {
+  const cover = await loadProjectCover(item.coverSrc);
+  const width = Math.min(960, cover.width);
+  const widths = [480, 720].filter((candidate) => candidate < width).concat(width);
+  return { ...item, cover, width, widths, accent: await getCoverAccent(item.coverSrc) };
+}));
+---
+
+<section class="featured-media" aria-roledescription="carousel" aria-labelledby="featured-media-title" data-carousel>
+  <div class="featured-header">
+    <h2 class="terminal-label" id="featured-media-title">Featured</h2>
+    <div class="carousel-controls" data-carousel-controls hidden>
+      <button class="terminal-control" type="button" data-carousel-step="-1" aria-label="Previous highlight">Prev</button>
+      <button class="terminal-control" type="button" data-carousel-step="1" aria-label="Next highlight">Next</button>
+    </div>
+  </div>
+  <ul class="carousel-track" role="list" data-carousel-track>
+    {slides.map((slide, index) => (
+      <li class="carousel-slide" data-carousel-slide data-accent={slide.accent} aria-roledescription="slide" aria-label={`${index + 1} of ${slides.length}`}>
+        <a class="featured-tile carousel-card" href={slide.href}>
+          <Image
+            src={slide.cover}
+            alt={slide.alt}
+            width={slide.width}
+            widths={slide.widths}
+            sizes="(min-width: 60rem) 34rem, 80vw"
+            loading={index < 2 ? 'eager' : 'lazy'}
+            draggable="false"
+          />
+          <span class="carousel-caption">
+            <span class="terminal-label">{slide.label}</span>
+            <span class="carousel-title">{slide.title}</span>
+          </span>
+        </a>
+      </li>
+    ))}
+  </ul>
+  <p class="terminal-label carousel-status" role="status" data-carousel-status></p>
+</section>
+
+<script>
+  const carousel = document.querySelector<HTMLElement>('[data-carousel]');
+  const track = carousel?.querySelector<HTMLElement>('[data-carousel-track]');
+  if (carousel && track) {
+    const slides = Array.from(track.querySelectorAll<HTMLElement>('[data-carousel-slide]'));
+    const status = carousel.querySelector<HTMLElement>('[data-carousel-status]')!;
+    const controls = carousel.querySelector<HTMLElement>('[data-carousel-controls]')!;
+    const buttons = Array.from(controls.querySelectorAll<HTMLButtonElement>('[data-carousel-step]'));
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    const root = document.documentElement;
+
+    let active = -1;
+    let frame = 0;
+    let settleTimer = 0;
+    let glide = 0;
+
+    const centerOf = (slide: HTMLElement) => slide.offsetLeft + slide.offsetWidth / 2;
+    const nearest = (position = track.scrollLeft + track.clientWidth / 2) => {
+      let best = 0;
+      slides.forEach((slide, index) => {
+        if (Math.abs(centerOf(slide) - position) < Math.abs(centerOf(slides[best]) - position)) best = index;
+      });
+      return best;
+    };
+    const scrollTarget = (index: number) => centerOf(slides[index]) - track.clientWidth / 2;
+
+    // Depth: scale, tilt, and fade follow each slide's distance from the center.
+    function paint() {
+      frame = 0;
+      const middle = track.scrollLeft + track.clientWidth / 2;
+      for (const slide of slides) {
+        const distance = Math.max(-1, Math.min(1, (centerOf(slide) - middle) / (slide.offsetWidth * 1.1)));
+        slide.style.setProperty('--depth', reduced.matches ? '0' : String(distance));
+      }
+    }
+
+    function settle() {
+      const index = nearest();
+      if (index === active) return;
+      active = index;
+      slides.forEach((slide, position) => {
+        if (position === index) slide.setAttribute('aria-current', 'true');
+        else slide.removeAttribute('aria-current');
+      });
+      const accent = slides[index].dataset.accent;
+      if (accent) root.style.setProperty('--color-active-accent', accent);
+      else root.style.removeProperty('--color-active-accent');
+      status.textContent = `${index + 1} of ${slides.length}: ${slides[index].querySelector('.carousel-title')?.textContent ?? ''}`;
+      buttons[0].disabled = index === 0;
+      buttons[1].disabled = index === slides.length - 1;
+    }
+
+    function onScroll() {
+      if (!frame) frame = requestAnimationFrame(paint);
+      clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(settle, 90);
+    }
+
+    // Weighted glide used after a mouse drag. Touch keeps the browser's own momentum and scroll snap.
+    function glideTo(left: number) {
+      cancelAnimationFrame(glide);
+      const maxLeft = track.scrollWidth - track.clientWidth;
+      const target = Math.max(0, Math.min(maxLeft, left));
+      if (reduced.matches) {
+        track.scrollLeft = target;
+        track.classList.remove('is-dragging');
+        return;
+      }
+      const from = track.scrollLeft;
+      const duration = 380 + Math.min(420, Math.abs(target - from) * 0.45);
+      const start = performance.now();
+      const step = (now: number) => {
+        const progress = Math.min(1, (now - start) / duration);
+        track.scrollLeft = from + (target - from) * (1 - (1 - progress) ** 4);
+        if (progress < 1) glide = requestAnimationFrame(step);
+        else track.classList.remove('is-dragging');
+      };
+      glide = requestAnimationFrame(step);
+    }
+
+    function goTo(index: number) {
+      const next = Math.max(0, Math.min(slides.length - 1, index));
+      track.classList.add('is-dragging');
+      glideTo(scrollTarget(next));
+    }
+
+    for (const button of buttons) {
+      button.addEventListener('click', () => goTo((active < 0 ? 0 : active) + Number(button.dataset.carouselStep)));
+    }
+
+    let drag: { id: number; x: number; left: number; lastX: number; lastTime: number; velocity: number } | undefined;
+    let moved = false;
+
+    track.addEventListener('pointerdown', (event) => {
+      if (event.pointerType !== 'mouse' || event.button !== 0) return;
+      cancelAnimationFrame(glide);
+      drag = { id: event.pointerId, x: event.clientX, left: track.scrollLeft, lastX: event.clientX, lastTime: event.timeStamp, velocity: 0 };
+      moved = false;
+    });
+    track.addEventListener('pointermove', (event) => {
+      if (!drag || drag.id !== event.pointerId) return;
+      const delta = event.clientX - drag.x;
+      if (!moved && Math.abs(delta) < 6) return;
+      if (!moved) {
+        moved = true;
+        track.classList.add('is-dragging');
+        track.setPointerCapture(event.pointerId);
+      }
+      const elapsed = Math.max(1, event.timeStamp - drag.lastTime);
+      drag.velocity = 0.8 * drag.velocity + 0.2 * ((drag.lastX - event.clientX) / elapsed);
+      drag.lastX = event.clientX;
+      drag.lastTime = event.timeStamp;
+      track.scrollLeft = drag.left - delta;
+    });
+    const release = (event: PointerEvent) => {
+      if (!drag || drag.id !== event.pointerId) return;
+      const { velocity } = drag;
+      drag = undefined;
+      if (!moved) return;
+      // Project the throw forward, then lock on the nearest slide.
+      const projected = track.scrollLeft + track.clientWidth / 2 + velocity * 260;
+      glideTo(scrollTarget(nearest(projected)));
+      setTimeout(() => { moved = false; }, 0);
+    };
+    track.addEventListener('pointerup', release);
+    track.addEventListener('pointercancel', release);
+    track.addEventListener('click', (event) => { if (moved) event.preventDefault(); }, true);
+    track.addEventListener('dragstart', (event) => event.preventDefault());
+
+    track.addEventListener('scroll', onScroll, { passive: true });
+    track.addEventListener('scrollend', settle);
+    addEventListener('resize', () => { paint(); settle(); });
+    reduced.addEventListener('change', paint);
+
+    controls.hidden = false;
+    // Start on the first slide centered; the track padding lets edge slides reach the middle.
+    track.scrollLeft = scrollTarget(0);
+    paint();
+    settle();
+  }
+</script>
+
+<style>
+  .featured-media {
+    margin-block-start: var(--space-3);
+  }
+
+  .featured-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-inline: var(--gutter);
+  }
+
+  .carousel-controls:not([hidden]) {
+    display: flex;
+    gap: var(--space-1);
+  }
+
+  .carousel-controls button:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .carousel-track {
+    --slide-width: clamp(15rem, 62vw, 34rem);
+    display: flex;
+    gap: var(--space-2);
+    margin: var(--space-1) 0 0;
+    padding: var(--space-2) calc(50% - var(--slide-width) / 2);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    list-style: none;
+    perspective: 70rem;
+    cursor: grab;
+  }
+
+  .carousel-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Mouse drags and glides position the track directly, so snapping waits until they finish. */
+  .carousel-track.is-dragging {
+    scroll-snap-type: none;
+    cursor: grabbing;
+  }
+
+  .carousel-slide {
+    flex: 0 0 var(--slide-width);
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    --depth: 0;
+    transform: rotateY(calc(var(--depth) * -16deg)) scale(calc(1 - var(--depth) * var(--depth) * 0.1 - 0.04 * var(--depth) * var(--depth)));
+    opacity: calc(1 - 0.35 * var(--depth) * var(--depth));
+  }
+
+  .carousel-card {
+    position: relative;
+    display: block;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    border: 1px solid var(--color-rule);
+    border-radius: var(--panel-radius);
+    background: var(--color-surface);
+    color: var(--color-text);
+    text-decoration: none;
+    isolation: isolate;
+    transition: border-color var(--motion-fast) var(--ease-out);
+  }
+
+  .carousel-card img {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    user-select: none;
+  }
+
+  /* A frosted band gives the glass feel; the title stays readable at rest. */
+  .carousel-caption {
+    position: absolute;
+    inset: auto 0.5rem 0.5rem;
+    display: grid;
+    gap: 0.125rem;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid #ffffff2e;
+    background: #12121299;
+    backdrop-filter: blur(12px) saturate(1.2);
+    -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  }
+
+  .carousel-title {
+    font-size: clamp(1.0625rem, 0.95rem + 0.5vw, 1.375rem);
+    font-weight: 700;
+  }
+
+  .carousel-slide[aria-current="true"] .carousel-card {
+    border-color: var(--color-accent);
+  }
+
+  .carousel-card:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  @media (hover: hover) {
+    .carousel-card:hover .carousel-title {
+      text-decoration: underline;
+      text-underline-offset: 0.22em;
+    }
+  }
+
+  .carousel-status {
+    margin: 0 var(--gutter);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .carousel-slide {
+      transform: none;
+      opacity: 1;
+    }
+  }
+</style>
