@@ -11,7 +11,6 @@
   const hero = canvas?.closest<HTMLElement>('.hero');
   const video = hero?.querySelector<HTMLVideoElement>('.reel video');
   const poster = hero?.querySelector<HTMLImageElement>('.reel picture img');
-  const control = hero?.querySelector<HTMLButtonElement>('.reel-control');
   const ctx = canvas?.getContext('2d');
   const motion = matchMedia('(prefers-reduced-motion: no-preference)');
 
@@ -20,26 +19,30 @@
     const noise = '01Ø/\\|<>[]{}+=:;';
     const sample = document.createElement('canvas');
     const sctx = sample.getContext('2d', { willReadFrequently: true })!;
-    const bg = '#121212';
+    const bg = '18,18,18';
     const accent = () => getComputedStyle(hero).getPropertyValue('--color-accent').trim() || '#ffffff';
     const smooth = (t: number) => { const c = Math.max(0, Math.min(1, t)); return c * c * (3 - 2 * c); };
     const hash = (i: number) => { const s = Math.sin(i * 12.9898) * 43758.5453; return s - Math.floor(s); };
 
+    // The decode front sweeps diagonally from the top-left, decelerates, and comes to rest
+    // toward the bottom-right. Cells behind it are clear footage; cells ahead stay alive as a
+    // glyph field, so the transition never fully clears.
+    const TRAVEL = 3800;     // ms for the front to ease to rest
+    const REST = 0.44;       // diagonal position where the footage is fully clear
+    const BAND = 0.14;       // thickness of the decoding edge
+    const AHEAD = 0.5;       // distance over which the field thickens ahead of the edge
+    const FIELD_MS = 90;     // the held field refreshes like a terminal, not at 60 fps
+
     let cols = 0, rows = 0, cell = 14, cellH = 18, dpr = 1;
-    let delay = new Float32Array(0);
+    let diag = new Float32Array(0);
     let lum = new Uint8ClampedArray(0);
     let energy = new Float32Array(0);   // cursor trail, 0..1 per cell
-    let band = new Float32Array(0);     // held corner band opacity per cell
     let startTime = 0;
     let running = false;
-    let done = false;
     let visible = true;
     let pointer: { x: number; y: number } | null = null;
     let raf = 0;
-    let lastBand = 0;
-    const WAVE = 2200;
-    const SETTLE = 520;
-    const BAND_MS = 90;                 // the held band refreshes like a terminal, not at 60 fps
+    let lastFrame = 0;
 
     const layout = () => {
       const rect = hero.getBoundingClientRect();
@@ -52,19 +55,12 @@
       canvas.height = Math.round(rect.height * dpr);
       sample.width = cols;
       sample.height = rows;
-      delay = new Float32Array(cols * rows);
+      diag = new Float32Array(cols * rows);
       energy = new Float32Array(cols * rows);
-      band = new Float32Array(cols * rows);
-      const narrow = rect.width < 640;
-      // The held band sits in the bottom-right and fades out toward its top-left edge.
-      const bx0 = cols * (narrow ? 0.4 : 0.56);
-      const by0 = rows * (narrow ? 0.5 : 0.34);
       for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
         const i = y * cols + x;
-        delay[i] = ((x / cols) * 0.62 + (y / rows) * 0.2 + hash(i) * 0.18) * WAVE;
-        const u = (x - bx0) / (cols - bx0);
-        const v = (y - by0) / (rows - by0);
-        band[i] = u > 0 && v > 0 ? smooth(u * 1.6) * smooth(v * 1.6) * 0.85 : 0;
+        // Ragged diagonal: further right at the top, further left at the bottom.
+        diag[i] = (x / cols) * 0.62 + (y / rows) * 0.2 + hash(i) * 0.18;
       }
       lum = new Uint8ClampedArray(cols * rows);
     };
@@ -86,71 +82,52 @@
 
     const glyphFor = (i: number) => ramp[Math.min(ramp.length - 1, Math.floor((lum[i] / 255) * ramp.length))];
 
-    /** Corner band: glyphs of the footage over a soft shade so they read on bright frames. */
-    const drawBand = () => {
-      const w = canvas.width / dpr, h = canvas.height / dpr;
-      const shade = ctx.createRadialGradient(w, h, 0, w, h, Math.max(w, h) * 0.55);
-      shade.addColorStop(0, 'rgba(18,18,18,0.55)');
-      shade.addColorStop(1, 'rgba(18,18,18,0)');
-      ctx.fillStyle = shade;
-      ctx.fillRect(0, 0, w, h);
+    /** One frame of the field. `front` is the diagonal position of the decode edge. */
+    const drawField = (now: number, front: number, boot: number, still: boolean) => {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.font = `600 ${cell * 1.05}px ui-monospace, Menlo, Consolas, monospace`;
+      ctx.textBaseline = 'top';
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const color = accent();
+      const tick = still ? 0 : Math.floor(now / 90);
+      const noiseChance = still ? 0.1 : boot * 0.55 + 0.14;
+
       for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
           const i = y * cols + x;
-          const a = band[i];
-          if (a < 0.03) continue;
-          const g = glyphFor(i);
-          if (g === ' ') continue;
+          const phase = (front - diag[i]) / BAND;
+          if (phase >= 1) continue;
+          const gx = x * cell, gy = y * cellH;
           const tone = lum[i] / 255;
-          ctx.fillStyle = `rgba(244,244,241,${(a * (0.3 + 0.7 * tone)).toFixed(3)})`;
-          ctx.fillText(g, x * cell, y * cellH);
+
+          if (phase < 0) {
+            // Ahead of the edge: the live field. Thicker the further it is from the edge.
+            const ahead = Math.min(1, (diag[i] - front) / AHEAD);
+            const fill = Math.min(1, Math.max(boot, (0.12 + 0.55 * ahead) * (0.75 + 0.25 * hash(i))));
+            ctx.fillStyle = `rgba(${bg},${fill.toFixed(3)})`;
+            ctx.fillRect(gx, gy, cell + 0.5, cellH + 0.5);
+            const g = hash(i + tick * 7) < noiseChance
+              ? noise[Math.floor(hash(i * 3 + tick) * noise.length)]
+              : glyphFor(i);
+            if (g !== ' ') {
+              ctx.fillStyle = `rgba(244,244,241,${(0.14 + 0.6 * tone).toFixed(3)})`;
+              ctx.fillText(g, gx, gy);
+            }
+            continue;
+          }
+
+          // On the edge: glyphs of the footage, accent on the leading side, fading to clear.
+          const fade = 1 - phase;
+          ctx.fillStyle = `rgba(${bg},${(0.7 * fade).toFixed(3)})`;
+          ctx.fillRect(gx, gy, cell + 0.5, cellH + 0.5);
+          ctx.fillStyle = phase < 0.45 ? color : `rgba(244,244,241,${(0.95 * fade).toFixed(3)})`;
+          const jitter = !still && phase < 0.3 && hash(i + tick) > 0.6;
+          ctx.fillText(jitter ? noise[Math.floor(hash(i + tick * 5) * noise.length)] : glyphFor(i), gx, gy);
         }
       }
     };
 
-    const draw = (now: number) => {
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.font = `600 ${cell * 1.05}px ui-monospace, Menlo, Consolas, monospace`;
-      ctx.textBaseline = 'top';
-      const color = accent();
-
-      if (!done) {
-        // Decode pass: dark panels and noise ahead of the wave, glyphs on it, clear behind it.
-        const elapsed = startTime ? now - startTime : 0;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        readLuminance();
-        const tick = Math.floor(now / 90);
-        let pending = 0;
-        for (let y = 0; y < rows; y++) {
-          for (let x = 0; x < cols; x++) {
-            const i = y * cols + x;
-            const phase = startTime ? Math.max(-1, Math.min(1, (elapsed - delay[i]) / SETTLE)) : -1;
-            const gx = x * cell, gy = y * cellH;
-            if (phase >= 1) continue;
-            pending++;
-            if (phase < 0) {
-              ctx.fillStyle = bg;
-              ctx.fillRect(gx, gy, cell + 0.5, cellH + 0.5);
-              if (hash(i + tick * 7) > 0.55) {
-                ctx.fillStyle = 'rgba(244,244,241,0.22)';
-                ctx.fillText(noise[Math.floor(hash(i * 3 + tick) * noise.length)], gx, gy);
-              }
-              continue;
-            }
-            const fade = 1 - phase;
-            ctx.fillStyle = `rgba(18,18,18,${(0.86 * fade).toFixed(3)})`;
-            ctx.fillRect(gx, gy, cell + 0.5, cellH + 0.5);
-            ctx.fillStyle = phase < 0.45 ? color : `rgba(244,244,241,${(0.95 * fade).toFixed(3)})`;
-            const jitter = phase < 0.3 && hash(i + tick) > 0.6;
-            ctx.fillText(jitter ? noise[Math.floor(hash(i + tick * 5) * noise.length)] : glyphFor(i), gx, gy);
-          }
-        }
-        if (startTime && pending === 0) { done = true; lastBand = 0; }
-        raf = requestAnimationFrame(draw);
-        return;
-      }
-
-      // Hold: the corner band stays, refreshing a few times a second while the reel plays.
+    const drawTrail = () => {
       let trailing = 0;
       if (pointer) {
         const px = pointer.x / cell, py = pointer.y / cellH, radius = 7;
@@ -161,35 +138,45 @@
           if (d < 1) energy[y * cols + x] = Math.max(energy[y * cols + x], (1 - d) ** 1.6);
         }
       }
-      for (let i = 0; i < energy.length; i++) if (energy[i] > 0.02) trailing++;
+      const color = accent();
+      for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+        const i = y * cols + x;
+        const e = energy[i];
+        if (e <= 0.02) continue;
+        trailing++;
+        const g = glyphFor(i);
+        if (g !== ' ') {
+          ctx.fillStyle = e > 0.7 ? color : `rgba(244,244,241,${(e * 0.95).toFixed(3)})`;
+          ctx.globalAlpha = Math.min(1, e * 1.4);
+          ctx.fillText(g, x * cell, y * cellH);
+          ctx.globalAlpha = 1;
+        }
+        energy[i] = e * 0.9;
+      }
+      return trailing;
+    };
+
+    const frontAt = (now: number) => {
+      if (!startTime) return { front: -0.05, boot: 1, settled: false };
+      const elapsed = now - startTime;
+      const u = Math.min(1, elapsed / TRAVEL);
+      const eased = 1 - (1 - u) ** 3;
+      return { front: eased * (REST + BAND), boot: 1 - smooth(elapsed / 900), settled: u >= 1 };
+    };
+
+    const draw = (now: number) => {
+      const { front, boot, settled } = frontAt(now);
+      const idle = settled && !pointer;
+      const hasTrail = energy.some((e) => e > 0.02);
+
+      if (idle && !hasTrail && now - lastFrame < FIELD_MS) { raf = requestAnimationFrame(draw); return; }
+      lastFrame = now;
+      readLuminance();
+      drawField(now, front, boot, false);
+      const trailing = drawTrail();
 
       const playing = !video.paused;
-      const bandDue = now - lastBand > BAND_MS && (playing || lastBand === 0);
-      if (!bandDue && !trailing && !pointer) {
-        if (playing && visible) raf = requestAnimationFrame(draw);
-        else running = false;
-        return;
-      }
-      if (bandDue) { lastBand = now; readLuminance(); }
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      drawBand();
-      if (trailing || pointer) {
-        // Cursor trail: bare glyphs whose opacity falls off with distance and fades over time.
-        for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
-          const i = y * cols + x;
-          const e = energy[i];
-          if (e <= 0.02) continue;
-          const g = glyphFor(i);
-          if (g !== ' ') {
-            ctx.fillStyle = e > 0.7 ? color : `rgba(244,244,241,${(e * 0.95).toFixed(3)})`;
-            ctx.globalAlpha = Math.min(1, e * 1.4);
-            ctx.fillText(g, x * cell, y * cellH);
-            ctx.globalAlpha = 1;
-          }
-          energy[i] = e * 0.9;
-        }
-      }
-      if (visible && (playing || pointer || trailing)) raf = requestAnimationFrame(draw);
+      if (visible && (!settled || playing || pointer || trailing)) raf = requestAnimationFrame(draw);
       else running = false;
     };
 
@@ -202,41 +189,31 @@
     const begin = () => {
       if (startTime) return;
       startTime = performance.now();
-      done = false;
-      run();
-    };
-
-    const replay = () => {
-      startTime = performance.now();
-      done = false;
       run();
     };
 
     layout();
-    new ResizeObserver(() => { layout(); lastBand = 0; if (done) run(); }).observe(hero);
+    new ResizeObserver(() => {
+      layout();
+      if (!motion.matches) stillFrame(); else run();
+    }).observe(hero);
+
+    function stillFrame() {
+      readLuminance();
+      drawField(0, REST + BAND, 0, true);
+    }
 
     if (!motion.matches) {
-      // Reduced motion: one static still of the corner band, no animation.
-      const still = () => {
-        done = true;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ctx.font = `600 ${cell * 1.05}px ui-monospace, Menlo, Consolas, monospace`;
-        ctx.textBaseline = 'top';
-        readLuminance();
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawBand();
-      };
-      if (poster?.complete) still(); else poster?.addEventListener('load', still, { once: true });
+      // Reduced motion: one static composition of the field at rest, no animation.
+      if (poster?.complete) stillFrame(); else poster?.addEventListener('load', stillFrame, { once: true });
     } else {
       run(); // idle noise until the footage is ready
-      video.addEventListener('playing', () => window.setTimeout(begin, 700), { once: true });
+      video.addEventListener('playing', () => { window.setTimeout(begin, 500); run(); });
       window.setTimeout(begin, 3200);
-      video.addEventListener('playing', () => { if (done) run(); });
-      control?.addEventListener('click', () => { if (video.paused) window.setTimeout(replay, 0); });
 
       const hover = matchMedia('(hover: hover) and (pointer: fine)');
       hero.addEventListener('pointermove', (event) => {
-        if (!hover.matches || event.pointerType !== 'mouse' || !done) return;
+        if (!hover.matches || event.pointerType !== 'mouse' || !startTime) return;
         const rect = hero.getBoundingClientRect();
         pointer = { x: event.clientX - rect.left, y: event.clientY - rect.top };
         run();

@@ -8,14 +8,6 @@ import HomeReel from './HomeReel.astro';
   <HeroDecode />
   <div class="grid-layer module-grid" aria-hidden="true"></div>
 
-  <div class="container hero-bar">
-    <p class="hero-status terminal-label" role="presentation">
-      <span>SYS.OK</span><span class="sep">/</span>
-      <span class="loc">LOC 44.98N 93.26W</span><span class="sep loc">/</span>
-      <span data-clock>--:--:--</span>
-    </p>
-  </div>
-
   <div class="container hero-copy">
     <h1 class="hero-title display-title" data-reveal id="hero-title">
       <span class="line">SOREN</span>
@@ -29,15 +21,6 @@ import HomeReel from './HomeReel.astro';
 
 </section>
 
-<script>
-  const clock = document.querySelector<HTMLElement>('[data-clock]');
-  if (clock) {
-    const tick = () => { clock.textContent = new Date().toLocaleTimeString('en-GB', { timeZone: 'America/Chicago' }); };
-    tick();
-    window.setInterval(tick, 1000);
-  }
-</script>
-
 <style>
   .hero {
     /* Lighter grid lines so they read over the footage. */
@@ -46,13 +29,12 @@ import HomeReel from './HomeReel.astro';
     isolation: isolate;
     overflow-x: clip;
     display: grid;
-    grid-template-rows: auto 1fr;
+    align-items: end;
     min-block-size: clamp(32rem, 92svh, 64rem);
     background: var(--color-background);
     border-block-end: 1px solid var(--color-rule);
   }
 
-  .hero > :global(.reel) { z-index: 0; }
   .hero > :global(.reel .reel-control) { z-index: 3; }
 
   .hero > .grid-layer {
@@ -62,35 +44,9 @@ import HomeReel from './HomeReel.astro';
     pointer-events: none;
   }
 
-  .hero-bar {
-    position: relative;
-    z-index: 2;
-    align-self: start;
-    padding-block: var(--space-2);
-    pointer-events: none;
-  }
-
-  .hero-status {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0 0.6em;
-    margin: 0;
-    color: var(--color-text);
-    font-variant-numeric: tabular-nums;
-    pointer-events: none;
-  }
-
-  .hero-status .sep { opacity: 0.4; }
-
-  @media (max-width: 40rem) {
-    .hero-status .loc { display: none; }
-    .hero-status { max-inline-size: 11rem; }
-  }
-
   .hero-copy {
     position: relative;
     z-index: 2;
-    align-self: end;
     padding-block: var(--space-4);
     pointer-events: none;
   }
