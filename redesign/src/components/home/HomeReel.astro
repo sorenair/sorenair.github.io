@@ -91,9 +91,11 @@ const desktopMedia = '(min-width: 56rem)';
       reel.setAttribute('data-playing', '');
       reel.removeAttribute('data-playback-failed');
       control.textContent = 'Pause reel';
+      control.dataset.state = 'playing';
     });
     video.addEventListener('pause', () => {
       if (!reel.hasAttribute('data-playback-failed')) control.textContent = 'Play reel';
+      control.dataset.state = 'paused';
     });
     video.addEventListener('error', playbackFailed);
     control.addEventListener('click', () => {
@@ -239,9 +241,30 @@ const desktopMedia = '(min-width: 56rem)';
       linear-gradient(90deg, #080808a6, #08080880 50%, #08080800 85%);
   }
 
+  /* Background reels use a compact icon control; the button text stays as its accessible name. */
   .reel--background .reel-control {
     inset: var(--space-2) var(--gutter) auto auto;
     z-index: 1;
+    display: grid;
+    place-items: center;
+    inline-size: var(--tap-target);
+    block-size: var(--tap-target);
+    padding: 0;
+    font-size: 0;
+  }
+
+  .reel--background .reel-control::before {
+    content: '';
+    inline-size: 0.875rem;
+    block-size: 1rem;
+    background: currentColor;
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+  }
+
+  .reel--background .reel-control[data-state='playing']::before {
+    background: none;
+    clip-path: none;
+    border-inline: 0.25rem solid currentColor;
   }
 
   @media (min-width: 56rem) {

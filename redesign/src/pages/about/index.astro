@@ -82,7 +82,6 @@ const socials = [
   <div class="container about">
     <div class="about-intro module-grid">
       <div class="about-bio">
-        <p class="terminal-label">About / 01</p>
         <h1 class="page-title display-title">ABOUT</h1>
         <p class="bio-opening">Hello, my name is Soren Gabor.</p>
         <p class="lead">I’m currently studying Electrical Engineering and Physics at the University of St. Thomas in St. Paul, Minnesota. While my work often focuses on designing and improving electronic systems, I love creative endeavors of every kind.</p>
@@ -146,7 +145,7 @@ const socials = [
     <section class="contact bracketed" id="contact" aria-labelledby="contact-heading" tabindex="-1">
       <h2 class="section-title" id="contact-heading">CONTACT</h2>
       <div>
-        <a class="text-link contact-email" href="mailto:gaborsoren@gmail.com">gaborsoren@gmail.com</a>
+        <a class="text-link contact-email" href="mailto:gaborsoren@gmail.com" data-decode-hover><span>gaborsoren@gmail.com</span></a>
         <ul class="socials">
           {socials.map(({ label, href, path }) => (
             <li>
@@ -160,6 +159,30 @@ const socials = [
     </section>
   </div>
 </SiteLayout>
+
+<script>
+  // Decode the email address on hover or focus. The real text is always in the HTML.
+  const link = document.querySelector<HTMLElement>('[data-decode-hover]');
+  const label = link?.querySelector('span');
+  if (link && label && matchMedia('(prefers-reduced-motion: no-preference)').matches) {
+    const original = label.textContent ?? '';
+    const pool = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let timer = 0;
+    const run = () => {
+      window.clearInterval(timer);
+      const started = performance.now();
+      timer = window.setInterval(() => {
+        const progress = (performance.now() - started) / 420;
+        const settled = Math.floor(progress * original.length);
+        label.textContent = [...original].map((c, i) => (i < settled || c === '@' || c === '.' ? c : pool[Math.floor(Math.random() * pool.length)])).join('');
+        if (progress >= 1) { window.clearInterval(timer); label.textContent = original; }
+      }, 40);
+    };
+    link.addEventListener('pointerenter', run);
+    link.addEventListener('focus', run);
+    link.addEventListener('blur', () => { window.clearInterval(timer); label.textContent = original; });
+  }
+</script>
 
 <style>
   .about {
@@ -260,11 +283,25 @@ const socials = [
     letter-spacing: 0.06em;
   }
 
-  .contact-email:is(:hover, :focus-visible) {
+  /* Terminal hover: the address re-decodes and a block cursor follows it. */
+  .contact-email::after {
+    content: '';
+    display: inline-block;
+    inline-size: 0.5em;
+    block-size: 0.85em;
+    margin-inline-start: 0.12em;
     background: var(--color-accent);
-    color: var(--color-background);
-    text-decoration: none;
+    opacity: 0;
+    transform: translateY(0.08em);
   }
+
+  .contact-email:is(:hover, :focus-visible)::after { opacity: 1; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .contact-email:is(:hover, :focus-visible)::after { animation: cursor-blink 1s steps(1, end) infinite; }
+  }
+
+  @keyframes cursor-blink { 50% { opacity: 0; } }
 
   .contact-email {
     text-decoration: none;
