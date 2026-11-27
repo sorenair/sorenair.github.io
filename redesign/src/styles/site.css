@@ -223,18 +223,6 @@ a {
   block-size: 3rem;
 }
 
-.site-mark::after {
-  position: absolute;
-  inset: -1px -1px auto auto;
-  inline-size: 0.5rem;
-  block-size: 0.5rem;
-  border-block-start: 1px solid var(--color-muted);
-  border-inline-end: 1px solid var(--color-muted);
-  border-start-end-radius: var(--panel-radius);
-  content: '';
-  pointer-events: none;
-}
-
 .site-mark img {
   inline-size: 2.75rem;
   filter: invert(1);
@@ -286,10 +274,6 @@ a {
 
   .terminal-control[aria-current="location"]:hover:not(:active) {
     box-shadow: inset 0 -3px 0 var(--color-background);
-  }
-
-  .site-mark:hover::after {
-    border-color: var(--color-accent);
   }
 
   .text-link:hover {
@@ -477,5 +461,35 @@ body::after {
   html {
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
+}
+
+/* Nav is plain: the logo and text links carry no boxes. Active page is marked by accent and underline. */
+.site-mark {
+  inline-size: 3rem;
+  block-size: 3rem;
+}
+
+.site-header .terminal-control {
+  border-color: transparent;
+  background-color: transparent;
+}
+
+.site-header .terminal-control:is([aria-current="page"], [aria-current="location"]) {
+  background-color: transparent;
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.3em;
+}
+
+.site-header .terminal-control:active {
+  border-color: transparent;
+  background-color: transparent;
+}
+
+@media (hover: hover) {
+  .site-header .terminal-control:hover:not([aria-current="location"]) {
+    border-color: transparent;
   }
 }
