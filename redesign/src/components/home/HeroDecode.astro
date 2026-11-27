@@ -21,7 +21,7 @@
     const sample = document.createElement('canvas');
     const sctx = sample.getContext('2d', { willReadFrequently: true })!;
     const bg = '#121212';
-    const accent = () => getComputedStyle(hero).getPropertyValue('--color-accent').trim() || '#d9fa80';
+    const accent = () => getComputedStyle(hero).getPropertyValue('--color-accent').trim() || '#ffffff';
 
     let cols = 0, rows = 0, cell = 14, cellH = 18, dpr = 1;
     let delay: Float32Array = new Float32Array(0);
