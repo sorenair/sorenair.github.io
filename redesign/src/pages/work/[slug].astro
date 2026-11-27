@@ -38,6 +38,11 @@ const sections = await Promise.all((data.sections ?? []).map(async (section) => 
 ---
 
 <SiteLayout title={data.title} description={data.summary} accentSource={data.cover.src}>
+  <style slot="head" is:global>
+    @media (prefers-reduced-motion: no-preference) {
+      @view-transition { navigation: auto; }
+    }
+  </style>
   <article class="container page-section project-detail">
     <header class="project-header">
       <a class="text-link terminal-label" href="/work/" data-back-to-work>Back to work</a>
@@ -79,7 +84,7 @@ const sections = await Promise.all((data.sections ?? []).map(async (section) => 
           )}
         </div>
 
-        <figure class="project-visual terminal-panel">
+        <figure class="project-visual terminal-panel" style={`view-transition-name: cover-${Astro.params.slug}`}>
           <Image
             class="project-cover"
             src={cover.image}
