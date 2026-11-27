@@ -65,7 +65,7 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
     </div>
     <div class="media-wall" id="media-wall" aria-label="Media library. Drag or use the arrow keys to browse." role="region" hidden>
       {Array.from({ length: 35 }, (_, index) => (
-        <a class="wall-tile" data-wall-tile data-row={Math.floor(index / 7) - 2} data-column={index % 7 - 3} tabindex="-1"></a>
+        <a class="wall-tile" data-wall-tile data-row={Math.floor(index / 7) - 2} data-column={index % 7 - 3} tabindex="-1"><span class="wall-image"></span></a>
       ))}
     </div>
     <ul class="media-grid" id="media-gallery" aria-label="Media library" role="list">
@@ -150,8 +150,8 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
       if (!wall || wall.hidden) return;
       const width = wall.clientWidth;
       const height = wall.clientHeight;
-      stepX = Math.max(116, width / (width < 600 ? 2.65 : 4.7));
-      stepY = height / 2.65;
+      // Every cell is a square of the same size, edge to edge.
+      stepX = stepY = Math.max(116, Math.min(height / 3, width / (width < 600 ? 2.5 : 5)));
       const shiftX = Math.round(dx / stepX);
       const shiftY = Math.round(dy / stepY);
       for (const tile of tiles) {
@@ -163,10 +163,15 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
         const verticalBend = Math.max(-1, Math.min(1, y / (height / 2)));
         const offset = originX + column - shiftX + 2 * (originY + row - shiftY);
         const item = entries[((offset % entries.length) + entries.length) % entries.length];
-        tile.style.width = `${stepX - 8}px`;
-        tile.style.height = `${stepY - 8}px`;
-        tile.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) rotateY(${-horizontalBend * 24}deg) rotateX(${verticalBend * 20}deg) scale(${1 - Math.min(0.2, Math.hypot(horizontalBend, verticalBend) * 0.13)})`;
-        tile.style.backgroundImage = `url("${item.image}")`;
+        tile.style.width = `${stepX}px`;
+        tile.style.height = `${stepY}px`;
+        tile.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
+        // The fisheye lives inside the cell: the picture swells at the center and recedes toward the edges.
+        const image = tile.firstElementChild as HTMLElement;
+        const reach = Math.min(1, Math.hypot(horizontalBend, verticalBend));
+        image.style.transform = `scale(${1.04 - reach * 0.2})`;
+        image.style.opacity = String(1 - reach * reach * 0.5);
+        image.style.backgroundImage = `url("${item.image}")`;
         tile.href = `#${item.entry.id}`;
         tile.setAttribute('aria-label', item.title);
         tile.tabIndex = row === 0 && column >= 0 && column < entries.length && (width >= 600 || column === 0) ? 0 : -1;
@@ -336,7 +341,6 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
     height: clamp(26rem, 72svh, 56rem);
     margin-block-start: var(--space-3);
     overflow: hidden;
-    perspective: 54rem;
     touch-action: pan-y pinch-zoom;
     cursor: grab;
     background: var(--color-background);
@@ -347,11 +351,23 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
   .wall-tile {
     position: absolute;
     inset: 50% auto auto 50%;
-    background: var(--color-surface) center / cover no-repeat;
+    box-sizing: border-box;
+    padding: 0.5rem;
+    border-right: 1px solid var(--color-rule);
+    border-bottom: 1px solid var(--color-rule);
     cursor: inherit;
   }
 
-  .wall-tile:hover { box-shadow: inset 0 0 0 2px var(--color-accent); }
+  /* A square window onto the picture: it covers the square and crops the overflow, never stretching. */
+  .wall-image {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    background: var(--color-surface) center / cover no-repeat;
+  }
+
+  .wall-tile:hover .wall-image,
+  .wall-tile:focus-visible .wall-image { outline: 2px solid var(--color-accent); outline-offset: -2px; }
 
   .media-detail {
     width: min(92vw, 64rem);

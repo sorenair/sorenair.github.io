@@ -30,8 +30,13 @@ const slides = await Promise.all(items.map(async (item) => {
   <div class="featured-header">
     <h2 class="terminal-label" id="featured-media-title">Featured</h2>
     <div class="carousel-controls" data-carousel-controls hidden>
-      <button class="terminal-control" type="button" data-carousel-step="-1" aria-label="Previous highlight">Prev</button>
-      <button class="terminal-control" type="button" data-carousel-step="1" aria-label="Next highlight">Next</button>
+      <button class="terminal-control chevron" type="button" data-carousel-step="-1" aria-label="Previous highlight">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M10.5 2.5 5 8l5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square"/></svg>
+      </button>
+      <span class="carousel-status" role="status" data-carousel-status></span>
+      <button class="terminal-control chevron" type="button" data-carousel-step="1" aria-label="Next highlight">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M5.5 2.5 11 8l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square"/></svg>
+      </button>
     </div>
   </div>
   <ul class="carousel-track" role="list" data-carousel-track>
@@ -59,7 +64,6 @@ const slides = await Promise.all(items.map(async (item) => {
     <div class="lens-mount" data-lens-mount role="group" aria-label="Featured highlights. Drag sideways or use Previous and Next."></div>
     <a class="lens-link terminal-control" href="#" data-lens-link></a>
   </div>
-  <p class="terminal-label carousel-status" role="status" data-carousel-status></p>
 </section>
 
 <script>
@@ -118,7 +122,7 @@ const slides = await Promise.all(items.map(async (item) => {
       const accent = slides[index].dataset.accent;
       if (accent) root.style.setProperty('--color-active-accent', accent);
       else root.style.removeProperty('--color-active-accent');
-      status.textContent = `${index + 1} of ${slides.length}: ${slides[index].querySelector('.carousel-title')?.textContent ?? ''}`;
+      status.textContent = `${index + 1} / ${slides.length}`;
       const link = slides[index].querySelector<HTMLAnchorElement>('a.carousel-card')!;
       if (lensLink) {
         lensLink.href = link.getAttribute('href') ?? '#';
@@ -293,7 +297,25 @@ const slides = await Promise.all(items.map(async (item) => {
 
   .carousel-controls:not([hidden]) {
     display: flex;
+    align-items: center;
     gap: var(--space-1);
+  }
+
+  .carousel-controls .chevron {
+    display: grid;
+    place-items: center;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    padding: 0;
+  }
+
+  .carousel-controls .carousel-status {
+    min-inline-size: 4.5rem;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    letter-spacing: 0.08em;
+    font-variant-numeric: tabular-nums;
   }
 
   .carousel-controls button:disabled {
@@ -420,10 +442,6 @@ const slides = await Promise.all(items.map(async (item) => {
 
   .is-lens .carousel-track {
     display: none;
-  }
-
-  .carousel-status {
-    margin: 0 var(--gutter);
   }
 
   @media (prefers-reduced-motion: reduce) {
