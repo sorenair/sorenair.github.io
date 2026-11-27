@@ -1,9 +1,11 @@
 ---
+import HeroDecode from './HeroDecode.astro';
 import HomeReel from './HomeReel.astro';
 ---
 
 <section class="hero bracketed" aria-labelledby="hero-title">
-  <HomeReel autoplay background decode />
+  <HomeReel autoplay background />
+  <HeroDecode />
   <div class="grid-layer module-grid" aria-hidden="true"></div>
 
   <div class="container hero-bar">
@@ -49,15 +51,19 @@ import HomeReel from './HomeReel.astro';
     border-block-end: 1px solid var(--color-rule);
   }
 
-  .hero > :global(.reel) { z-index: -2; }
+  .hero > :global(.reel) { z-index: 0; }
+  .hero > :global(.reel .reel-control) { z-index: 3; }
 
   .hero > .grid-layer {
     position: absolute;
+    z-index: 0;
     inset: 0;
     pointer-events: none;
   }
 
   .hero-bar {
+    position: relative;
+    z-index: 2;
     align-self: start;
     padding-block: var(--space-2);
     pointer-events: none;
@@ -81,6 +87,8 @@ import HomeReel from './HomeReel.astro';
   }
 
   .hero-copy {
+    position: relative;
+    z-index: 2;
     align-self: end;
     padding-block: var(--space-4);
     pointer-events: none;

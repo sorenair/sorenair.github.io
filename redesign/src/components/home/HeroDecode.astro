@@ -1,0 +1,193 @@
+---
+// Full-frame glyph field over the hero reel. It starts as scrambling noise, then a diagonal
+// wave resolves each cell into a glyph of the footage and finally into the footage itself.
+// Decorative only: aria-hidden, no pointer capture, and nothing is drawn for reduced motion.
+---
+
+<canvas class="hero-decode" aria-hidden="true" data-hero-decode></canvas>
+
+<script>
+  const canvas = document.querySelector<HTMLCanvasElement>('[data-hero-decode]');
+  const hero = canvas?.closest<HTMLElement>('.hero');
+  const video = hero?.querySelector<HTMLVideoElement>('.reel video');
+  const poster = hero?.querySelector<HTMLImageElement>('.reel picture img');
+  const control = hero?.querySelector<HTMLButtonElement>('.reel-control');
+  const ctx = canvas?.getContext('2d');
+  const motion = matchMedia('(prefers-reduced-motion: no-preference)');
+
+  if (canvas && hero && video && ctx && motion.matches) {
+    const ramp = ' .:-=+*#%@';
+    const noise = '01Ø/\\|<>[]{}+=:;';
+    const sample = document.createElement('canvas');
+    const sctx = sample.getContext('2d', { willReadFrequently: true })!;
+    const bg = '#121212';
+    const accent = () => getComputedStyle(hero).getPropertyValue('--color-accent').trim() || '#d9fa80';
+
+    let cols = 0, rows = 0, cell = 14, cellH = 18, dpr = 1;
+    let delay: Float32Array = new Float32Array(0);
+    let lum: Uint8ClampedArray = new Uint8ClampedArray(0);
+    let startTime = 0;       // ms timestamp the wave began, 0 when idle
+    let running = false;
+    let done = false;
+    let pointer: { x: number; y: number } | null = null;
+    let raf = 0;
+    const WAVE = 2200;       // ms for the wave to cross the frame
+    const SETTLE = 520;      // ms each cell spends decoding
+    const hash = (i: number) => { const s = Math.sin(i * 12.9898) * 43758.5453; return s - Math.floor(s); };
+
+    const layout = () => {
+      const rect = hero.getBoundingClientRect();
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cell = rect.width < 640 ? 11 : 14;
+      cellH = Math.round(cell * 1.3);
+      cols = Math.ceil(rect.width / cell);
+      rows = Math.ceil(rect.height / cellH);
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+      sample.width = cols;
+      sample.height = rows;
+      delay = new Float32Array(cols * rows);
+      for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+        const i = y * cols + x;
+        // Diagonal sweep with per-cell jitter so the edge reads as digital, not smooth.
+        delay[i] = ((x / cols) * 0.62 + (y / rows) * 0.2 + hash(i) * 0.18) * WAVE;
+      }
+      lum = new Uint8ClampedArray(cols * rows);
+    };
+
+    const readLuminance = () => {
+      const source = video.readyState >= 2 && video.videoWidth ? video : poster;
+      if (!source) return;
+      // Match the cover crop of the reel so glyphs line up with the footage.
+      const sw = source instanceof HTMLVideoElement ? source.videoWidth : source.naturalWidth;
+      const sh = source instanceof HTMLVideoElement ? source.videoHeight : source.naturalHeight;
+      if (!sw || !sh) return;
+      const scale = Math.max(cols / sw, rows / sh);
+      const dw = sw * scale, dh = sh * scale;
+      sctx.drawImage(source, (cols - dw) / 2, (rows - dh) / 2, dw, dh);
+      const data = sctx.getImageData(0, 0, cols, rows).data;
+      for (let i = 0; i < cols * rows; i++) {
+        lum[i] = data[i * 4] * 0.3 + data[i * 4 + 1] * 0.59 + data[i * 4 + 2] * 0.11;
+      }
+    };
+
+    const draw = (now: number) => {
+      const elapsed = startTime ? now - startTime : 0;
+      const color = accent();
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.font = `600 ${cell * 1.05}px ui-monospace, Menlo, Consolas, monospace`;
+      ctx.textBaseline = 'top';
+      readLuminance();
+      const tick = Math.floor(now / 90);
+      let pending = 0;
+      const radius = 5;
+      const px = pointer ? pointer.x / cell : -99;
+      const py = pointer ? pointer.y / cellH : -99;
+
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          const i = y * cols + x;
+          const phase = startTime ? Math.max(-1, Math.min(1, (elapsed - delay[i]) / SETTLE)) : -1;
+          const lens = pointer && Math.hypot(x - px, y - py) < radius;
+          const gx = x * cell, gy = y * cellH;
+
+          if (phase >= 1 && !lens) continue;
+
+          if (phase < 0 && !lens) {
+            // Waiting: dark panel with dim scrambling glyphs.
+            pending++;
+            ctx.fillStyle = bg;
+            ctx.fillRect(gx, gy, cell + 0.5, cellH + 0.5);
+            if (hash(i + tick * 7) > 0.55) {
+              ctx.fillStyle = 'rgba(244,244,241,0.22)';
+              ctx.fillText(noise[Math.floor(hash(i * 3 + tick) * noise.length)], gx, gy);
+            }
+            continue;
+          }
+
+          const tone = lum[i] / 255;
+          const glyph = ramp[Math.min(ramp.length - 1, Math.floor(tone * ramp.length))];
+          if (lens && phase >= 1) {
+            ctx.fillStyle = 'rgba(18,18,18,0.72)';
+            ctx.fillRect(gx, gy, cell + 0.5, cellH + 0.5);
+            ctx.fillStyle = color;
+            ctx.fillText(glyph, gx, gy);
+            continue;
+          }
+          // Decoding: glyph of the footage, accent on the leading edge, fading to clear.
+          pending++;
+          const fade = 1 - phase;
+          ctx.fillStyle = `rgba(18,18,18,${(0.86 * fade).toFixed(3)})`;
+          ctx.fillRect(gx, gy, cell + 0.5, cellH + 0.5);
+          ctx.fillStyle = phase < 0.45 ? color : `rgba(244,244,241,${(0.95 * fade).toFixed(3)})`;
+          const jitter = phase < 0.3 && hash(i + tick) > 0.6;
+          ctx.fillText(jitter ? noise[Math.floor(hash(i + tick * 5) * noise.length)] : glyph, gx, gy);
+        }
+      }
+
+      if (startTime && pending === 0) done = true;
+      if (!pointer && done) { running = false; ctx.clearRect(0, 0, canvas.width, canvas.height); return; }
+      raf = requestAnimationFrame(draw);
+    };
+
+    const run = () => {
+      if (running) return;
+      running = true;
+      raf = requestAnimationFrame(draw);
+    };
+
+    const begin = () => {
+      if (startTime) return;
+      startTime = performance.now();
+      done = false;
+      run();
+    };
+
+    const replay = () => {
+      startTime = performance.now();
+      done = false;
+      run();
+    };
+
+    layout();
+    new ResizeObserver(() => { layout(); if (done && !pointer) ctx.clearRect(0, 0, canvas.width, canvas.height); }).observe(hero);
+    run(); // Idle field: scrambling noise until the footage is ready.
+
+    // Start the wave once the footage plays, or after a short wait if it never does.
+    video.addEventListener('playing', () => window.setTimeout(begin, 700), { once: true });
+    window.setTimeout(begin, 3200);
+    control?.addEventListener('click', () => { if (video.paused) window.setTimeout(replay, 0); });
+
+    // Optional pointer lens: glyphs around a mouse cursor. Nothing depends on it.
+    const hover = matchMedia('(hover: hover) and (pointer: fine)');
+    hero.addEventListener('pointermove', (event) => {
+      if (!hover.matches || event.pointerType !== 'mouse' || !done) return;
+      const rect = hero.getBoundingClientRect();
+      pointer = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+      run();
+    });
+    hero.addEventListener('pointerleave', () => { pointer = null; });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) { cancelAnimationFrame(raf); running = false; }
+      else if (!done || pointer) run();
+    });
+    motion.addEventListener('change', () => {
+      if (!motion.matches) { cancelAnimationFrame(raf); running = false; ctx.clearRect(0, 0, canvas.width, canvas.height); }
+    });
+  }
+</script>
+
+<style>
+  .hero-decode {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    inline-size: 100%;
+    block-size: 100%;
+    pointer-events: none;
+  }
+
+  /* Without scripting or with reduced motion the canvas never draws and the still shows. */
+</style>
