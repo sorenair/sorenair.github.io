@@ -1,7 +1,7 @@
 import type { ImageMetadata } from 'astro';
 
 const covers = import.meta.glob<ImageMetadata>(
-  '../../images/work/**/*.{avif,gif,jpeg,jpg,png,svg,webp}',
+  ['../../images/work/**/*.{avif,gif,jpeg,jpg,png,svg,webp}', '../../images/media/**/*.{avif,gif,jpeg,jpg,png,svg,webp}'],
   { import: 'default' },
 );
 

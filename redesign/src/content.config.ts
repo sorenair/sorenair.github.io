@@ -2,7 +2,7 @@ import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
 const projectImage = z.object({
-  src: z.string().startsWith('/images/work/'),
+  src: z.string().regex(/^\/images\/(work|media)\//),
   alt: z.string().trim().min(1),
 });
 
@@ -29,4 +29,31 @@ const projects = defineCollection({
   }),
 });
 
-export const collections = { projects };
+const media = defineCollection({
+  loader: glob({ pattern: '*.json', base: '../content/media' }),
+  schema: z.object({
+    title: z.string().trim().min(1),
+    kind: z.enum(['youtube', 'instagram', 'photo', 'artwork', 'video']),
+    cover: projectImage.optional(),
+    href: z.httpUrl().optional(),
+    caption: z.string().trim().min(1).optional(),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    featured: z.boolean().optional(),
+    project: z.string().optional(),
+    description: z.string().optional(),
+    src: z.string().startsWith('/').optional(),
+    poster: z.string().startsWith('/').optional(),
+  }).superRefine((entry, context) => {
+    if (entry.kind === 'video' && (!entry.src || !entry.poster)) {
+      context.addIssue({ code: 'custom', message: 'A video entry needs src and poster.' });
+    }
+    if (entry.kind !== 'video' && !entry.cover) {
+      context.addIssue({ code: 'custom', message: 'This entry needs a cover image.' });
+    }
+    if ((entry.kind === 'youtube' || entry.kind === 'instagram') && !entry.href) {
+      context.addIssue({ code: 'custom', message: 'YouTube and Instagram entries need an href.' });
+    }
+  }),
+});
+
+export const collections = { projects, media };
