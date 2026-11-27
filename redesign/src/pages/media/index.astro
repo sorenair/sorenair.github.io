@@ -154,14 +154,14 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
       stepX = stepY = Math.max(116, Math.min(height / 3, width / (width < 600 ? 2.5 : 5)));
       const shiftX = Math.round(dx / stepX);
       const shiftY = Math.round(dy / stepY);
-      // One curved surface: every cell corner goes through the same barrel mapping, so neighbouring
+      // One curved surface: every cell corner goes through the same pincushion mapping (cells grow and tilt toward the edges, as when looking into a bowl), so neighbouring
       // cells share corners (they stay aligned, never overlap) and the grid bends like a lens.
       const unit = height * 0.9;
-      const bend = 0.35;
+      const bend = 0.12;
       const warp = (px: number, py: number): [number, number] => {
         const nx = px / unit;
         const ny = py / unit;
-        const k = 1 / Math.sqrt(1 + bend * (nx * nx + ny * ny));
+        const k = 1 + bend * (nx * nx + ny * ny);
         return [nx * k * unit, ny * k * unit];
       };
       const half = stepX / 2;
