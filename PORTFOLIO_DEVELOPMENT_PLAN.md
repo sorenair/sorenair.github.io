@@ -29,3 +29,7 @@ The first review is complete (Home, Work and Media prototypes, plus the identity
 3. **Work and Media.** Rebuild the Work library as the Artifact index with hover preview and accent follow, keep return-flow behavior, and apply the direction to project pages and Media.
 
 Review again on desktop and a real phone before the first release.
+
+## Current state (integration branch)
+
+Work holds 21 entries across Technical, Creative and Academic. The Media Featured strip is the WebGL liquid glass lens in `redesign/src/media-lens/` (MIT licence included, loads only on `/media/`), with the CSS carousel as the fallback for touch, small screens, reduced motion and no WebGL. The Media Explore grid eases into its lock-in after a drag. The `three` and `gsap` dependencies are owned by Foundation.
