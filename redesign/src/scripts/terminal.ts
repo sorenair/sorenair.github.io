@@ -120,5 +120,27 @@ function startClocks() {
   setInterval(tick, 1000);
 }
 
+/**
+ * Keep page headers (WORK, MEDIA, ABOUT) on one line at every width by shrinking the type to fit
+ * its container. Runs before the reveal starts so scrambled glyph widths never affect the result.
+ */
+function fitHeaders() {
+  const headers = document.querySelectorAll<HTMLElement>('h1.display-title:not(.hero-title):not(.project-title), [data-fit]');
+  if (!headers.length) return;
+  const fit = () => headers.forEach((header) => {
+    header.style.whiteSpace = 'nowrap';
+    header.style.fontSize = '';
+    const available = header.clientWidth;
+    const needed = header.scrollWidth;
+    if (available && needed > available) {
+      header.style.fontSize = `${parseFloat(getComputedStyle(header).fontSize) * (available / needed) * 0.98}px`;
+    }
+  });
+  fit();
+  addEventListener('resize', fit);
+  document.fonts?.ready.then(fit);
+}
+
 startClocks();
+fitHeaders();
 startReveals();

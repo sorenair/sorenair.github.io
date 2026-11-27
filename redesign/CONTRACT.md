@@ -29,7 +29,7 @@ Three workstreams build the redesign in parallel. This file says who owns which 
 
 ## Accent contract
 
-Set `--color-accent` once per page or active item (inline style or via the helper in `src/cover-accent.ts`). Fallback is `#d9fa80`; monochrome covers such as PØRTAL use the fallback. Use it only for focus, active links and interaction feedback.
+Set `--color-accent` once per page or active item (inline style or via the helper in `src/cover-accent.ts`). Fallback is `#ffffff`; monochrome covers such as PØRTAL use the fallback. Use it only for focus, active links and interaction feedback.
 
 ## Done checks (every PR)
 

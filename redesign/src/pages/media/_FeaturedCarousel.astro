@@ -231,10 +231,12 @@ const slides = await Promise.all(items.map(async (item) => {
       stage.hidden = false;
       CONFIG.PANEL_H = Math.round(mount.clientHeight * 0.62);
       ENTRY.enabled = false;
-      // Large rotated oval: centre stays clean, only the outer panels warp at the rim.
-      LENS.sizeX = 1.2;
-      LENS.sizeY = 0.95;
-      LENS.rotation = 25;
+      // Oversized oval: its edge sits outside the frame, so only the outermost panels bend.
+      LENS.sizeX = 1.9;
+      LENS.sizeY = 1.5;
+      LENS.rotation = 10;
+      LENS.rimStart = 0.45;
+      LENS.rimTangential = 1;
       LENS.whiteGlow = 0;
       LENS.blueColor = '#ffffff';
       LENS.blueRing = 1.2;
