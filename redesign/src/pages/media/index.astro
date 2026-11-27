@@ -1,6 +1,7 @@
 ---
 import { Image, getImage } from 'astro:assets';
 import { getCollection, getEntry } from 'astro:content';
+import StatusLine from '../../components/terminal/StatusLine.astro';
 import SiteLayout from '../../layouts/SiteLayout.astro';
 import FeaturedCarousel, { type FeaturedItem } from './_FeaturedCarousel.astro';
 import { loadProjectCover as loadCover } from '../../project-cover';
@@ -52,8 +53,11 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
 ---
 
 <SiteLayout title="Media" description="Photography, video, and artwork by Soren Gabor.">
-  <div class="page-section media-gallery">
-    <h1 class="page-title">Media</h1>
+  <div class="page-section media-gallery module-grid">
+    <div class="media-top">
+      <StatusLine items={[`NODE ${entries.length}`]} />
+      <h1 class="display-title" data-reveal>Media</h1>
+    </div>
     <FeaturedCarousel items={highlights} />
     <div class="view-toggle" role="group" aria-label="Media view" data-view-toggle hidden>
       <button class="terminal-control" type="button" data-view="explore" aria-pressed="true" aria-controls="media-wall">Explore</button>
@@ -68,7 +72,7 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
       {entries.map((entry) => (
         <li class="media-entry" id={entry.id} tabindex="-1">
           <figure>
-            <div class="media-visual">
+            <div class="media-visual bracketed">
               {entry.kind === 'video' ? (
                 <video
                   controls
@@ -370,7 +374,9 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
     padding-block-start: var(--space-4);
   }
 
-  .media-gallery > h1 {
+  .media-top {
+    display: grid;
+    gap: var(--space-2);
     margin-inline: var(--gutter);
   }
 
@@ -440,7 +446,13 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
     padding: var(--space-2) var(--gutter);
   }
 
+  figcaption .terminal-label {
+    margin-block-end: 0.25rem;
+  }
+
   figcaption .section-title {
+    font-family: var(--font-display);
+    letter-spacing: -0.05em;
     margin-block-start: var(--space-1);
     font-size: clamp(1.375rem, 1.15rem + 1vw, 2rem);
   }
