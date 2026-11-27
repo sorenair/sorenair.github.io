@@ -1,0 +1,329 @@
+---
+/**
+ * Visual identity study. One component, three contrasting directions, all drawn from the
+ * same real content so the directions can be compared like for like. Study-only: nothing
+ * here is used by the live pages.
+ */
+import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import { getCoverAccent } from '../../cover-accent';
+import { loadProjectCover } from '../../project-cover';
+
+interface Props {
+  direction: 'instrument' | 'signal' | 'artifact';
+}
+const { direction } = Astro.props;
+
+const directions = [
+  { id: 'instrument', name: 'Instrument', note: 'Precise lab readout. Grotesk headlines, mono data, corner brackets, quiet grain.' },
+  { id: 'signal', name: 'Signal', note: 'Phosphor terminal. All mono, scanlines on media, typed reveals, glowing accent.' },
+  { id: 'artifact', name: 'Artifact', note: 'Monolithic object. Huge type on a visible Ø grid, accent floods the active row.' },
+] as const;
+
+const order = [
+  'portal', 'wifi-transceiver', 'overclock', 'nighteye', 'astrogolf', 'autonomous-ev-model',
+  'puerto-rico-2025', 'dakota', 'soren-music', 'digital-photography',
+  'lockheed-martin-intern', 'nuclear-physics-research', 'multimedia-producer',
+];
+const labels = { technical: 'Technical', creative: 'Creative', academic: 'Academic' } as const;
+const all = await getCollection('projects');
+const projects = await Promise.all(order.map(async (id, index) => {
+  const entry = all.find((project) => project.id === id)!;
+  return {
+    id,
+    index: String(index + 1).padStart(2, '0'),
+    data: entry.data,
+    cover: await loadProjectCover(entry.data.cover.src),
+    accent: (await getCoverAccent(entry.data.cover.src)) ?? '',
+  };
+}));
+const fallback = '#d9fa80';
+---
+
+<div class="study" data-direction={direction} data-study>
+  <div class="study-grain" aria-hidden="true"></div>
+
+  <header class="study-bar container">
+    <nav class="study-switch" aria-label="Design directions">
+      {directions.map(({ id, name }, i) => (
+        <a class="terminal-control" href={`/studies/identity/${id}/`} aria-current={id === direction ? 'page' : undefined}>{`0${i + 1} ${name}`}</a>
+      ))}
+    </nav>
+    <p class="status-line terminal-label" role="presentation">
+      <span>SYS.OK</span><span class="sep">/</span>
+      <span>LOC 44.98N 93.26W</span><span class="sep">/</span>
+      <span data-clock>--:--:--</span><span class="sep">/</span>
+      <span>NODE <b data-count-active>00</b>/{projects.length}</span>
+    </p>
+  </header>
+
+  <section class="container study-hero">
+    <p class="terminal-label">{directions.find(({ id }) => id === direction)!.note}</p>
+    <h1 class="study-title" data-reveal>
+      <span class="line">Soren Gabor</span>
+      <span class="line sub">Electrical engineering <i aria-hidden="true">Ø</i> creative work</span>
+    </h1>
+    <div class="hero-row">
+      <div class="hero-actions">
+        <a class="terminal-control" href="#index">View work</a>
+        <a class="terminal-control" href="/home/reel-desktop.mp4">Play reel</a>
+      </div>
+      <figure class="ascii-wrap bracketed" data-ascii-wrap>
+        <pre class="ascii" aria-hidden="true" data-ascii></pre>
+        <figcaption class="terminal-label"><span data-ascii-readout>LUM 0.00</span> <button class="terminal-control" type="button" data-pulse>Pulse</button></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="container index" id="index" aria-labelledby="index-title" data-index>
+    <header class="index-head">
+      <h2 class="section-title" id="index-title" data-reveal>Work <span class="terminal-label" data-index-count role="status">{projects.length} entries</span></h2>
+      <div class="filters" role="group" aria-label="Filter by discipline">
+        <button class="terminal-control" type="button" data-filter="all" aria-pressed="true">All</button>
+        <button class="terminal-control" type="button" data-filter="technical" aria-pressed="false">Technical</button>
+        <button class="terminal-control" type="button" data-filter="creative" aria-pressed="false">Creative</button>
+      </div>
+    </header>
+
+    <div class="index-body">
+      <ol class="rows" data-rows role="list">
+        {projects.map(({ id, index, data, cover, accent }) => (
+          <li class="row" data-row data-cats={data.categories.join(' ')} data-accent={accent || fallback} data-id={id} data-n={index}>
+            <a href={`/work/${id}/`}>
+              <span class="n terminal-label">{index}</span>
+              <span class="thumb bracketed"><Image src={cover} alt="" width={180} loading="lazy" /></span>
+              <span class="title">{data.title}</span>
+              <span class="ctx terminal-label">{data.context}</span>
+              <span class="cat terminal-label">{data.categories.map((c) => labels[c]).join(' / ')}</span>
+              <span class="go" aria-hidden="true">↗</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+      <aside class="preview bracketed" aria-hidden="true" data-preview>
+        {projects.map(({ id, data, cover }) => (
+          <figure class="shot" data-shot={id}>
+            <Image src={cover} alt="" width={960} widths={[480, 720, 960]} sizes="(min-width: 60rem) 40vw, 0px" loading="lazy" />
+            <div class="crt"></div>
+          </figure>
+        ))}
+        <p class="preview-meta terminal-label"><span data-preview-n>--</span> <span data-preview-title>Hover or focus a row</span></p>
+      </aside>
+    </div>
+  </section>
+
+  <footer class="container study-foot terminal-label">
+    <span>Motion: one ease, one reveal, one glitch</span>
+    <span>Reduced motion: still states only</span>
+  </footer>
+</div>
+
+<style is:global>
+  /* ----- shared study kit ----- */
+  .study { --ease: cubic-bezier(0.2, 0.75, 0.25, 1); --reveal: 520ms; --glitch: 180ms; position: relative; overflow: clip; }
+  .study-grain { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: var(--grain, 0.07); mix-blend-mode: screen;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  .study > *:not(.study-grain) { position: relative; z-index: 1; }
+  .study-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-1) var(--space-3); padding-block: var(--space-2); }
+  .study-switch { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+  .status-line { display: flex; flex-wrap: wrap; gap: 0 0.6em; margin: 0; font-variant-numeric: tabular-nums; }
+  .status-line .sep { opacity: 0.4; }
+  .status-line b { color: var(--color-accent); font-weight: 600; }
+  .study-hero { display: grid; gap: var(--space-3); padding-block: var(--space-4); }
+  .study-title { margin: 0; font-family: var(--study-display); font-weight: 700; font-size: var(--text-title); line-height: 0.98; letter-spacing: -0.05em; }
+  .study-title .line { display: block; }
+  .study-title .sub { margin-top: 0.15em; color: var(--color-muted); font-size: 0.34em; letter-spacing: -0.02em; line-height: 1.15; }
+  .study-title i { color: var(--color-accent); font-style: normal; }
+  .hero-row { display: grid; gap: var(--space-3); align-items: end; }
+  .hero-actions { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+  .hero-row > * { min-inline-size: 0; }
+  .ascii-wrap { box-sizing: border-box; inline-size: 100%; margin: 0; padding: var(--space-2); border: 1px solid var(--color-rule); background: color-mix(in srgb, var(--color-surface) 70%, transparent); max-inline-size: 36rem; }
+  .ascii { margin: 0; font: 0.72rem / 1 var(--font-mono); letter-spacing: 0.08em; color: var(--color-muted); white-space: pre; overflow: hidden; user-select: none; }
+  .ascii-wrap figcaption { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin-top: var(--space-1); }
+  @media (min-width: 60rem) { .hero-row { grid-template-columns: 1fr auto; } }
+
+  /* corner brackets */
+  .bracketed { position: relative; }
+  .bracketed::before, .bracketed::after { content: ''; position: absolute; inline-size: 0.75rem; block-size: 0.75rem; border: 0 solid var(--color-accent); pointer-events: none; transition: border-color var(--motion-fast) var(--ease); }
+  .bracketed::before { inset: -1px auto auto -1px; border-width: 1px 0 0 1px; }
+  .bracketed::after { inset: auto -1px -1px auto; border-width: 0 1px 1px 0; }
+
+  /* work index */
+  .index { padding-block: var(--space-4) var(--space-5); }
+  .index-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--space-2); padding-block-end: var(--space-2); border-block-end: 1px solid var(--color-rule); }
+  .index-head .terminal-label { margin-inline-start: 0.75em; font-weight: 400; }
+  .filters { display: flex; gap: var(--space-1); flex-wrap: wrap; }
+  .index-body { display: grid; gap: var(--space-3); }
+  .rows { list-style: none; margin: 0; padding: 0; }
+  .row { border-block-end: 1px solid var(--color-rule); transition: background-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease); }
+  .row[hidden] { display: none; }
+  .row a { display: grid; grid-template-columns: 2rem 4.5rem 1fr auto; align-items: center; gap: 0 var(--space-2); min-block-size: 4.5rem; padding-block: 0.5rem; text-decoration: none; }
+  .row .thumb { grid-row: span 2; display: block; inline-size: 4.5rem; aspect-ratio: 4 / 3; overflow: hidden; background: var(--color-surface); }
+  .row .thumb img { inline-size: 100%; block-size: 100%; object-fit: cover; }
+  .row .title { font-family: var(--study-display); font-weight: 700; font-size: clamp(1.15rem, 0.9rem + 1.2vw, 1.75rem); letter-spacing: -0.03em; line-height: 1.1; overflow-wrap: anywhere; }
+  .row .ctx, .row .cat { grid-column: 3; font-size: 0.75rem; }
+  .row .n { grid-row: span 2; }
+  .row .go { grid-column: 4; grid-row: 1 / span 2; font-family: var(--font-mono); color: var(--color-muted); transition: transform var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease); }
+  .row .cat { display: none; }
+  .row.is-active .title, .row.is-active .go { color: var(--color-accent); }
+  .row.is-active .go { transform: translate(0.15rem, -0.15rem); }
+  .preview { display: none; }
+  @media (min-width: 60rem) {
+    .index-body { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; }
+    .row a { grid-template-columns: 2.5rem minmax(0, 1fr) 12rem 2rem; }
+    .row .thumb { display: none; }
+    .row .n { grid-row: auto; }
+    .row .title { grid-column: 2; grid-row: auto; }
+    .row .ctx { grid-column: 3; grid-row: auto; }
+    .row .cat { display: none; }
+    .row .go { grid-column: 4; grid-row: auto; }
+    .preview { display: block; position: sticky; inset-block-start: var(--space-3); aspect-ratio: 4 / 3; background: var(--color-surface); border: 1px solid var(--color-rule); }
+    .shot { position: absolute; inset: 0; margin: 0; opacity: 0; transition: opacity var(--motion-fast) var(--ease); overflow: hidden; }
+    .shot img { inline-size: 100%; block-size: 100%; object-fit: cover; }
+    .shot.is-on { opacity: 1; }
+    .preview-meta { position: absolute; inset: auto 0 0 0; z-index: 2; margin: 0; padding: 0.5rem 0.75rem; background: linear-gradient(transparent, rgb(0 0 0 / 0.75)); color: var(--color-text); }
+  }
+  .crt { position: absolute; inset: 0; pointer-events: none; }
+
+  /* motion language: one reveal, one glitch */
+  @media (prefers-reduced-motion: no-preference) {
+    [data-reveal] .line, [data-reveal].is-hidden { animation: study-reveal var(--reveal) var(--ease) both; }
+    [data-reveal] .line.sub { animation-delay: 120ms; }
+    .is-glitch { animation: study-glitch var(--glitch) steps(2, end) 1; }
+  }
+  @keyframes study-reveal { from { clip-path: inset(0 100% 0 0); transform: translateX(-0.4rem); opacity: 0; } to { clip-path: inset(0 0 0 0); transform: none; opacity: 1; } }
+  @keyframes study-glitch { 0% { transform: translateX(-4px); clip-path: inset(10% 0 55% 0); } 50% { transform: translateX(4px); clip-path: inset(50% 0 10% 0); } 100% { transform: none; clip-path: inset(0); } }
+  .study-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-1); padding-block: var(--space-3); border-block-start: 1px solid var(--color-rule); }
+
+  /* ===== Direction 1: Instrument ===== */
+  [data-direction='instrument'] { --study-display: 'Helvetica Neue', Arial, sans-serif; --grain: 0.06; }
+  [data-direction='instrument'] .row:hover, [data-direction='instrument'] .row.is-active { background: color-mix(in srgb, var(--color-accent) 7%, transparent); }
+  [data-direction='instrument'] .crt { background: linear-gradient(transparent 50%, rgb(0 0 0 / 0.12) 50%); background-size: 100% 3px; opacity: 0.35; }
+
+  /* ===== Direction 2: Signal ===== */
+  [data-direction='signal'] { --study-display: var(--font-mono); --grain: 0.1; --ease: steps(6, end); --reveal: 640ms; --glitch: 140ms; --color-page-accent: #7dffb0; font-family: var(--font-mono); }
+  [data-direction='signal'] .study-title { font-size: clamp(2.2rem, 1.2rem + 5vw, 6rem); letter-spacing: -0.06em; text-shadow: 0 0 18px color-mix(in srgb, var(--color-accent) 35%, transparent); }
+  [data-direction='signal'] .row .title { letter-spacing: -0.04em; text-transform: uppercase; }
+  [data-direction='signal'] .row a::before { content: '>'; position: absolute; inset-inline-start: -1.1rem; color: var(--color-accent); opacity: 0; }
+  [data-direction='signal'] .row { position: relative; }
+  [data-direction='signal'] .row.is-active a::before { opacity: 1; }
+  [data-direction='signal'] .row.is-active .title { text-shadow: 0 0 12px color-mix(in srgb, var(--color-accent) 60%, transparent); }
+  [data-direction='signal'] .crt { background: repeating-linear-gradient(0deg, rgb(0 0 0 / 0.28) 0 1px, transparent 1px 3px); mix-blend-mode: multiply; box-shadow: inset 0 0 6rem rgb(0 0 0 / 0.55); }
+  [data-direction='signal'] .shot img { filter: grayscale(0.55) contrast(1.15) saturate(1.4); }
+  [data-direction='signal'] .is-glitch { text-shadow: -2px 0 #ff2d6f, 2px 0 #2de2ff; }
+  [data-direction='signal']::after { content: ''; position: fixed; inset: 0; z-index: 2; pointer-events: none; background: repeating-linear-gradient(0deg, rgb(0 0 0 / 0.1) 0 1px, transparent 1px 4px); }
+
+  /* ===== Direction 3: Artifact ===== */
+  [data-direction='artifact'] { --study-display: 'Helvetica Neue', Arial, sans-serif; --grain: 0.045; --module: clamp(3rem, 8vw, 7rem); --ease: cubic-bezier(0.7, 0, 0.2, 1); --reveal: 700ms; }
+  [data-direction='artifact']::before { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background-image: linear-gradient(var(--color-rule) 1px, transparent 1px), linear-gradient(90deg, var(--color-rule) 1px, transparent 1px);
+    background-size: var(--module) var(--module); opacity: 0.35; mask-image: linear-gradient(black, transparent 70%); }
+  [data-direction='artifact'] .study-title { font-size: clamp(3.5rem, 1rem + 12vw, 13rem); letter-spacing: -0.075em; line-height: 0.88; }
+  [data-direction='artifact'] .study-title .sub { font-size: 0.14em; letter-spacing: 0; }
+  [data-direction='artifact'] .row a { min-block-size: 6rem; }
+  [data-direction='artifact'] .row .title { font-size: clamp(1.6rem, 1rem + 2.4vw, 3.5rem); letter-spacing: -0.06em; line-height: 0.95; }
+  [data-direction='artifact'] .row { margin-inline-start: calc(var(--gutter) * -1); padding-inline-start: var(--gutter); }
+  [data-direction='artifact'] .row.is-active { background: var(--color-accent); color: var(--color-background); }
+  [data-direction='artifact'] .row.is-active .title, [data-direction='artifact'] .row.is-active .go, [data-direction='artifact'] .row.is-active .terminal-label { color: var(--color-background); }
+  [data-direction='artifact'] .shot img { filter: contrast(1.05); }
+  [data-direction='artifact'] .shot.is-on img { animation: study-resolve 360ms steps(4, end) both; }
+  @media (prefers-reduced-motion: reduce) { [data-direction='artifact'] .shot.is-on img { animation: none; } }
+  @keyframes study-resolve { from { filter: grayscale(1) contrast(1.6) blur(6px); } to { filter: none; } }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-study]');
+  if (root) {
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const $ = <T extends HTMLElement>(s: string) => root.querySelector<T>(s);
+    const $$ = <T extends HTMLElement>(s: string) => [...root.querySelectorAll<T>(s)];
+
+    // status line clock
+    const clock = $('[data-clock]');
+    const tick = () => { if (clock) clock.textContent = new Date().toLocaleTimeString('en-GB', { hour12: false }); };
+    tick(); setInterval(tick, 1000);
+
+    // glitch on state change (one effect, reused)
+    const glitch = (el: Element | null) => {
+      if (!el || reduced) return;
+      el.classList.remove('is-glitch'); void (el as HTMLElement).offsetWidth; el.classList.add('is-glitch');
+      el.addEventListener('animationend', () => el.classList.remove('is-glitch'), { once: true });
+    };
+
+    // work index: hover/focus preview, accent follows the active project
+    const rows = $$('[data-row]');
+    const shots = $$('[data-shot]');
+    const countActive = $('[data-count-active]');
+    const pn = $('[data-preview-n]'), pt = $('[data-preview-title]');
+    const clear = () => {
+      document.documentElement.style.removeProperty('--color-active-accent');
+      rows.forEach((r) => r.classList.remove('is-active'));
+      shots.forEach((s) => s.classList.remove('is-on'));
+      if (countActive) countActive.textContent = '00';
+      if (pn) pn.textContent = '--'; if (pt) pt.textContent = 'Hover or focus a row';
+    };
+    const activate = (row: HTMLElement) => {
+      if (row.classList.contains('is-active')) return;
+      clear();
+      row.classList.add('is-active');
+      document.documentElement.style.setProperty('--color-active-accent', row.dataset.accent ?? '');
+      shots.find((s) => s.dataset.shot === row.dataset.id)?.classList.add('is-on');
+      if (countActive) countActive.textContent = row.dataset.n ?? '00';
+      if (pn) pn.textContent = row.dataset.n ?? '';
+      if (pt) pt.textContent = row.querySelector('.title')?.textContent ?? '';
+      glitch($('[data-preview]'));
+    };
+    rows.forEach((row) => {
+      row.addEventListener('pointerenter', (e) => { if ((e as PointerEvent).pointerType === 'mouse') activate(row); });
+      row.addEventListener('focusin', () => activate(row));
+    });
+    $('[data-rows]')?.addEventListener('pointerleave', () => { if (!rows.some((r) => r.contains(document.activeElement))) clear(); });
+    $('[data-rows]')?.addEventListener('focusout', (e) => { if (!(e.relatedTarget instanceof Node) || !$('[data-rows]')!.contains(e.relatedTarget)) clear(); });
+
+    // filters
+    const count = $('[data-index-count]');
+    $$('[data-filter]').forEach((btn) => btn.addEventListener('click', () => {
+      const f = btn.dataset.filter!;
+      $$('[data-filter]').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+      let n = 0;
+      rows.forEach((r) => { const show = f === 'all' || r.dataset.cats!.split(' ').includes(f); r.hidden = !show; if (show) n++; });
+      if (count) count.textContent = `${n} ${n === 1 ? 'entry' : 'entries'}`;
+      clear(); glitch($('[data-rows]'));
+    }));
+
+    // interactive ASCII Ø: glyph field responds to the pointer; Pulse button for keyboard and touch
+    const pre = $('[data-ascii]'); const readout = $('[data-ascii-readout]');
+    if (pre) {
+      const cols = 44, rowsN = 14, ramp = ' .:-=+*#%@';
+      let px = 0.5, py = 0.5, pulse = 0, raf = 0;
+      const draw = (t: number) => {
+        let out = ''; let sum = 0;
+        for (let y = 0; y < rowsN; y++) {
+          for (let x = 0; x < cols; x++) {
+            const u = (x / cols - 0.5) * 2 * (cols * 0.6 / rowsN), v = (y / rowsN - 0.5) * 2;
+            const r = Math.hypot(u, v);
+            const ring = Math.exp(-Math.pow((r - 0.7) / 0.07, 2));
+            const bar = Math.exp(-Math.pow((u + v * 0.9) / 0.06, 2)) * (r < 0.95 ? 1 : 0);
+            let l = Math.max(ring, bar);
+            const d = Math.hypot(x / cols - px, (y / rowsN - py) * 0.6);
+            l += Math.exp(-d * d * 60) * 0.55;
+            l += pulse * Math.exp(-Math.pow((r - pulse * 1.4) / 0.12, 2)) * 0.9;
+            l += reduced ? 0 : (Math.sin(t / 700 + x * 0.6 + y * 0.9) * 0.05 + 0.05) * (l > 0.1 ? 1 : 0.3);
+            l = Math.min(1, Math.max(0, l)); sum += l;
+            out += ramp[Math.round(l * (ramp.length - 1))];
+          }
+          out += '\n';
+        }
+        pre.textContent = out;
+        if (readout) readout.textContent = `LUM ${(sum / (cols * rowsN)).toFixed(2)}`;
+        if (pulse > 0) pulse = Math.max(0, pulse - 0.025);
+      };
+      const loop = (t: number) => { draw(t); if (!reduced || pulse > 0) raf = requestAnimationFrame(loop); };
+      draw(0);
+      if (!reduced) raf = requestAnimationFrame(loop);
+      const wrap = $('[data-ascii-wrap]')!;
+      wrap.addEventListener('pointermove', (e) => { const b = pre.getBoundingClientRect(); px = (e.clientX - b.left) / b.width; py = (e.clientY - b.top) / b.height; });
+      $('[data-pulse]')?.addEventListener('click', () => { pulse = 1; glitch(wrap); if (reduced) { cancelAnimationFrame(raf); raf = requestAnimationFrame(loop); } });
+    }
+  }
+</script>
