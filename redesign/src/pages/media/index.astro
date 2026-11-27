@@ -413,6 +413,11 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, 5);
     outline-offset: -2px;
   }
 
+  .media-visual video a:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
   /* Native video controls take focus inside the shadow tree, so mark the frame. */
   .media-visual:has(video):focus-within {
     outline: 2px solid var(--color-accent);
