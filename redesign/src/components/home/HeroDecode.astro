@@ -27,8 +27,8 @@
     // The decode front sweeps diagonally from the top-left, decelerates, and comes to rest
     // toward the bottom-right. Cells behind it are clear footage; cells ahead stay alive as a
     // glyph field, so the transition never fully clears.
-    const TRAVEL = 3800;     // ms for the front to ease to rest
-    const REST = 0.44;       // diagonal position where the footage is fully clear
+    const TRAVEL = 4400;     // ms for the front to ease to rest
+    const REST = 0.64;       // diagonal position where the footage is fully clear
     const BAND = 0.14;       // thickness of the decoding edge
     const AHEAD = 0.5;       // distance over which the field thickens ahead of the edge
     const FIELD_MS = 90;     // the held field refreshes like a terminal, not at 60 fps

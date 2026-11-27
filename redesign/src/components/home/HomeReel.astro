@@ -25,7 +25,7 @@ const desktopMedia = '(min-width: 56rem)';
     <source media={desktopMedia} srcset="/home/reel-desktop.webp" width="1280" height="720" />
     <img src="/home/reel-mobile.webp" width="720" height="540" alt="" loading={eagerPoster ? "eager" : "lazy"} fetchpriority={decode ? 'low' : eagerPoster ? 'high' : undefined} />
   </picture>
-  <video muted loop playsinline preload="none" aria-hidden="true"></video>
+  <video muted loop playsinline preload={autoplay ? "auto" : "none"} aria-hidden="true"></video>
   {decode && <DecodePoster {desktopMedia} />}
   {hasMask && <div class="reel-mask" aria-hidden="true"><slot name="mask" /></div>}
   <button class="reel-control" type="button" hidden>Play reel</button>
@@ -83,10 +83,28 @@ const desktopMedia = '(min-width: 56rem)';
 
       video.play().catch((error: unknown) => {
         if (error instanceof DOMException && error.name === 'AbortError') return;
-        if (wantsPlayback && video.paused) playbackFailed();
+        if (wantsPlayback && video.paused) {
+          if (error instanceof DOMException && error.name === 'NotAllowedError' && autoplayRetry) return autoplayRetry();
+          playbackFailed();
+        }
       });
     };
 
+    // Browsers may block the first autoplay attempt; retry once media is ready or on first interaction.
+    const autoplayRetry = () => {
+      const retry = () => {
+        if (wantsPlayback && video.paused) {
+          video.muted = true;
+          video.play().catch(() => {});
+        }
+      };
+      video.addEventListener('canplay', retry, { once: true });
+      for (const type of ['pointerdown', 'keydown', 'touchstart', 'scroll'])
+        window.addEventListener(type, retry, { once: true, passive: true });
+      control.hidden = false;
+    };
+
+    video.muted = true;
     video.addEventListener('playing', () => {
       reel.setAttribute('data-playing', '');
       reel.removeAttribute('data-playback-failed');
@@ -243,7 +261,7 @@ const desktopMedia = '(min-width: 56rem)';
 
   /* Background reels use bare play/pause glyphs; the button text stays as its accessible name. */
   .reel--background .reel-control {
-    inset: var(--space-2) var(--gutter) auto auto;
+    inset: var(--space-2) auto auto var(--gutter);
     z-index: 1;
     display: grid;
     place-items: center;
@@ -272,9 +290,9 @@ const desktopMedia = '(min-width: 56rem)';
   }
 
   .reel--background .reel-control[data-state='playing']::before {
-    background: none;
+    inline-size: 0.625rem;
+    background: linear-gradient(90deg, currentColor 0 0.2rem, transparent 0.2rem 0.425rem, currentColor 0.425rem);
     clip-path: none;
-    border-inline: 0.25rem solid currentColor;
   }
 
   @media (min-width: 56rem) {
