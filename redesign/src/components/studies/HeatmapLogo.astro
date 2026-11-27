@@ -1,0 +1,181 @@
+---
+/**
+ * Heatmap logo study: a WebGL fragment shader fills the Ø silhouette with slowly drifting heat,
+ * mapped through a grayscale ramp that peaks at the white accent. Pointer or focus adds local heat.
+ * Reduced motion and no-WebGL get a still frame, drawn with canvas 2D. The <img> is the baseline
+ * for no-JS. Study only: nothing in the live shell uses this yet.
+ */
+import mark from '../../../../images/o.png';
+
+interface Props {
+  /** Ambient drift speed multiplier. Smaller logos read better slower. */
+  speed?: number;
+  /** Halo strength, 0 to 1. */
+  glow?: number;
+  class?: string;
+}
+const { speed = 1, glow = 0.35, class: className = '' } = Astro.props;
+---
+
+<div class:list={['heatmap-logo', className]} data-heatmap data-speed={speed} data-glow={glow} data-src={mark.src}>
+  <img src={mark.src} alt="" width="256" height="256" decoding="async" />
+  <canvas aria-hidden="true"></canvas>
+</div>
+
+<style>
+  .heatmap-logo { position: relative; display: block; inline-size: 100%; aspect-ratio: 1; }
+  .heatmap-logo img { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; filter: invert(1); }
+  .heatmap-logo canvas { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; opacity: 0; transition: opacity 240ms steps(4, end); }
+  .heatmap-logo.is-ready canvas { opacity: 1; }
+  .heatmap-logo.is-ready img { visibility: hidden; }
+</style>
+
+<script>
+  const VERT = `attribute vec2 p; varying vec2 v; void main(){ v = p * .5 + .5; gl_Position = vec4(p, 0., 1.); }`;
+  // Grayscale heat ramp, coolest to hottest. The hottest stop is the white accent.
+  const FRAG = `
+    precision mediump float;
+    varying vec2 v;
+    uniform sampler2D uMask;
+    uniform float uTime, uGlow, uBoost;
+    uniform vec2 uPointer;
+    float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+    float noise(vec2 p){
+      vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
+      return mix(mix(hash(i), hash(i + vec2(1,0)), f.x), mix(hash(i + vec2(0,1)), hash(i + vec2(1,1)), f.x), f.y);
+    }
+    float fbm(vec2 p){ float s = 0., a = .5; for(int i = 0; i < 4; i++){ s += a * noise(p); p = p * 2.03 + 11.7; a *= .5; } return s; }
+    vec3 ramp(float h){
+      vec3 c0 = vec3(.10), c1 = vec3(.27), c2 = vec3(.52), c3 = vec3(.86), c4 = vec3(1.);
+      if (h < .25) return mix(c0, c1, h / .25);
+      if (h < .5) return mix(c1, c2, (h - .25) / .25);
+      if (h < .75) return mix(c2, c3, (h - .5) / .25);
+      return mix(c3, c4, (h - .75) / .25);
+    }
+    void main(){
+      vec2 uv = vec2(v.x, 1. - v.y);
+      float m = texture2D(uMask, uv).a;
+      // Heat drifts through the mark: domain-warped noise, slowly advected.
+      vec2 q = uv * 2.6;
+      float w = fbm(q + vec2(uTime * .06, -uTime * .045));
+      float heat = fbm(q + w * 1.6 + vec2(-uTime * .035, uTime * .05));
+      heat = smoothstep(.2, .85, heat);
+      // Pointer adds local heat that falls off with distance.
+      float d = distance(uv, uPointer);
+      heat = clamp(heat + uBoost * exp(-d * d * 22.) * .85, 0., 1.);
+      vec3 col = ramp(heat);
+      // Soft halo: average the mask around the pixel, keep it outside the mark.
+      float halo = 0.;
+      for (int i = 0; i < 20; i++){
+        float k = float(i) + .5;
+        float a = k * 2.39996;
+        float r = .09 * sqrt(k / 20.);
+        halo += texture2D(uMask, uv + vec2(cos(a), sin(a)) * r).a * (1. - k / 24.);
+      }
+      halo = halo / 11.5 * (1. - m) * uGlow * (.45 + heat * .55);
+      float alpha = m + halo * (1. - m);
+      vec3 rgb = (col * m + vec3(1.) * halo) ;
+      gl_FragColor = vec4(rgb, alpha);
+    }`;
+
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function drawStill(canvas: HTMLCanvasElement, image: HTMLImageElement) {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return false;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    ctx.globalCompositeOperation = 'source-in';
+    const g = ctx.createLinearGradient(0, canvas.height, canvas.width, 0);
+    g.addColorStop(0, '#2a2a2a'); g.addColorStop(0.45, '#8a8a8a'); g.addColorStop(1, '#ffffff');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    return true;
+  }
+
+  function init(root: HTMLElement) {
+    const canvas = root.querySelector('canvas')!;
+    const image = new Image();
+    image.onload = () => {
+      const size = () => {
+        const dpr = Math.min(devicePixelRatio || 1, 2);
+        canvas.width = Math.max(1, Math.round(root.clientWidth * dpr));
+        canvas.height = canvas.width;
+      };
+      size();
+
+      // Reduced motion never touches WebGL: a canvas can only hold one context type.
+      const gl = reduced ? null : canvas.getContext('webgl', { premultipliedAlpha: true, alpha: true }) as WebGLRenderingContext | null;
+      if (!gl) {
+        if (drawStill(canvas, image)) root.classList.add('is-ready');
+        return;
+      }
+
+      const compile = (type: number, src: string) => { const s = gl.createShader(type)!; gl.shaderSource(s, src); gl.compileShader(s); return s; };
+      const prog = gl.createProgram()!;
+      gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
+      gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
+      gl.linkProgram(prog);
+      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { if (drawStill(canvas, image)) root.classList.add('is-ready'); return; }
+      gl.useProgram(prog);
+
+      const buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+      const loc = gl.getAttribLocation(prog, 'p');
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+      const tex = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+      const u = (n: string) => gl.getUniformLocation(prog, n);
+      const speed = parseFloat(root.dataset.speed ?? '1');
+      gl.uniform1f(u('uGlow'), parseFloat(root.dataset.glow ?? '0.35'));
+      gl.uniform1i(u('uMask'), 0);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+      // Pointer heat eases toward its target so it blooms and cools instead of snapping.
+      let px = 0.5, py = 0.5, boost = 0, target = 0, hovering = false, visible = true, raf = 0;
+      const host = root.closest<HTMLElement>('[data-heat-host]') ?? root;
+      const move = (e: PointerEvent) => {
+        const r = root.getBoundingClientRect();
+        px = (e.clientX - r.left) / r.width; py = (e.clientY - r.top) / r.height;
+        hovering = true; target = 1;
+      };
+      host.addEventListener('pointermove', move);
+      host.addEventListener('pointerleave', () => { hovering = false; target = 0; });
+      host.addEventListener('focusin', () => { px = 0.5; py = 0.5; target = 1; });
+      host.addEventListener('focusout', () => { if (!hovering) target = 0; });
+
+      const frame = (now: number) => {
+        boost += (target - boost) * 0.08;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.uniform1f(u('uTime'), (now / 1000) * speed + 20);
+        gl.uniform1f(u('uBoost'), boost);
+        gl.uniform2f(u('uPointer'), px, py);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        raf = visible && !document.hidden ? requestAnimationFrame(frame) : 0;
+      };
+      new IntersectionObserver(([entry]) => {
+        visible = entry.isIntersecting;
+        if (visible && !raf) raf = requestAnimationFrame(frame);
+      }).observe(root);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden && !raf && visible) raf = requestAnimationFrame(frame); });
+      addEventListener('resize', size);
+      root.classList.add('is-ready');
+      raf = requestAnimationFrame(frame);
+    };
+    image.src = root.dataset.src!;
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-heatmap]').forEach(init);
+</script>
