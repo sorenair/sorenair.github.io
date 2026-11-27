@@ -64,8 +64,8 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
       <button class="terminal-control" type="button" data-view="gallery" aria-pressed="false" aria-controls="media-gallery">Gallery</button>
     </div>
     <div class="media-wall" id="media-wall" aria-label="Media library. Drag or use the arrow keys to browse." role="region" hidden>
-      {Array.from({ length: 35 }, (_, index) => (
-        <a class="wall-tile" data-wall-tile data-row={Math.floor(index / 7) - 2} data-column={index % 7 - 3} tabindex="-1"><span class="wall-image"></span></a>
+      {Array.from({ length: 77 }, (_, index) => (
+        <a class="wall-tile" data-wall-tile data-row={Math.floor(index / 11) - 3} data-column={index % 11 - 5} tabindex="-1"><span class="wall-image"></span></a>
       ))}
     </div>
     <ul class="media-grid" id="media-gallery" aria-label="Media library" role="list">
@@ -154,26 +154,49 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
       stepX = stepY = Math.max(116, Math.min(height / 3, width / (width < 600 ? 2.5 : 5)));
       const shiftX = Math.round(dx / stepX);
       const shiftY = Math.round(dy / stepY);
+      // One curved surface: every cell corner goes through the same barrel mapping, so neighbouring
+      // cells share corners (they stay aligned, never overlap) and the grid bends like a lens.
+      const unit = height * 0.9;
+      const bend = 0.35;
+      const warp = (px: number, py: number): [number, number] => {
+        const nx = px / unit;
+        const ny = py / unit;
+        const k = 1 / Math.sqrt(1 + bend * (nx * nx + ny * ny));
+        return [nx * k * unit, ny * k * unit];
+      };
+      const half = stepX / 2;
       for (const tile of tiles) {
         const column = Number(tile.dataset.column);
         const row = Number(tile.dataset.row);
         const x = (column - shiftX) * stepX + dx;
         const y = (row - shiftY) * stepY + dy;
-        const horizontalBend = Math.max(-1, Math.min(1, x / (width / 2)));
-        const verticalBend = Math.max(-1, Math.min(1, y / (height / 2)));
-        const offset = originX + column - shiftX + 2 * (originY + row - shiftY);
-        const item = entries[((offset % entries.length) + entries.length) % entries.length];
+        const [x0, y0] = warp(x - half, y - half);
+        const [x1, y1] = warp(x + half, y - half);
+        const [x2, y2] = warp(x + half, y + half);
+        const [x3, y3] = warp(x - half, y + half);
+        // Unit square -> quad (projective), then scale input from cell pixels to the unit square.
+        const dx1 = x1 - x2, dx2 = x3 - x2, dx3 = x0 - x1 + x2 - x3;
+        const dy1 = y1 - y2, dy2 = y3 - y2, dy3 = y0 - y1 + y2 - y3;
+        const det = dx1 * dy2 - dy1 * dx2;
+        const g = det ? (dx3 * dy2 - dy3 * dx2) / det : 0;
+        const h = det ? (dx1 * dy3 - dy1 * dx3) / det : 0;
+        const a = x1 - x0 + g * x1, b = x3 - x0 + h * x3;
+        const d = y1 - y0 + g * y1, e = y3 - y0 + h * y3;
+        const m = 1 / stepX;
         tile.style.width = `${stepX}px`;
         tile.style.height = `${stepY}px`;
-        tile.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
-        // The fisheye lives inside the cell: the picture swells at the center and recedes toward the edges.
+        tile.style.transform = `matrix3d(${a * m},${d * m},0,${g * m},${b * m},${e * m},0,${h * m},0,0,1,0,${x0},${y0},0,1)`;
+        const centerX = Math.hypot(x, y) / unit;
+        tile.style.setProperty('--wall-dim', String(Math.min(0.55, centerX * centerX * 0.18)));
+        const offset = originX + column - shiftX + 2 * (originY + row - shiftY);
+        const item = entries[((offset % entries.length) + entries.length) % entries.length];
         const image = tile.firstElementChild as HTMLElement;
-        const reach = Math.min(1, Math.hypot(horizontalBend, verticalBend));
-        image.style.transform = `scale(${1.04 - reach * 0.2})`;
-        image.style.opacity = String(1 - reach * reach * 0.5);
-        image.style.backgroundImage = `url("${item.image}")`;
-        tile.href = `#${item.entry.id}`;
-        tile.setAttribute('aria-label', item.title);
+        if (tile.dataset.src !== item.image) {
+          tile.dataset.src = item.image;
+          image.style.backgroundImage = `url("${item.image}")`;
+          tile.href = `#${item.entry.id}`;
+          tile.setAttribute('aria-label', item.title);
+        }
         tile.tabIndex = row === 0 && column >= 0 && column < entries.length && (width >= 600 || column === 0) ? 0 : -1;
       }
     }
@@ -351,6 +374,7 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
   .wall-tile {
     position: absolute;
     inset: 50% auto auto 50%;
+    transform-origin: 0 0;
     box-sizing: border-box;
     padding: 0.5rem;
     border-right: 1px solid var(--color-rule);
@@ -364,6 +388,7 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
     inline-size: 100%;
     block-size: 100%;
     background: var(--color-surface) center / cover no-repeat;
+    filter: brightness(calc(1 - var(--wall-dim, 0)));
   }
 
   .wall-tile:hover .wall-image,
