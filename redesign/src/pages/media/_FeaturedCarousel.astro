@@ -231,9 +231,13 @@ const slides = await Promise.all(items.map(async (item) => {
       stage.hidden = false;
       CONFIG.PANEL_H = Math.round(mount.clientHeight * 0.62);
       ENTRY.enabled = false;
-      // Fit the lens to a wide, short strip so its rim stays inside the frame.
-      LENS.sizeX = 0.5;
-      LENS.sizeY = 0.82;
+      // Large rotated oval: centre stays clean, only the outer panels warp at the rim.
+      LENS.sizeX = 1.2;
+      LENS.sizeY = 0.95;
+      LENS.rotation = 25;
+      LENS.whiteGlow = 0;
+      LENS.blueColor = '#ffffff';
+      LENS.blueRing = 1.2;
       const items = slides.map((slide) => {
         const image = slide.querySelector('img')!;
         return { src: image.currentSrc || image.src, aspect: null };
@@ -397,7 +401,7 @@ const slides = await Promise.all(items.map(async (item) => {
     position: relative;
     block-size: clamp(22rem, 40vw, 34rem);
     overflow: hidden;
-    background: var(--color-background);
+    background: transparent;
     cursor: grab;
     touch-action: pan-y;
   }

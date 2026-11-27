@@ -37,7 +37,7 @@ export function createCarousel(mount, callbacks = {}) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(W, H);
-  renderer.setClearColor(background, 1); // match page bg so FBO gaps blend
+  renderer.setClearColor(0x000000, 0); // transparent: panels float over the page
   mount.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
@@ -178,7 +178,7 @@ export function createCarousel(mount, callbacks = {}) {
   // at 1x and upscale — blurry on retina); a fullscreen quad then samples it
   // through the lens shader.
   const dpr = renderer.getPixelRatio();
-  let rt = new THREE.WebGLRenderTarget(W * dpr, H * dpr);
+  let rt = new THREE.WebGLRenderTarget(W * dpr, H * dpr, { format: THREE.RGBAFormat });
   const lensScene = new THREE.Scene();
   const lensCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   const lensUniforms = {
@@ -274,7 +274,7 @@ export function createCarousel(mount, callbacks = {}) {
 
       // Evaluate the disc lens centered at 'center' (screen-UV). Returns the
       // lensed color; 'outA' = how opaque this lens is here (0 outside disc).
-      vec3 discLens(vec2 center, float aspectCorrect, out float outA) {
+      vec4 discLens(vec2 center, float aspectCorrect, out float outA) {
         // local coords, aspect-corrected so x/y are in the same screen units
         vec2 p = (vUv - center);
         p.x *= aspectCorrect;
@@ -296,7 +296,7 @@ export function createCarousel(mount, callbacks = {}) {
         } else {
           maskND = dist;
         }
-        if (maskND > 1.0) return vec3(0.0);
+        if (maskND > 1.0) return vec4(0.0);
 
         // shapeND: 0 center .. 1 boundary, following the chosen shape. Used by
         // nova / ring / border so they take the SAME shape.
@@ -328,21 +328,24 @@ export function createCarousel(mount, callbacks = {}) {
         if (N < 2) N = 2;
         if (N > MAX_SAMPLES) N = MAX_SAMPLES;
         vec3 col = vec3(0.0);
+        float colA = 0.0;
         vec3 caW = vec3(0.0);
         for (int i = 0; i < MAX_SAMPLES; i++) {
           if (i >= N) break;
           float t = float(i) / float(N - 1);
           vec2 sUV = baseUV + dispDir * (t - 0.5);
-          vec3 s = texture2D(uTex, sUV).rgb;
+          vec4 s4 = texture2D(uTex, sUV); vec3 s = s4.rgb;
           vec3 w = vec3(
             exp(-pow((t - 0.00) / 0.38, 2.0)),
             exp(-pow((t - 0.50) / 0.38, 2.0)),
             exp(-pow((t - 1.00) / 0.38, 2.0))
           );
           col += s * w;
+          colA += s4.a * (w.x + w.y + w.z) / 3.0;
           caW += w;
         }
         col /= max(caW, vec3(0.001));
+        colA /= max((caW.x + caW.y + caW.z) / 3.0, 0.001);
 
         // optional blur near the rim
         float blurFade = 1.0 - smoothstep(0.72, 0.98, nd);
@@ -385,15 +388,16 @@ export function createCarousel(mount, callbacks = {}) {
 
         // lens alpha: solid inside, soft falloff at the very edge
         outA = smoothstep(1.0, 0.93, maskND);
-        return col;
+        float addA = clamp(max(col.r, max(col.g, col.b)) - max(colA, 0.0), 0.0, 1.0);
+        return vec4(col, clamp(colA + addA, 0.0, 1.0));
       }
 
       void main(){
-        vec3 base = texture2D(uTex, vUv).rgb;  // carousel, untouched
-        vec3 outc = base;
+        vec4 base = texture2D(uTex, vUv);  // carousel, untouched (premultiplied)
+        vec4 outc = base;
 
         float a = 0.0;
-        vec3 c = discLens(uCenter, uAspect, a);
+        vec4 c = discLens(uCenter, uAspect, a);
         outc = mix(outc, c, a);
 
         // overall vignette: darken toward screen corners (aspect-correct)
@@ -402,10 +406,10 @@ export function createCarousel(mount, callbacks = {}) {
           vc.x *= uAspect;
           float d = length(vc) / max(uVignetteSize, 0.0001);
           float vig = 1.0 - uVignette * smoothstep(0.5, 1.0, d);
-          outc *= clamp(vig, 0.0, 1.0);
+          outc.rgb *= clamp(vig, 0.0, 1.0);
         }
 
-        gl_FragColor = vec4(outc, 1.0);
+        gl_FragColor = outc;
       }
     `,
   });
