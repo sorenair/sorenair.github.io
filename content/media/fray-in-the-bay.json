@@ -1,0 +1,10 @@
+{
+  "title": "Fray in the Bay",
+  "kind": "youtube",
+  "cover": {
+    "src": "/images/media/youtube/fray-in-the-bay.jpg",
+    "alt": "A bright blue spinnaker fills the frame during a sailing race."
+  },
+  "href": "https://www.youtube.com/@soren_air/videos",
+  "featured": true
+}
