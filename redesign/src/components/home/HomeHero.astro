@@ -2,10 +2,9 @@
 import HomeReel from './HomeReel.astro';
 ---
 
-<section class="hero" aria-labelledby="hero-title">
+<section class="hero bracketed" aria-labelledby="hero-title">
   <HomeReel autoplay background decode />
-  <div class="hero-grid" aria-hidden="true"></div>
-  <div class="hero-grain" aria-hidden="true"></div>
+  <div class="grid-layer module-grid" aria-hidden="true"></div>
 
   <div class="container hero-bar">
     <p class="hero-status terminal-label" role="presentation">
@@ -16,7 +15,7 @@ import HomeReel from './HomeReel.astro';
   </div>
 
   <div class="container hero-copy">
-    <h1 class="hero-title" id="hero-title">
+    <h1 class="hero-title display-title" id="hero-title">
       <span class="line"><span>Soren</span></span>
       <span class="line"><span>Gabor<i aria-hidden="true">Ø</i></span></span>
     </h1>
@@ -26,8 +25,6 @@ import HomeReel from './HomeReel.astro';
     </div>
   </div>
 
-  <span class="bracket tl" aria-hidden="true"></span>
-  <span class="bracket br" aria-hidden="true"></span>
 </section>
 
 <script>
@@ -41,40 +38,23 @@ import HomeReel from './HomeReel.astro';
 
 <style>
   .hero {
-    --module: clamp(3rem, 8vw, 7rem);
+    /* Lighter grid lines so they read over the footage. */
+    --color-rule: #f4f4f140;
     position: relative;
     isolation: isolate;
     display: grid;
     grid-template-rows: auto 1fr;
     min-block-size: clamp(32rem, 92svh, 64rem);
-    overflow: clip;
     background: var(--color-background);
     border-block-end: 1px solid var(--color-rule);
   }
 
-  .hero > :global(.reel) { z-index: -3; }
+  .hero > :global(.reel) { z-index: -2; }
 
-  .hero-grid,
-  .hero-grain {
+  .hero > .grid-layer {
     position: absolute;
     inset: 0;
-    z-index: -1;
     pointer-events: none;
-  }
-
-  /* The visible Ø module grid fades out toward the bottom. */
-  .hero-grid {
-    background-image:
-      linear-gradient(#f4f4f133 1px, transparent 1px),
-      linear-gradient(90deg, #f4f4f133 1px, transparent 1px);
-    background-size: var(--module) var(--module);
-    mask-image: linear-gradient(black, transparent 80%);
-  }
-
-  .hero-grain {
-    opacity: 0.09;
-    mix-blend-mode: screen;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
   .hero-bar {
@@ -108,8 +88,7 @@ import HomeReel from './HomeReel.astro';
 
   .hero-title {
     margin: 0;
-    font: 700 clamp(4rem, 1rem + 16vw, 17rem) / 0.84 var(--font-display);
-    letter-spacing: -0.075em;
+    line-height: 0.84;
     text-shadow: 0 0 2rem #0008;
   }
 
@@ -137,21 +116,10 @@ import HomeReel from './HomeReel.astro';
     border-color: var(--color-accent);
   }
 
-  .bracket {
-    position: absolute;
-    inline-size: 1.75rem;
-    block-size: 1.75rem;
-    border: 0 solid var(--color-text);
-    opacity: 0.7;
-    pointer-events: none;
-  }
-  .bracket.tl { inset: var(--space-1) auto auto var(--gutter); border-width: 1px 0 0 1px; }
-  .bracket.br { inset: auto var(--gutter) var(--space-1) auto; border-width: 0 1px 1px 0; }
-
   @media (prefers-reduced-motion: no-preference) {
     /* One clip wipe per line, upward, staggered. */
     .line > span {
-      animation: wipe 700ms cubic-bezier(0.7, 0, 0.2, 1) both;
+      animation: wipe 700ms var(--ease-artifact) both;
     }
     .line:nth-child(2) > span { animation-delay: 120ms; }
     .hero-intro, .hero-actions { animation: rise 600ms var(--ease-out) 380ms both; }

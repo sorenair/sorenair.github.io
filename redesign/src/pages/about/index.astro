@@ -68,14 +68,15 @@ const socials = [
 
 <SiteLayout title="About" description="About Soren Gabor, with experience in electrical engineering, physics, and multimedia design.">
   <div class="container about">
-    <div class="about-intro">
+    <div class="about-intro module-grid">
       <div class="about-bio">
-        <h1 class="page-title">About</h1>
+        <p class="terminal-label">About / 01</p>
+        <h1 class="page-title display-title">About</h1>
         <p class="bio-opening">Hello, my name is Soren Gabor.</p>
         <p class="lead">I’m currently studying Electrical Engineering and Physics at the University of St. Thomas in St. Paul, Minnesota. While my work often focuses on designing and improving electronic systems, I love creative endeavors of every kind.</p>
         <a class="text-link" href="#contact">Contact</a>
       </div>
-      <picture class="about-portrait">
+      <picture class="about-portrait bracketed">
         <source media="(min-width: 54rem)" srcset={desktopPortrait.srcSet.attribute} sizes="(min-width: 88rem) 49rem, 56vw" />
         <Image
           src={portrait}
@@ -89,7 +90,7 @@ const socials = [
     </div>
 
     <section class="about-section" aria-labelledby="experience-heading">
-      <h2 class="section-title" id="experience-heading">Experience</h2>
+      <h2 class="section-title" id="experience-heading" data-reveal>Experience</h2>
       <ul class="details-list">
         {experience.map(({ role, organization, period, summary }) => (
           <li class="experience">
@@ -105,7 +106,7 @@ const socials = [
     </section>
 
     <section class="about-section" aria-labelledby="awards-heading">
-      <h2 class="section-title" id="awards-heading">Awards and recognition</h2>
+      <h2 class="section-title" id="awards-heading" data-reveal>Awards and recognition</h2>
       <ul class="details-list">
         {awards.map(({ title, organization }) => (
           <li>
@@ -117,7 +118,7 @@ const socials = [
     </section>
 
     <section class="about-section" aria-labelledby="activities-heading">
-      <h2 class="section-title" id="activities-heading">Activities</h2>
+      <h2 class="section-title" id="activities-heading" data-reveal>Activities</h2>
       <ul class="details-list">
         {activities.map(({ title, role, summary, href, link }) => (
           <li>
@@ -130,7 +131,7 @@ const socials = [
       </ul>
     </section>
 
-    <section class="contact" id="contact" aria-labelledby="contact-heading" tabindex="-1">
+    <section class="contact bracketed" id="contact" aria-labelledby="contact-heading" tabindex="-1">
       <h2 class="section-title" id="contact-heading">Contact</h2>
       <div>
         <a class="text-link contact-email" href="mailto:gaborsoren@gmail.com">gaborsoren@gmail.com</a>
@@ -168,6 +169,10 @@ const socials = [
 
   .about-bio .text-link {
     margin-block-start: var(--space-1);
+  }
+
+  .about-portrait {
+    display: block;
   }
 
   .about-portrait img {
@@ -230,6 +235,12 @@ const socials = [
   .contact:focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 3px;
+  }
+
+  .contact-email:is(:hover, :focus-visible) {
+    background: var(--color-accent);
+    color: var(--color-background);
+    text-decoration: none;
   }
 
   .contact-email {
