@@ -33,7 +33,8 @@ Soren chose the **Artifact** direction from the identity study (`/studies/identi
 | `body::after` grain | Global static grain. Tune with `--grain-opacity` (0.05). Do not animate. |
 | `.bracketed` | Corner brackets that take the active accent. |
 | `StatusLine` (`components/terminal/`) | Mono readout with path and live clock. The footer already has one; pass `items` for counters. |
-| `data-reveal` | One reveal: clip wipe the first time the element scrolls in. Content below the fold only, so the first paint is never hidden. |
+| `data-reveal` | One reveal: text decode. Characters scramble (matching case, so lines don't rewrap) and resolve in a ragged left-to-right sweep the first time the element scrolls in. Applied automatically to every `.page-title` and `.section-title`; opt out with `data-no-reveal`, opt in other text with `data-reveal`. Real text is in the HTML from first paint. |
+| `data-type` | Typed reveal with a block cursor for short single-line labels and leads. Do not use on multi-line text. |
 | `glitch(el)` from `scripts/terminal.ts` | One glitch, for state changes only (filter change, new active project). |
 | `.resolve` | Stepped posterized-to-clear resolve when media becomes active. |
 | `--ease-artifact`, `--motion-reveal`, `--motion-glitch` | The single easing and durations. All become zero under reduced motion. |

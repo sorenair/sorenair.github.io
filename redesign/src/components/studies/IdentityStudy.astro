@@ -187,8 +187,6 @@ const fallback = '#d9fa80';
 
   /* motion language: one reveal, one glitch */
   @media (prefers-reduced-motion: no-preference) {
-    [data-reveal] .line, [data-reveal].is-hidden { animation: study-reveal var(--reveal) var(--ease) both; }
-    [data-reveal] .line.sub { animation-delay: 120ms; }
     .is-glitch { animation: study-glitch var(--glitch) steps(2, end) 1; }
   }
   @keyframes study-reveal { from { clip-path: inset(0 100% 0 0); transform: translateX(-0.4rem); opacity: 0; } to { clip-path: inset(0 0 0 0); transform: none; opacity: 1; } }
