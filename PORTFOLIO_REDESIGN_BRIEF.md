@@ -17,6 +17,10 @@ Use the current projects, media, and About copy as the starting content. Soren w
 - **Ordinary Folk.** The strongest overall reference for motion, typography, clean visuals, and the relationship between the homepage and the project archive. Some compositions feel more playful than the target. Favor aligned grids and orderly rows of media with a consistent rhythm. [Ordinary Folk homepage](https://www.ordinaryfolk.co/) · [Work archive](https://www.ordinaryfolk.co/work)
 - **Andy Cavatorta.** A reference for case-study depth and for interleaving process images with explanations. Use that editorial approach within the portfolio’s own visual system. [Gravity Harps](https://andycavatorta.com/gravityharps.html)
 
+### Decision: visual identity (Artifact)
+
+After the identity study, the direction is **Artifact**: oversized type on a visible Ø grid, grayscale with one content-driven accent that floods the active row, plus digital grain and stepped textures. Signal's scanlines, CRT and glow are out. Home keeps a large, full-frame video hero. The Work index is the primary browsing surface. Details are recorded in the [shared style guide](redesign/SHELL.md#chosen-direction-artifact-with-texture).
+
 ### Visual language to explore
 
 Explore a retro-futurist alien terminal. The portfolio should feel like accessing an unfamiliar digital artifact that responds to the visitor. Give Home, Work, project pages, and About a recognizable visual language through the Ø, precise typography, aligned layouts, and consistent control behavior. Keep the interface grayscale with one content-driven accent. Let the project media carry its own color.

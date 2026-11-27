@@ -13,6 +13,17 @@ Use the [design references](../PORTFOLIO_DESIGN_REFERENCES.md) for examples of t
 - **Feedback and reuse.** Use shared spacing, color, focus, and motion tokens for controls, card states, and media frames. Tie responsive effects to real actions such as selecting a category or opening a project. Keep feedback immediate for pointer, touch, and keyboard. Share treatments that recur across pages so each instance behaves consistently.
 - **Static states.** Keep essential text, links, and project media present while effects initialize or load. Give motion-led treatments a composed still for reduced motion, keep decorative glyphs out of the accessibility tree, and avoid rapid flashing. Focus, selection, and navigation should remain clear in the static state.
 
+## Chosen direction: Artifact with texture
+
+Soren chose the **Artifact** direction from the identity study (`/studies/identity/artifact/`, source in `redesign/src/components/studies/IdentityStudy.astro`), combined with the digital grain and texture from the other studies. The study's Signal direction (scanlines, CRT, phosphor glow, all-mono) is rejected as too much, and Instrument is a fallback reference for quieter surfaces.
+
+- **Type.** Oversized grotesk headlines with tight tracking, on a visible Ø-based module grid. Mono for labels, counters, status lines and readouts.
+- **Surfaces.** Grayscale with one accent. The accent floods the active row or control and follows the hovered or focused project. Fine grain over charcoal, posterized or stepped tones on media, sparse glyph fields. No scanlines, glow, or tinted CRT filters.
+- **Terminal pieces.** Status line (live clock, node counter), corner brackets on panels and media, Ø marks and an interactive ASCII Ø with a keyboard and touch equivalent.
+- **Motion language.** One easing (`cubic-bezier(0.7, 0, 0.2, 1)`), one reveal (clip wipe for text, stepped resolve for media), one glitch (short horizontal tear) reserved for state changes such as filter changes or a new active project.
+- **Work index.** Orderly rows with large titles, index numbers, context and discipline. Hover or focus shows a preview and the accent follows the project. On phones each row carries a thumbnail and needs no hover. Index first, editorial project pages second.
+- **Home hero.** Stays large and immediately engaging with full-frame video or its treated still behind the hero copy. The identity study had no media behind the hero, which was a regression, so the hero study (still-to-reel reveal) remains the source of truth for Home.
+
 ## Content-driven accent
 
 Use one interface accent at a time through `--color-accent`. On a project page, draw the accent from the cover or artwork. On a page with multiple featured projects, let the accent follow the active project. Use the shared yellow-green (`#d9fa80`) when there is no active project or the content is monochrome.

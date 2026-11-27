@@ -27,3 +27,7 @@ The next phase builds on the video-led Home, About and Contact, and the three-pr
 1. The workstreams can proceed in parallel. Agent 1 owns shared files and dependency changes. Agents 2 and 3 own their page implementations and coordinate shared changes through Agent 1.
 2. Bring preview URLs and desktop and phone findings to the review. Show the hero beside the existing opening, the Work return flow, and Media’s regular gallery. Keep any graphics-heavy studies optional with a usable static view.
 3. Review **Home → Work → PØRTAL → Back** on desktop and a real phone with pointer, touch, keyboard, and reduced motion. Check that the pages feel like one interface, that the route into Work stays clear, and that browsing position and focus survive the return. Use the review to settle which studies, Media navigation, and further content belong in the first release.
+
+## Next phase: apply the Artifact direction
+
+Soren chose **Artifact with texture** from the identity study. Branch from `ws1-foundation` and follow [CONTRACT.md](redesign/CONTRACT.md). Agent 1 first lands shared tokens and components from the study. Agent 2 applies the direction to Home (large full-frame video hero), About and Contact. Agent 3 rebuilds Work as the index with hover preview and accent follow, then Media and project pages. Do not copy Signal's scanline, CRT or glow effects.

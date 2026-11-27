@@ -34,3 +34,10 @@ Set `--color-accent` once per page or active item (inline style or via the helpe
 ## Done checks (every PR)
 
 `cd redesign && npm run build` passes, keyboard focus and reduced motion checked, essential content visible without JS.
+
+## Workflow notes
+
+- `ws1-foundation` is the integration branch for previews. Merge each workstream PR into it, then Soren pulls it and runs `npm run dev` in `redesign/`.
+- Install dependencies on local disk with `npm ci`. Shared-mount installs fail.
+- Shared study sources live in `src/components/studies/` and `src/pages/studies/`; the identity study there is reference material, not live pages.
+- Shared terminal components (status line, brackets, glitch, reveal) are being promoted into `src/components/terminal/` and `site.css` by Foundation. Request changes through Foundation.
