@@ -23,3 +23,6 @@ export const mediaEntries = [
     projectHref: '/work/overclock/',
   },
 ] as const;
+
+/** Work projects whose covers stand in as Featured highlights until Media has its own featured entries. */
+export const featuredPlaceholderProjects = ['portal', 'wifi-transceiver', 'overclock', 'nighteye', 'astrogolf'];
