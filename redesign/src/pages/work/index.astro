@@ -25,6 +25,11 @@ const cards = await Promise.all(projects.map(async ({ id, data }) => {
 ---
 
 <SiteLayout title="Work" description="Technical and creative projects by Soren Gabor.">
+  <style slot="head" is:global>
+    @media (prefers-reduced-motion: no-preference) {
+      @view-transition { navigation: auto; }
+    }
+  </style>
   <section class="container page-section work-library" data-work-library>
     <header class="library-heading">
       <h1 class="page-title">Work</h1>
@@ -51,7 +56,7 @@ const cards = await Promise.all(projects.map(async ({ id, data }) => {
       {cards.map(({ id, data, cover, width, widths }, index) => (
         <li data-project-card data-categories={data.categories.join(' ')} data-date={data.date}>
           <a class="project-card terminal-panel" id={`project-${id}`} href={`/work/${id}/`} aria-labelledby={`title-${id}`}>
-            <div class="project-media">
+            <div class="project-media" style={`view-transition-name: cover-${id}`}>
               <Image
                 src={cover}
                 alt={data.cover.alt}

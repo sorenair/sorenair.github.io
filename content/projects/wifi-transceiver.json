@@ -7,5 +7,54 @@
   "cover": {
     "src": "/images/work/academic/projects/wifi_pcb.jpg",
     "alt": "Assembled green WiFi Transceiver board with a central ESP32 chip and two push buttons"
-  }
+  },
+  "sections": [
+    {
+      "heading": "The brief",
+      "paragraphs": [
+        "For the ENGR 342 capstone I designed a small WiFi board around an ESP32-C3 from scratch. The goal was to treat the radio as the hard part of the design: a board that connects and programs easily is only useful if the antenna, supply, and clock around the chip are laid out with care."
+      ]
+    },
+    {
+      "heading": "Schematic",
+      "paragraphs": [
+        "The circuit is a USB-C port feeding a 3.3 V regulator, which powers the ESP32-C3 through a bank of decoupling capacitors. A crystal sets the clock and a chip antenna sits on the RF line through a small matching network. Enable and Boot buttons allow resetting and flashing the chip, a status LED shows power, and spare GPIO pins are broken out to headers.",
+        "Keeping the schematic divided by function (power, RF, clock, and I/O) made it easier to check each block before committing it to a layout."
+      ],
+      "images": [
+        {
+          "src": "/images/work/academic/projects/wifi_schematic.png",
+          "alt": "Schematic with USB-C input, voltage regulator, status LED, reset button, boot button, GPIO headers, crystal, antenna, and the ESP32-C3",
+          "caption": "Schematic drawn in KiCad, grouped by power, RF, clock, and I/O."
+        }
+      ]
+    },
+    {
+      "heading": "Layout and antenna placement",
+      "paragraphs": [
+        "High-frequency layout is mostly about what goes where. The decoupling capacitors and crystal are placed around the ESP32-C3, and the antenna is positioned with its matching components so the RF path stays short.",
+        "The board uses two copper layers. The silkscreen carries the course number, project name, and a Ø mark."
+      ],
+      "images": [
+        {
+          "src": "/images/work/academic/projects/wifi_layout.png",
+          "alt": "Two-layer PCB layout in red and blue with the ESP32-C3 at the top centre, a USB-C connector at the bottom, and the project name in the silkscreen",
+          "caption": "PCB layout: red is the top copper layer and blue is the bottom."
+        }
+      ]
+    },
+    {
+      "heading": "The finished board",
+      "paragraphs": [
+        "The finished board was assembled with the ESP32-C3 at its centre and the Enable and Boot buttons within easy reach for flashing over USB-C."
+      ],
+      "images": [
+        {
+          "src": "/images/work/academic/projects/wifi_pcb.jpg",
+          "alt": "Assembled green WiFi Transceiver board with a central ESP32 chip and two push buttons",
+          "caption": "The assembled WiFi Transceiver."
+        }
+      ]
+    }
+  ]
 }
