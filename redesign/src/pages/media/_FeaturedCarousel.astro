@@ -55,6 +55,10 @@ const slides = await Promise.all(items.map(async (item) => {
       </li>
     ))}
   </ul>
+  <div class="lens-stage" data-lens-stage hidden>
+    <div class="lens-mount" data-lens-mount role="group" aria-label="Featured highlights. Drag sideways or use Previous and Next."></div>
+    <a class="lens-link terminal-control" href="#" data-lens-link></a>
+  </div>
   <p class="terminal-label carousel-status" role="status" data-carousel-status></p>
 </section>
 
@@ -69,6 +73,15 @@ const slides = await Promise.all(items.map(async (item) => {
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');
     const root = document.documentElement;
 
+    const stage = carousel.querySelector<HTMLElement>('[data-lens-stage]')!;
+    const mount = carousel.querySelector<HTMLElement>('[data-lens-mount]')!;
+    const lensLink = carousel.querySelector<HTMLAnchorElement>('[data-lens-link]')!;
+    lensLink.addEventListener('click', (event) => {
+      // Media entries open in the page dialog; the carousel card carries that behaviour.
+      if (!lensLink.getAttribute('href')?.startsWith('#') || active < 0) return;
+      event.preventDefault();
+      slides[active].querySelector<HTMLAnchorElement>('a.carousel-card')?.click();
+    });
     let active = -1;
     let frame = 0;
     let settleTimer = 0;
@@ -94,8 +107,8 @@ const slides = await Promise.all(items.map(async (item) => {
       }
     }
 
-    function settle() {
-      const index = nearest();
+    function settle(forced?: number) {
+      const index = typeof forced === 'number' ? forced : nearest();
       if (index === active) return;
       active = index;
       slides.forEach((slide, position) => {
@@ -106,8 +119,14 @@ const slides = await Promise.all(items.map(async (item) => {
       if (accent) root.style.setProperty('--color-active-accent', accent);
       else root.style.removeProperty('--color-active-accent');
       status.textContent = `${index + 1} of ${slides.length}: ${slides[index].querySelector('.carousel-title')?.textContent ?? ''}`;
-      buttons[0].disabled = index === 0;
-      buttons[1].disabled = index === slides.length - 1;
+      const link = slides[index].querySelector<HTMLAnchorElement>('a.carousel-card')!;
+      if (lensLink) {
+        lensLink.href = link.getAttribute('href') ?? '#';
+        lensLink.textContent = `View ${slides[index].querySelector('.carousel-title')?.textContent ?? ''}`;
+      }
+      // The glass row wraps around, so only the plain scroller has ends.
+      buttons[0].disabled = !lens && index === 0;
+      buttons[1].disabled = !lens && index === slides.length - 1;
     }
 
     function onScroll() {
@@ -144,8 +163,13 @@ const slides = await Promise.all(items.map(async (item) => {
       glideTo(scrollTarget(next));
     }
 
+    let lens: { step(delta: number): void; goTo(index: number): void; destroy(): void } | undefined;
     for (const button of buttons) {
-      button.addEventListener('click', () => goTo((active < 0 ? 0 : active) + Number(button.dataset.carouselStep)));
+      button.addEventListener('click', () => {
+        const delta = Number(button.dataset.carouselStep);
+        if (lens) lens.step(delta);
+        else goTo((active < 0 ? 0 : active) + delta);
+      });
     }
 
     let drag: { id: number; x: number; left: number; lastX: number; lastTime: number; velocity: number } | undefined;
@@ -191,6 +215,54 @@ const slides = await Promise.all(items.map(async (item) => {
     track.addEventListener('scrollend', settle);
     addEventListener('resize', () => { paint(); settle(); });
     reduced.addEventListener('change', paint);
+
+    // The WebGL liquid glass row replaces the scroller when the device can run it. The scroller
+    // above stays as the fallback for reduced motion, small screens, and failed WebGL.
+    async function enableLens() {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl2') ?? canvas.getContext('webgl');
+      if (!gl || reduced.matches || innerWidth < 700) return;
+
+      const [{ createCarousel }, { CONFIG, ENTRY, LENS }] = await Promise.all([
+        import('../../media-lens/engine.js'),
+        import('../../media-lens/config.js'),
+      ]);
+      carousel!.classList.add('is-lens');
+      stage.hidden = false;
+      CONFIG.PANEL_H = Math.round(mount.clientHeight * 0.62);
+      ENTRY.enabled = false;
+      // Fit the lens to a wide, short strip so its rim stays inside the frame.
+      LENS.sizeX = 0.5;
+      LENS.sizeY = 0.82;
+      const items = slides.map((slide) => {
+        const image = slide.querySelector('img')!;
+        return { src: image.currentSrc || image.src, aspect: null };
+      });
+      let settleDelay = 0;
+      try {
+        const engine = createCarousel(mount, {
+          items,
+          background: 0x121212,
+          onActiveChange: (index: number) => {
+            clearTimeout(settleDelay);
+            settleDelay = window.setTimeout(() => settle(index), 140);
+          },
+          onSelect: (index: number) => slides[index].querySelector<HTMLAnchorElement>('a.carousel-card')?.click(),
+        });
+        lens = engine;
+        active = -1;
+        settle(0);
+      } catch {
+        carousel!.classList.remove('is-lens');
+        stage.hidden = true;
+        lens = undefined;
+      }
+    }
+    enableLens().catch(() => {
+      carousel.classList.remove('is-lens');
+      stage.hidden = true;
+      lens = undefined;
+    });
 
     controls.hidden = false;
     // Start on the first slide centered; the track padding lets edge slides reach the middle.
@@ -313,6 +385,35 @@ const slides = await Promise.all(items.map(async (item) => {
       text-decoration: underline;
       text-underline-offset: 0.22em;
     }
+  }
+
+  .lens-stage:not([hidden]) {
+    display: grid;
+    gap: var(--space-1);
+    margin-block-start: var(--space-1);
+  }
+
+  .lens-mount {
+    position: relative;
+    block-size: clamp(22rem, 40vw, 34rem);
+    overflow: hidden;
+    background: var(--color-background);
+    cursor: grab;
+    touch-action: pan-y;
+  }
+
+  .lens-mount :global(canvas) {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+  }
+
+  .lens-link {
+    justify-self: center;
+  }
+
+  .is-lens .carousel-track {
+    display: none;
   }
 
   .carousel-status {
