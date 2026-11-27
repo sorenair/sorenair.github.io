@@ -5,7 +5,7 @@ The Media page (`/media/`) reads one JSON file per item from this folder. The fi
 ## Add a YouTube thumbnail or an Instagram post
 
 1. Put the image in `images/media/youtube/` or `images/media/instagram/`. Use a lowercase name with hyphens, such as `dakota-thumbnail.jpg`. JPG, PNG, or WebP all work.
-2. Copy `by-the-water.json` to a new file here, such as `dakota.json`, and edit it:
+2. Copy `dakota.json` to a new file here, such as `dakota.json`, and edit it:
 
 ```json
 {

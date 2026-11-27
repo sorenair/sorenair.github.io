@@ -1,7 +1,6 @@
 ---
 import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
-import StatusLine from '../../components/terminal/StatusLine.astro';
 import { getCoverAccent } from '../../cover-accent';
 import SiteLayout from '../../layouts/SiteLayout.astro';
 import { loadProjectCover } from '../../project-cover';
@@ -45,7 +44,6 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
   </style>
   <section class="work-library module-grid" data-work-library>
     <div class="container library-top">
-      <StatusLine items={[`NODE ${rows.length}`]} />
       <header class="library-heading">
         <h1 class="display-title" data-reveal>Work</h1>
         <p class="terminal-label" role="status" data-project-status>{rows.length} {rows.length === 1 ? 'project' : 'projects'} shown</p>
