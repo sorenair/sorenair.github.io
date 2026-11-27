@@ -1,0 +1,381 @@
+---
+import { Image, getImage } from 'astro:assets';
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import { mediaEntries } from '../../media-entries';
+import { loadProjectCover as loadCover } from '../../project-cover';
+
+const mediaLabels = { video: 'Video', photo: 'Photography', artwork: 'Artwork' };
+const entries = await Promise.all(mediaEntries.map(async (entry) => {
+  if (entry.kind === 'video') return entry;
+
+  const cover = await loadCover(entry.coverSrc);
+  const width = Math.min(900, cover.width);
+  const widths = [360, 540, 720].filter((candidate) => candidate < width).concat(width);
+  if (entry.kind === 'artwork') return { ...entry, cover, width, widths };
+
+  const fullPhoto = await getImage({ src: cover, width: Math.min(1600, cover.width), format: 'webp' });
+  return { ...entry, cover, width, widths, fullPhotoHref: fullPhoto.src };
+}));
+const featured = entries.filter((entry) => entry.kind === 'video' || entry.kind === 'artwork');
+---
+
+<SiteLayout title="Media" description="Photography, video, and artwork by Soren Gabor.">
+  <div class="page-section media-gallery">
+    <h1 class="page-title">Media</h1>
+    <section class="featured-media" aria-labelledby="featured-media-title">
+      <h2 class="terminal-label" id="featured-media-title">Featured</h2>
+      <ul class="featured-row" role="list">
+        {featured.map((entry) => (
+          <li>
+            <a href={`#${entry.id}`} class="featured-tile">
+              {entry.kind === 'video' ? (
+                <img src={entry.poster} alt="" width="1280" height="720" />
+              ) : (
+                <Image src={entry.cover} alt="" width={entry.width} widths={entry.widths} sizes="50vw" />
+              )}
+              <span>{entry.title}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+    <div class="media-wall" id="media-wall" aria-label="Media library. Drag or use the arrow keys to browse." role="region" hidden>
+      {Array.from({ length: 35 }, (_, index) => (
+        <a class="wall-tile" data-wall-tile data-row={Math.floor(index / 7) - 2} data-column={index % 7 - 3} tabindex="-1"></a>
+      ))}
+    </div>
+    <ul class="media-grid" id="media-gallery" aria-label="Media library" role="list">
+      {entries.map((entry) => (
+        <li class="media-entry" id={entry.id} tabindex="-1">
+          <figure>
+            <div class="media-visual">
+              {entry.kind === 'video' ? (
+                <video
+                  controls
+                  playsinline
+                  preload="none"
+                  poster={entry.poster}
+                  width="1280"
+                  height="720"
+                  aria-labelledby={`title-${entry.id}`}
+                  aria-describedby={`description-${entry.id}`}
+                >
+                  <source src={entry.src} type="video/mp4" />
+                  <a href={entry.src}>Open the reel</a>
+                </video>
+              ) : (
+                <Image
+                  src={entry.cover}
+                  alt={entry.alt}
+                  width={entry.width}
+                  widths={entry.widths}
+                  sizes="(min-width: 64rem) 34vw, (min-width: 38rem) 50vw, 100vw"
+                />
+              )}
+            </div>
+            <figcaption>
+              <p class="terminal-label">{mediaLabels[entry.kind]}</p>
+              <h2 class="section-title" id={`title-${entry.id}`} tabindex="-1">{entry.title}</h2>
+              {entry.kind === 'video' && <p class="lead" id={`description-${entry.id}`}>{entry.description}</p>}
+              {entry.kind === 'photo' && (
+                <a class="text-link" href={entry.fullPhotoHref} aria-label="View the full photo, By the water">View full photo</a>
+              )}
+              {entry.kind === 'artwork' && (
+                <a class="text-link" href={entry.projectHref} aria-label="View the ØVERCLOCK project">View project</a>
+              )}
+            </figcaption>
+          </figure>
+        </li>
+      ))}
+    </ul>
+    <dialog class="media-detail terminal-panel" id="media-detail" aria-label="Media item">
+      <form method="dialog"><button class="terminal-control">Close</button></form>
+      <div data-media-detail></div>
+    </dialog>
+  </div>
+</SiteLayout>
+
+<script>
+  const wall = document.querySelector<HTMLElement>('#media-wall');
+  const gallery = document.querySelector<HTMLElement>('#media-gallery');
+  const dialog = document.querySelector<HTMLDialogElement>('#media-detail');
+  const detail = dialog?.querySelector('[data-media-detail]');
+
+  if (wall && gallery && dialog && detail && typeof dialog.showModal === 'function') {
+    const entries = [...gallery.querySelectorAll<HTMLElement>('.media-entry')].map((entry) => ({
+      entry,
+      figure: entry.querySelector('figure')!,
+      title: entry.querySelector('h2')!.textContent!,
+      image: entry.querySelector('video')?.poster ?? entry.querySelector('img')!.src,
+    }));
+    const tiles = [...wall.querySelectorAll<HTMLAnchorElement>('[data-wall-tile]')];
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    let originX = 0;
+    let originY = 0;
+    let stepX = 0;
+    let stepY = 0;
+    let drag: { x: number; y: number; id: number } | undefined;
+    let dragged = false;
+    let opened: typeof entries[number] | undefined;
+
+    function draw(dx = 0, dy = 0) {
+      if (!wall) return;
+      const width = wall.clientWidth;
+      const height = wall.clientHeight;
+      stepX = Math.max(116, width / (width < 600 ? 2.65 : 4.7));
+      stepY = height / 2.65;
+      const shiftX = Math.round(dx / stepX);
+      const shiftY = Math.round(dy / stepY);
+      for (const tile of tiles) {
+        const column = Number(tile.dataset.column);
+        const row = Number(tile.dataset.row);
+        const x = (column - shiftX) * stepX + dx;
+        const y = (row - shiftY) * stepY + dy;
+        const horizontalBend = Math.max(-1, Math.min(1, x / (width / 2)));
+        const verticalBend = Math.max(-1, Math.min(1, y / (height / 2)));
+        const offset = originX + column - shiftX + 2 * (originY + row - shiftY);
+        const item = entries[((offset % entries.length) + entries.length) % entries.length];
+        tile.style.width = `${stepX - 8}px`;
+        tile.style.height = `${stepY - 8}px`;
+        tile.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) rotateY(${-horizontalBend * 24}deg) rotateX(${verticalBend * 20}deg) scale(${1 - Math.min(0.2, Math.hypot(horizontalBend, verticalBend) * 0.13)})`;
+        tile.style.backgroundImage = `url("${item.image}")`;
+        tile.href = `#${item.entry.id}`;
+        tile.setAttribute('aria-label', item.title);
+        tile.tabIndex = row === 0 && column >= 0 && column < entries.length && (width >= 600 || column === 0) ? 0 : -1;
+      }
+    }
+
+    function openItem(id: string) {
+      if (!dialog || !detail) return;
+      opened = entries.find(({ entry }) => `#${entry.id}` === id);
+      if (!opened) return;
+      detail.append(opened.figure);
+      dialog.setAttribute('aria-label', opened.title);
+      dialog.showModal();
+    }
+
+    dialog.addEventListener('close', () => {
+      opened?.figure.querySelector('video')?.pause();
+      if (opened) opened.entry.append(opened.figure);
+      opened = undefined;
+    });
+
+    for (const link of [...tiles, ...document.querySelectorAll<HTMLAnchorElement>('.featured-tile')]) {
+      link.addEventListener('click', (event) => {
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        if (!wall.contains(link) || !dragged) openItem(link.hash);
+      });
+    }
+
+    wall.addEventListener('keydown', (event) => {
+      const direction: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+      const step = direction[event.key];
+      if (!step) return;
+      event.preventDefault();
+      originX += step[0];
+      originY += step[1];
+      draw();
+    });
+
+    wall.addEventListener('pointerdown', (event) => {
+      if (!event.isPrimary || event.button !== 0) return;
+      dragged = false;
+      drag = { x: event.clientX, y: event.clientY, id: event.pointerId };
+    });
+    wall.addEventListener('pointermove', (event) => {
+      if (drag?.id !== event.pointerId) return;
+      const x = event.clientX - drag.x;
+      const y = event.clientY - drag.y;
+      if (Math.hypot(x, y) < 8 && !dragged) return;
+      if (!dragged) wall.setPointerCapture(event.pointerId);
+      dragged = true;
+      if (!reduced.matches) draw(x, y);
+    });
+    wall.addEventListener('pointerup', (event) => {
+      if (drag?.id !== event.pointerId) return;
+      const x = event.clientX - drag.x;
+      const y = event.clientY - drag.y;
+      drag = undefined;
+      if (!dragged) return;
+      originX -= Math.round(x / stepX);
+      originY -= Math.round(y / stepY);
+      draw();
+      setTimeout(() => { dragged = false; }, 0);
+    });
+    wall.addEventListener('pointercancel', () => { drag = undefined; dragged = false; draw(); });
+    wall.addEventListener('dragstart', (event) => event.preventDefault());
+    gallery.hidden = true;
+    wall.hidden = false;
+    draw();
+    new ResizeObserver(() => draw()).observe(wall);
+    if (location.hash) openItem(location.hash);
+  }
+</script>
+
+<style>
+  .media-wall {
+    position: relative;
+    height: clamp(26rem, 72svh, 56rem);
+    margin-block-start: var(--space-3);
+    overflow: hidden;
+    perspective: 54rem;
+    touch-action: pan-y pinch-zoom;
+    cursor: grab;
+    background: var(--color-background);
+  }
+
+  .media-wall:active { cursor: grabbing; }
+
+  .wall-tile {
+    position: absolute;
+    inset: 50% auto auto 50%;
+    background: var(--color-surface) center / cover no-repeat;
+    cursor: inherit;
+  }
+
+  .wall-tile:hover { box-shadow: inset 0 0 0 2px var(--color-accent); }
+
+  .media-detail {
+    width: min(92vw, 64rem);
+    max-height: 90svh;
+    padding: var(--space-2);
+    color: var(--color-text);
+  }
+
+  .media-detail::backdrop { background: #000c; }
+  .media-detail form { margin-block-end: var(--space-2); text-align: end; }
+  .media-detail .media-visual { max-height: 65svh; }
+  .media-grid[hidden] { display: none; }
+
+  .media-gallery {
+    padding-block-start: var(--space-4);
+  }
+
+  .media-gallery > h1,
+  .featured-media h2 {
+    margin-inline: var(--gutter);
+  }
+
+  .featured-media {
+    margin-block-start: var(--space-3);
+  }
+
+  .featured-row,
+  .media-grid {
+    display: grid;
+    gap: 1px;
+    padding: 0;
+    list-style: none;
+    background: var(--color-rule);
+  }
+
+  .featured-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: var(--space-1) 0 0;
+  }
+
+  .featured-tile {
+    position: relative;
+    display: flex;
+    align-items: end;
+    min-block-size: clamp(8rem, 17vw, 17rem);
+    padding: var(--space-2) var(--gutter);
+    background: linear-gradient(transparent, #000d);
+    isolation: isolate;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .featured-tile img {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .featured-tile span {
+    padding: 0.25rem 0.5rem;
+    background: var(--color-background);
+  }
+
+  .featured-tile:focus-visible,
+  .media-entry:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -3px;
+  }
+
+  .featured-tile:hover span {
+    text-decoration: underline;
+  }
+
+  .media-grid {
+    grid-template-columns: minmax(0, 1fr);
+    margin: var(--space-4) 0 0;
+    border-block: 1px solid var(--color-rule);
+  }
+
+  .media-entry {
+    background: var(--color-background);
+  }
+
+  figure {
+    margin: 0;
+  }
+
+  .media-visual {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 8 / 5;
+    background: var(--color-surface);
+    overflow: hidden;
+  }
+
+  .media-visual :is(img, video) {
+    inline-size: 100%;
+    block-size: 100%;
+    min-block-size: 0;
+    object-fit: contain;
+  }
+
+  .media-visual video {
+    background: var(--color-background);
+  }
+
+  .media-visual video:focus-visible {
+    outline: 2px solid var(--color-accent);
+  }
+
+  figcaption {
+    padding: var(--space-2) var(--gutter);
+  }
+
+  figcaption .section-title {
+    margin-block-start: var(--space-1);
+    font-size: clamp(1.375rem, 1.15rem + 1vw, 2rem);
+  }
+
+  figcaption .section-title:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+
+  figcaption .lead {
+    margin-block-start: var(--space-1);
+  }
+
+  @media (min-width: 38rem) {
+    .media-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+  }
+
+  @media (min-width: 64rem) {
+    .media-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+</style>

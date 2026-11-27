@@ -1,0 +1,67 @@
+---
+interface Props {
+  desktopMedia: string;
+}
+
+const { desktopMedia } = Astro.props;
+
+// Clear the reflection first, then work outward across the still.
+const bands = [
+  { start: '38%', end: '44%', delay: '0ms', slip: '0.4rem' },
+  { start: '24%', end: '62%', delay: '72ms', slip: '-1rem' },
+  { start: '56%', end: '28%', delay: '116ms', slip: '0.75rem' },
+  { start: '0%', end: '76%', delay: '162ms', slip: '-1.25rem' },
+  { start: '72%', end: '0%', delay: '212ms', slip: '0.9rem' },
+];
+---
+
+<div class="decode-poster" aria-hidden="true">
+  {bands.map(({ start, end, delay, slip }) => (
+    <picture class="decode-band" style={{ '--start': start, '--end': end, '--delay': delay, '--slip': slip }}>
+      <source media={desktopMedia} srcset="/home/reel-decoded-desktop.webp" width="1280" height="720" />
+      <img src="/home/reel-decoded-mobile.webp" width="720" height="540" alt="" fetchpriority="high" />
+    </picture>
+  ))}
+</div>
+
+<style>
+  .decode-poster,
+  .decode-band,
+  .decode-band img {
+    position: absolute;
+    inset: 0;
+  }
+
+  .decode-poster {
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .decode-band {
+    clip-path: inset(var(--start) 0 var(--end) 0);
+    background: var(--color-surface);
+  }
+
+  .decode-band img {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  :global(.reel[data-playing]) .decode-band {
+    opacity: 0;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    :global(.reel[data-playing]) .decode-band {
+      animation: decode-band var(--motion-project) var(--ease-out) var(--delay) both;
+    }
+  }
+
+  @keyframes decode-band {
+    0% { opacity: 1; transform: translateX(0); }
+    19% { opacity: 0.94; transform: translateX(var(--slip)); }
+    47% { opacity: 0.65; transform: translateX(0); }
+    100% { opacity: 0; transform: translateX(0); }
+  }
+</style>

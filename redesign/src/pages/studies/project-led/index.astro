@@ -1,0 +1,225 @@
+---
+import { Image } from 'astro:assets';
+import { getEntry } from 'astro:content';
+import HomeReel from '../../../components/home/HomeReel.astro';
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+import { loadProjectCover } from '../../../project-cover';
+
+const projects = await Promise.all(
+  (['portal', 'wifi-transceiver', 'overclock'] as const).map(async (slug) => {
+    const { id, data } = await getEntry('projects', slug);
+    return { id, data, cover: await loadProjectCover(data.cover.src) };
+  }),
+);
+const [featured, ...previews] = projects;
+---
+
+<SiteLayout title="Project-led home study" description="Soren Gabor’s portfolio of electrical engineering and creative work.">
+  <meta slot="head" name="robots" content="noindex" />
+
+  <div class="container project-led">
+    <div class="introduction">
+      <h1 class="page-title">Soren Gabor</h1>
+      <p class="lead">I design electronic systems and make creative work across video, music, and games.</p>
+      <a class="work-link" href="/work/">View work</a>
+    </div>
+
+    <article>
+      <a class="feature" href={`/work/${featured.id}/`} aria-labelledby="featured-title">
+        <Image
+          src={featured.cover}
+          alt={featured.data.cover.alt}
+          width={1440}
+          widths={[400, 640, 960, 1200, 1440]}
+          sizes="(min-width: 88rem) 56rem, (min-width: 56rem) 65vw, 100vw"
+          loading="eager"
+          fetchpriority="high"
+        />
+        <div class="feature-copy">
+          <h2 class="section-title" id="featured-title">{featured.data.title}</h2>
+          <p class="lead">{featured.data.summary}</p>
+        </div>
+      </a>
+    </article>
+
+    <ul class="project-list">
+      {previews.map(({ id, data, cover }) => (
+        <li>
+          <a class="preview" href={`/work/${id}/`} aria-labelledby={`preview-${id}`}>
+            <Image
+              src={cover}
+              alt={data.cover.alt}
+              width={640}
+              widths={[240, 400, 640]}
+              sizes="(min-width: 56rem) 26vw, (min-width: 38rem) 36vw, 100vw"
+            />
+            <div>
+              <h2 class="section-title" id={`preview-${id}`}>{data.title}</h2>
+              <p class="lead">{data.summary}</p>
+            </div>
+          </a>
+        </li>
+      ))}
+    </ul>
+
+    <section class="reel-section" aria-labelledby="reel-title">
+      <h2 class="section-title" id="reel-title">Video reel</h2>
+      <HomeReel />
+    </section>
+  </div>
+</SiteLayout>
+
+<style>
+  .project-led {
+    padding-block: var(--space-4) var(--space-5);
+  }
+
+  .introduction {
+    display: grid;
+    align-items: end;
+    justify-items: start;
+    gap: var(--space-2);
+    margin-block-end: var(--space-3);
+  }
+
+  .introduction .page-title {
+    text-wrap: balance;
+  }
+
+  .introduction .lead {
+    max-inline-size: 29ch;
+  }
+
+  .work-link {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--tap-target);
+    padding: var(--space-1) var(--space-2);
+    background: var(--color-text);
+    color: var(--color-background);
+    font: 650 0.9375rem / 1.3 var(--font-body);
+    text-decoration: none;
+    transition: background-color var(--motion-fast) var(--ease-out);
+  }
+
+  .feature,
+  .preview {
+    display: grid;
+    overflow-wrap: normal;
+    text-decoration: none;
+  }
+
+  .feature {
+    background: var(--color-surface);
+  }
+
+  .feature img,
+  .preview img {
+    inline-size: 100%;
+  }
+
+  .feature-copy {
+    align-self: end;
+    padding: var(--space-3);
+  }
+
+  .feature .section-title {
+    font-size: clamp(2rem, 1.15rem + 3.5vw, 4.5rem);
+  }
+
+  .feature .lead,
+  .preview .lead {
+    margin-block-start: var(--space-1);
+    max-inline-size: 42ch;
+  }
+
+  .project-list {
+    margin: var(--space-3) 0 0;
+    padding: 0;
+    border-block-start: 1px solid var(--color-rule);
+    list-style: none;
+  }
+
+  .project-list li {
+    border-block-end: 1px solid var(--color-rule);
+  }
+
+  .preview {
+    align-items: center;
+    gap: var(--space-2);
+    padding-block: var(--space-2);
+  }
+
+  .preview img {
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    background: var(--color-surface);
+  }
+
+  .feature h2,
+  .preview h2 {
+    transition: color var(--motion-fast) var(--ease-out);
+  }
+
+  .reel-section {
+    inline-size: min(100%, 60rem);
+    margin: var(--space-5) auto 0;
+  }
+
+  .reel-section h2 {
+    margin-block-end: var(--space-2);
+  }
+
+  @media (min-width: 38rem) {
+    .preview {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+      gap: var(--space-3);
+    }
+  }
+
+  @media (min-width: 56rem) {
+    .introduction {
+      grid-template-columns: minmax(0, 1fr) minmax(13rem, max-content) max-content;
+      gap: var(--space-3);
+    }
+
+    .introduction .page-title {
+      font-size: clamp(3.75rem, 6.25vw, 6.5rem);
+    }
+
+    .feature {
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    }
+
+    .feature img {
+      block-size: 100%;
+      object-fit: cover;
+    }
+
+    .preview {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+    }
+  }
+
+  @media (hover: hover) {
+    .work-link:hover {
+      background: var(--color-accent);
+    }
+
+    .feature:hover h2,
+    .preview:hover h2 {
+      color: var(--color-accent);
+    }
+  }
+
+  .work-link:active {
+    background: var(--color-accent);
+    transition-duration: 0ms;
+  }
+
+  .feature:active h2,
+  .preview:active h2 {
+    color: var(--color-accent);
+    transition-duration: 0ms;
+  }
+</style>

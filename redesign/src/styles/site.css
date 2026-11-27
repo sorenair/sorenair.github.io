@@ -1,0 +1,298 @@
+:root {
+  color-scheme: dark;
+  --color-background: #121212;
+  --color-surface: #1d1d1d;
+  --color-text: #f4f4f1;
+  --color-muted: #b6b6b2;
+  --color-rule: #414141;
+  --color-control-edge: #707070;
+  /* Interactive views may set --color-active-accent on the document root on selection. */
+  --color-accent: var(--color-active-accent, var(--color-page-accent, #d9fa80));
+
+  --font-body: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --text-body: clamp(1rem, 0.95rem + 0.22vw, 1.125rem);
+  --text-title: clamp(2.75rem, 1.55rem + 6vw, 7.5rem);
+  --text-heading: clamp(1.5rem, 1.15rem + 1.75vw, 2.75rem);
+
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: clamp(1.25rem, 0.9rem + 1.5vw, 2.25rem);
+  --space-4: clamp(2rem, 1.3rem + 3vw, 4.5rem);
+  --space-5: clamp(3rem, 1.9rem + 5vw, 7rem);
+  --gutter: clamp(1rem, 0.4rem + 2.25vw, 3rem);
+  --site-width: 88rem;
+  --readable-width: 60ch;
+  --tap-target: 2.75rem;
+  --panel-radius: 0.125rem;
+
+  --motion-fast: 140ms;
+  --motion-project: 300ms;
+  --ease-out: cubic-bezier(0.2, 0.75, 0.25, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100vh;
+  min-block-size: 100svh;
+  margin: 0;
+  background: var(--color-background);
+  color: var(--color-text);
+  font: var(--text-body) / 1.55 var(--font-body);
+}
+
+main {
+  flex: 1;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+img,
+video {
+  display: block;
+  max-inline-size: 100%;
+  block-size: auto;
+}
+
+a {
+  color: inherit;
+  text-underline-offset: 0.22em;
+  overflow-wrap: anywhere;
+}
+
+:is(a, button, input, select, textarea):focus-visible,
+#main-content:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+#main-content:focus-visible {
+  outline-offset: -3px;
+}
+
+.container {
+  inline-size: min(100%, var(--site-width));
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.page-section {
+  padding-block: var(--space-5);
+}
+
+.page-title,
+.section-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.page-title {
+  font-size: var(--text-title);
+  line-height: 0.98;
+  letter-spacing: -0.063em;
+}
+
+.section-title {
+  font-size: var(--text-heading);
+  line-height: 1.1;
+  letter-spacing: -0.032em;
+}
+
+.lead {
+  max-inline-size: var(--readable-width);
+  color: var(--color-muted);
+}
+
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--tap-target);
+}
+
+.terminal-panel {
+  border: 1px solid var(--color-rule);
+  border-radius: var(--panel-radius);
+  background-color: var(--color-surface);
+}
+
+.terminal-label {
+  color: var(--color-muted);
+  font: 0.875rem / 1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.terminal-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: var(--tap-target);
+  min-inline-size: var(--tap-target);
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--color-control-edge);
+  border-radius: var(--panel-radius);
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font: 600 0.875rem / 1.3 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out),
+    background-color var(--motion-fast) var(--ease-out);
+}
+
+.terminal-control:is([aria-current="page"], [aria-current="location"], [aria-pressed="true"]) {
+  background-color: var(--color-surface);
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+}
+
+.terminal-control[aria-current="location"] {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+  color: var(--color-background);
+}
+
+.terminal-control:active {
+  border-color: var(--color-accent);
+  background-color: var(--color-surface);
+  color: var(--color-accent);
+  transition-duration: 0ms;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 2;
+  inset-block-start: var(--space-1);
+  inset-inline-start: var(--gutter);
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-background);
+}
+
+.skip-link:not(:focus) {
+  clip-path: inset(50%);
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.site-header {
+  border-block-end: 1px solid var(--color-rule);
+}
+
+.site-header__inner,
+.site-footer__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+  min-block-size: 4.625rem;
+  padding-block: var(--space-1);
+}
+
+.site-mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: 3rem;
+  block-size: 3rem;
+}
+
+.site-mark::after {
+  position: absolute;
+  inset: -1px -1px auto auto;
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-block-start: 1px solid var(--color-muted);
+  border-inline-end: 1px solid var(--color-muted);
+  border-start-end-radius: var(--panel-radius);
+  content: '';
+  pointer-events: none;
+}
+
+.site-mark img {
+  inline-size: 2.75rem;
+  filter: invert(1);
+}
+
+.site-mark:active img {
+  opacity: 0.72;
+}
+
+.site-header nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+@media (max-width: 24rem) {
+  .site-header .terminal-control {
+    padding-inline: var(--space-1);
+  }
+}
+
+.text-link:active {
+  color: var(--color-accent);
+}
+
+.site-footer {
+  border-block-start: 1px solid var(--color-rule);
+}
+
+@media (min-width: 36rem) {
+  .site-header__inner::before {
+    order: 1;
+    flex: 1;
+    block-size: 0.375rem;
+    background: repeating-linear-gradient(90deg, var(--color-rule) 0 1px, transparent 1px 0.5rem);
+    content: '';
+  }
+
+  .site-header nav {
+    order: 2;
+  }
+}
+
+@media (hover: hover) {
+  .terminal-control:hover:not([aria-current="location"]) {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  .terminal-control[aria-current="location"]:hover:not(:active) {
+    box-shadow: inset 0 -3px 0 var(--color-background);
+  }
+
+  .site-mark:hover::after {
+    border-color: var(--color-accent);
+  }
+
+  .text-link:hover {
+    color: var(--color-accent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-project: 0ms;
+  }
+}

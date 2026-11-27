@@ -1,0 +1,12 @@
+---
+import AsciiPoster from '../../../components/home/AsciiPoster.astro';
+import HomeOpening from '../../../components/home/HomeOpening.astro';
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+---
+
+<SiteLayout title="ASCII poster study" description="Soren Gabor’s portfolio of electrical engineering and creative work.">
+  <meta slot="head" name="robots" content="noindex" />
+  <HomeOpening>
+    <AsciiPoster slot="hero" />
+  </HomeOpening>
+</SiteLayout>

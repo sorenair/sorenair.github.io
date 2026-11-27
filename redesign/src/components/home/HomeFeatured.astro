@@ -1,0 +1,56 @@
+---
+import { Image } from 'astro:assets';
+import { getEntry } from 'astro:content';
+import { loadProjectCover } from '../../project-cover';
+
+interface Props {
+  class?: string;
+}
+
+const featured = await getEntry('projects', 'portal');
+const cover = await loadProjectCover(featured.data.cover.src);
+---
+
+<article class:list={['featured', Astro.props.class]}>
+  <Image
+    src={cover}
+    alt={featured.data.cover.alt}
+    width={720}
+    widths={[360, 540, 720]}
+    sizes="(min-width: 56rem) 28vw, 100vw"
+  />
+  <div class="featured-copy">
+    <h2 class="section-title"><a class="text-link" href={`/work/${featured.id}/`}>{featured.data.title}</a></h2>
+    <p class="lead">{featured.data.summary}</p>
+  </div>
+</article>
+
+<style>
+  .featured {
+    display: grid;
+    align-items: center;
+    gap: var(--space-2);
+    border-block: 1px solid var(--color-rule);
+    padding-block: var(--space-2);
+  }
+
+  .featured img {
+    inline-size: 100%;
+    background: var(--color-surface);
+  }
+
+  .featured .text-link {
+    text-decoration: none;
+  }
+
+  .featured .lead {
+    max-inline-size: 42ch;
+  }
+
+  @media (min-width: 40rem) {
+    .featured {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+      gap: var(--space-3);
+    }
+  }
+</style>

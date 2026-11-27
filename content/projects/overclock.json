@@ -1,0 +1,11 @@
+{
+  "title": "ØVERCLOCK",
+  "categories": ["creative"],
+  "summary": "A one-on-one indie fighting game where androids battle in the ruins of a fragmented system.",
+  "context": "Independent game development",
+  "technologies": ["Godot", "Aseprite"],
+  "cover": {
+    "src": "/images/work/personal/game_dev/overclock_mainmenu.png",
+    "alt": "ØVERCLOCK title above pixel-art industrial towers and clouds"
+  }
+}
