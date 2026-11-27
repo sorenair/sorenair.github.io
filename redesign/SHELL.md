@@ -24,6 +24,22 @@ Soren chose the **Artifact** direction from the identity study (`/studies/identi
 - **Work index.** Orderly rows with large titles, index numbers, context and discipline. Hover or focus shows a preview and the accent follows the project. On phones each row carries a thumbnail and needs no hover. Index first, editorial project pages second.
 - **Home hero.** Stays large and immediately engaging with full-frame video or its treated still behind the hero copy. The identity study had no media behind the hero, which was a regression, so the hero study (still-to-reel reveal) remains the source of truth for Home.
 
+### Artifact kit (shared, in `site.css` and `src/scripts/terminal.ts`)
+
+| Piece | Use |
+| --- | --- |
+| `--module`, `.module-grid` | Visible Ø grid lines behind a section. |
+| `.display-title` | Oversized grotesk headline with tight tracking. |
+| `body::after` grain | Global static grain. Tune with `--grain-opacity` (0.05). Do not animate. |
+| `.bracketed` | Corner brackets that take the active accent. |
+| `StatusLine` (`components/terminal/`) | Mono readout with path and live clock. The footer already has one; pass `items` for counters. |
+| `data-reveal` | One reveal: clip wipe the first time the element scrolls in. Content below the fold only, so the first paint is never hidden. |
+| `glitch(el)` from `scripts/terminal.ts` | One glitch, for state changes only (filter change, new active project). |
+| `.resolve` | Stepped posterized-to-clear resolve when media becomes active. |
+| `--ease-artifact`, `--motion-reveal`, `--motion-glitch` | The single easing and durations. All become zero under reduced motion. |
+
+Page-specific layout stays in the page. Ask Foundation before adding global classes.
+
 ## Content-driven accent
 
 Use one interface accent at a time through `--color-accent`. On a project page, draw the accent from the cover or artwork. On a page with multiple featured projects, let the accent follow the active project. Use the shared yellow-green (`#d9fa80`) when there is no active project or the content is monochrome.
