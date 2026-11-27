@@ -1,9 +1,11 @@
 ---
+import HeroDecode from './HeroDecode.astro';
 import HomeReel from './HomeReel.astro';
 ---
 
 <section class="hero bracketed" aria-labelledby="hero-title">
-  <HomeReel autoplay background decode />
+  <HomeReel autoplay background />
+  <HeroDecode />
   <div class="grid-layer module-grid" aria-hidden="true"></div>
 
   <div class="container hero-bar">
@@ -15,7 +17,7 @@ import HomeReel from './HomeReel.astro';
   </div>
 
   <div class="container hero-copy">
-    <h1 class="hero-title display-title" id="hero-title">
+    <h1 class="hero-title display-title" data-reveal id="hero-title">
       <span class="line"><span>Soren</span></span>
       <span class="line"><span>Gabor<i aria-hidden="true">Ø</i></span></span>
     </h1>
@@ -42,6 +44,7 @@ import HomeReel from './HomeReel.astro';
     --color-rule: #f4f4f140;
     position: relative;
     isolation: isolate;
+    overflow-x: clip;
     display: grid;
     grid-template-rows: auto 1fr;
     min-block-size: clamp(32rem, 92svh, 64rem);
@@ -49,15 +52,19 @@ import HomeReel from './HomeReel.astro';
     border-block-end: 1px solid var(--color-rule);
   }
 
-  .hero > :global(.reel) { z-index: -2; }
+  .hero > :global(.reel) { z-index: 0; }
+  .hero > :global(.reel .reel-control) { z-index: 3; }
 
   .hero > .grid-layer {
     position: absolute;
+    z-index: 0;
     inset: 0;
     pointer-events: none;
   }
 
   .hero-bar {
+    position: relative;
+    z-index: 2;
     align-self: start;
     padding-block: var(--space-2);
     pointer-events: none;
@@ -81,6 +88,8 @@ import HomeReel from './HomeReel.astro';
   }
 
   .hero-copy {
+    position: relative;
+    z-index: 2;
     align-self: end;
     padding-block: var(--space-4);
     pointer-events: none;
@@ -92,8 +101,7 @@ import HomeReel from './HomeReel.astro';
     text-shadow: 0 0 2rem #0008;
   }
 
-  .line { display: block; overflow: clip; padding-block-end: 0.06em; }
-  .line > span { display: inline-block; }
+  .line { display: block; }
   .hero-title i { color: var(--color-accent); font-style: normal; margin-inline-start: 0.04em; }
 
   .hero-intro {
@@ -117,15 +125,9 @@ import HomeReel from './HomeReel.astro';
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    /* One clip wipe per line, upward, staggered. */
-    .line > span {
-      animation: wipe 700ms var(--ease-artifact) both;
-    }
-    .line:nth-child(2) > span { animation-delay: 120ms; }
     .hero-intro, .hero-actions { animation: rise 600ms var(--ease-out) 380ms both; }
   }
 
-  @keyframes wipe { from { transform: translateY(105%); } to { transform: none; } }
   @keyframes rise { from { opacity: 0; transform: translateY(0.75rem); } to { opacity: 1; transform: none; } }
 
   @media (hover: hover) {
