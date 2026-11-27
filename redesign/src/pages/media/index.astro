@@ -39,6 +39,10 @@ const featured = entries.filter((entry) => entry.kind === 'video' || entry.kind 
         ))}
       </ul>
     </section>
+    <div class="view-toggle" role="group" aria-label="Media view" data-view-toggle hidden>
+      <button class="terminal-control" type="button" data-view="explore" aria-pressed="true" aria-controls="media-wall">Explore</button>
+      <button class="terminal-control" type="button" data-view="gallery" aria-pressed="false" aria-controls="media-gallery">Gallery</button>
+    </div>
     <div class="media-wall" id="media-wall" aria-label="Media library. Drag or use the arrow keys to browse." role="region" hidden>
       {Array.from({ length: 35 }, (_, index) => (
         <a class="wall-tile" data-wall-tile data-row={Math.floor(index / 7) - 2} data-column={index % 7 - 3} tabindex="-1"></a>
@@ -205,9 +209,21 @@ const featured = entries.filter((entry) => entry.kind === 'video' || entry.kind 
     });
     wall.addEventListener('pointercancel', () => { drag = undefined; dragged = false; draw(); });
     wall.addEventListener('dragstart', (event) => event.preventDefault());
-    gallery.hidden = true;
-    wall.hidden = false;
-    draw();
+    const toggle = document.querySelector<HTMLElement>('[data-view-toggle]');
+    function setView(view: 'explore' | 'gallery') {
+      wall!.hidden = view !== 'explore';
+      gallery!.hidden = view !== 'gallery';
+      toggle?.querySelectorAll<HTMLButtonElement>('[data-view]').forEach((button) => {
+        button.setAttribute('aria-pressed', String(button.dataset.view === view));
+      });
+      if (view === 'explore') draw();
+    }
+    toggle?.addEventListener('click', (event) => {
+      const button = (event.target as Element).closest<HTMLButtonElement>('[data-view]');
+      if (button) setView(button.dataset.view === 'gallery' ? 'gallery' : 'explore');
+    });
+    if (toggle) toggle.hidden = false;
+    setView(reduced.matches ? 'gallery' : 'explore');
     new ResizeObserver(() => draw()).observe(wall);
     if (location.hash) openItem(location.hash);
   }
@@ -247,6 +263,11 @@ const featured = entries.filter((entry) => entry.kind === 'video' || entry.kind 
   .media-detail form { margin-block-end: var(--space-2); text-align: end; }
   .media-detail .media-visual { max-height: 65svh; }
   .media-grid[hidden] { display: none; }
+  .view-toggle:not([hidden]) {
+    display: flex;
+    gap: var(--space-1);
+    margin: var(--space-3) var(--gutter) 0;
+  }
 
   .media-gallery {
     padding-block-start: var(--space-4);
