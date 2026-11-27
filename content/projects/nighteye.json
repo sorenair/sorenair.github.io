@@ -1,0 +1,33 @@
+{
+  "title": "NightEye",
+  "categories": [
+    "technical"
+  ],
+  "summary": "A Raspberry Pi night vision headset using infrared imaging and machine vision.",
+  "context": "Personal project",
+  "technologies": [
+    "Python",
+    "OpenCV",
+    "AI / ML",
+    "IR Imaging"
+  ],
+  "cover": {
+    "src": "/images/work/personal/electronics/ne_fd.png",
+    "alt": "Grayscale infrared view of a person with a white box drawn around their face"
+  },
+  "sections": [
+    {
+      "heading": "Overview",
+      "paragraphs": [
+        "A modular night vision headset capable of infrared-spectrum imaging and facial detection.",
+        "With a Raspberry Pi 5 microcomputer serving as the design's foundation, efficiency in both power and processing is ensured. The headset leverages machine vision and artificial intelligence for real-time feature analysis."
+      ],
+      "images": [
+        {
+          "src": "/images/work/personal/electronics/ne.jpg",
+          "alt": "Headset prototype with two camera modules and ribbon cables resting on a wooden block"
+        }
+      ]
+    }
+  ]
+}

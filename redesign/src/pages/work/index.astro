@@ -7,7 +7,11 @@ import { loadProjectCover } from '../../project-cover';
 const categoryLabels = { technical: 'Technical', creative: 'Creative' };
 const filters = [{ value: 'all', label: 'All' }, ...Object.entries(categoryLabels).map(([value, label]) => ({ value, label }))];
 
-const editorialOrder = ['portal', 'wifi-transceiver', 'overclock'];
+const editorialOrder = [
+  'portal', 'wifi-transceiver', 'overclock', 'nighteye', 'astrogolf', 'autonomous-ev-model',
+  'puerto-rico-2025', 'dakota', 'soren-music', 'digital-photography',
+  'lockheed-martin-intern', 'nuclear-physics-research', 'multimedia-producer',
+];
 const editorialPosition = (id: string) => {
   const index = editorialOrder.indexOf(id);
   return index === -1 ? editorialOrder.length : index;

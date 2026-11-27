@@ -1,0 +1,27 @@
+{
+  "title": "Multimedia Producer",
+  "categories": [
+    "creative"
+  ],
+  "summary": "Freelance advertisements, logos, and event compilations for private clients and mid-sized companies.",
+  "context": "Freelance",
+  "technologies": [
+    "Adobe Photoshop",
+    "Adobe Premiere Pro",
+    "Adobe After Effects",
+    "Adobe Lightroom",
+    "FL Studio"
+  ],
+  "cover": {
+    "src": "/images/work/professional/mm_t10.png",
+    "alt": "Aerial view of a roof deck with the T-10 Construction logo overlaid"
+  },
+  "sections": [
+    {
+      "heading": "Role",
+      "paragraphs": [
+        "Worked with private clients and mid-sized companies (i.e. construction, photography), creating advertisements, logos, and compilations of corporate events. Applied understanding of professional-grade music production, video editing, photo manipulation, and animation software to tailor final products to client specifications."
+      ]
+    }
+  ]
+}

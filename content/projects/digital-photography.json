@@ -1,0 +1,32 @@
+{
+  "title": "Digital Photography",
+  "categories": [
+    "creative"
+  ],
+  "summary": "Photos of everyday moments, interesting places, and people, focused on light, mood, and composition.",
+  "context": "Personal project",
+  "cover": {
+    "src": "/images/work/personal/art/1.jpg",
+    "alt": "Black and white photo of a person in a backwards cap and glasses lit from one side"
+  },
+  "sections": [
+    {
+      "heading": "Overview",
+      "paragraphs": [
+        "A mix of photos capturing everyday moments, interesting places, and people along the way. Focused on light, mood, and composition, these shots reflect how I see the world through a lens."
+      ],
+      "images": [
+        {
+          "src": "/images/work/personal/art/5.jpg",
+          "alt": "A person seen from behind beside green water with both hands raised to their head"
+        }
+      ]
+    }
+  ],
+  "links": [
+    {
+      "label": "View more on Instagram",
+      "href": "https://www.instagram.com/gaborsoren/?hl=en"
+    }
+  ]
+}
