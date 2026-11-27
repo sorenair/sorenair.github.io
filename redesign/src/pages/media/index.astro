@@ -1,7 +1,6 @@
 ---
 import { Image, getImage } from 'astro:assets';
 import { getCollection, getEntry } from 'astro:content';
-import StatusLine from '../../components/terminal/StatusLine.astro';
 import SiteLayout from '../../layouts/SiteLayout.astro';
 import FeaturedCarousel, { type FeaturedItem } from './_FeaturedCarousel.astro';
 import { loadProjectCover as loadCover } from '../../project-cover';
@@ -14,15 +13,16 @@ const featuredPlaceholderProjects = ['portal', 'wifi-transceiver', 'overclock', 
 
 // Newest dated items first; undated items keep their file order after them.
 const collection = (await getCollection('media')).sort((a, b) => (b.data.date ?? '').localeCompare(a.data.date ?? ''));
+const dateLabel = (date?: string) => date ? new Date(`${date}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' }).toUpperCase() : '';
 const entries = await Promise.all(collection.map(async ({ id, data }) => {
   if (data.kind === 'video') {
-    return { id, kind: data.kind, title: data.title, description: data.description ?? '', src: data.src!, poster: data.poster! };
+    return { id, kind: data.kind, title: data.title, date: dateLabel(data.date), description: data.description ?? '', src: data.src!, poster: data.poster! };
   }
 
   const cover = await loadCover(data.cover!.src);
   const width = Math.min(900, cover.width);
   const widths = [360, 540, 720].filter((candidate) => candidate < width).concat(width);
-  const entry = { id, kind: data.kind, title: data.title, alt: data.cover!.alt, caption: data.caption, href: data.href, project: data.project, cover, width, widths };
+  const entry = { id, kind: data.kind, title: data.title, date: dateLabel(data.date), alt: data.cover!.alt, caption: data.caption, href: data.href, project: data.project, cover, width, widths };
   if (data.kind !== 'photo') return entry;
 
   const fullPhoto = await getImage({ src: cover, width: Math.min(1600, cover.width), format: 'webp' });
@@ -55,7 +55,6 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
 <SiteLayout title="Media" description="Photography, video, and artwork by Soren Gabor.">
   <div class="page-section media-gallery module-grid">
     <div class="media-top">
-      <StatusLine items={[`NODE ${entries.length}`]} />
       <h1 class="display-title" data-reveal>Media</h1>
     </div>
     <FeaturedCarousel items={highlights} />
@@ -68,9 +67,22 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
         <a class="wall-tile" data-wall-tile data-row={Math.floor(index / 11) - 3} data-column={index % 11 - 5} tabindex="-1"><span class="wall-image"></span></a>
       ))}
     </div>
-    <ul class="media-grid" id="media-gallery" aria-label="Media library" role="list">
-      {entries.map((entry) => (
-        <li class="media-entry" id={entry.id} tabindex="-1">
+    <div class="timeline" id="media-gallery" data-timeline>
+      <nav class="timeline-rail" aria-label="Timeline" data-timeline-rail>
+        <ol class="rail-track" data-rail-track>
+          {entries.map((entry, index) => (
+            <li class="rail-item" style={`--d:${index}`}>
+              <a class="rail-dash" href={`#${entry.id}`} data-rail-dash aria-label={`${entry.title}${entry.date ? `, ${entry.date}` : ''}`}>
+                <span class="rail-line" aria-hidden="true"></span>
+                <span class="rail-label" aria-hidden="true">{entry.date || String(index + 1).padStart(2, '0')}</span>
+              </a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+    <ul class="media-grid" aria-label="Media library" role="list">
+      {entries.map((entry, index) => (
+        <li class="media-entry" id={entry.id} tabindex="-1" data-timeline-entry>
           <figure>
             <div class="media-visual bracketed">
               {entry.kind === 'video' ? (
@@ -98,7 +110,7 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
               )}
             </div>
             <figcaption>
-              <p class="terminal-label">{mediaLabels[entry.kind]}</p>
+              <p class="terminal-label entry-meta"><span>{String(index + 1).padStart(2, '0')} / {String(entries.length).padStart(2, '0')}</span><span>{entry.date}</span><span>{mediaLabels[entry.kind]}</span></p>
               <h2 class="section-title" id={`title-${entry.id}`} tabindex="-1">{entry.title}</h2>
               {entry.kind === 'video' && <p class="lead" id={`description-${entry.id}`}>{entry.description}</p>}
               {entry.kind !== 'video' && entry.caption && <p class="lead">{entry.caption}</p>}
@@ -116,6 +128,7 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
         </li>
       ))}
     </ul>
+    </div>
     <dialog class="media-detail terminal-panel" id="media-detail" aria-label="Media item">
       <form method="dialog"><button class="terminal-control">Close</button></form>
       <div data-media-detail></div>
@@ -358,6 +371,92 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
   }
 </script>
 
+
+<script>
+  // Timeline: the dash rail follows the entry nearest the reading line, and can be clicked or dragged.
+  const timeline = document.querySelector<HTMLElement>('[data-timeline]');
+  if (timeline) {
+    const rail = timeline.querySelector<HTMLElement>('[data-timeline-rail]')!;
+    const track = timeline.querySelector<HTMLElement>('[data-rail-track]')!;
+    const dashes = [...timeline.querySelectorAll<HTMLAnchorElement>('[data-rail-dash]')];
+    const cards = [...timeline.querySelectorAll<HTMLElement>('[data-timeline-entry]')];
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    let active = -1;
+    let frame = 0;
+    let dragging: { y: number; index: number; moved: boolean; id: number } | undefined;
+
+    function setActive(index: number) {
+      if (index === active) return;
+      active = index;
+      track.style.setProperty('--active', String(index));
+      dashes.forEach((dash, position) => {
+        dash.parentElement!.style.setProperty('--d', String(Math.abs(position - index)));
+        if (position === index) dash.setAttribute('aria-current', 'true');
+        else dash.removeAttribute('aria-current');
+        cards[position].classList.toggle('is-active', position === index);
+      });
+    }
+
+    function nearest() {
+      const line = innerHeight * 0.42;
+      let best = 0;
+      let bestDistance = Infinity;
+      cards.forEach((card, position) => {
+        const box = card.getBoundingClientRect();
+        const distance = box.top <= line && box.bottom >= line ? 0 : Math.min(Math.abs(box.top - line), Math.abs(box.bottom - line));
+        if (distance < bestDistance) { best = position; bestDistance = distance; }
+      });
+      return best;
+    }
+
+    function update() {
+      frame = 0;
+      if (timeline!.hidden || dragging) return;
+      setActive(nearest());
+    }
+
+    function goTo(index: number, smooth = !reduced.matches) {
+      const card = cards[Math.max(0, Math.min(cards.length - 1, index))];
+      const top = card.getBoundingClientRect().top + scrollY - innerHeight * 0.18;
+      scrollTo({ top, behavior: smooth ? 'smooth' : 'instant' });
+    }
+
+    addEventListener('scroll', () => { if (!frame) frame = requestAnimationFrame(update); }, { passive: true });
+    addEventListener('resize', update);
+    new MutationObserver(update).observe(timeline, { attributes: true, attributeFilter: ['hidden'] });
+
+    dashes.forEach((dash, index) => {
+      dash.addEventListener('click', (event) => {
+        event.preventDefault();
+        goTo(index);
+        history.replaceState(null, '', dash.hash);
+      });
+    });
+
+    // Drag the rail like a scrubber: one dash pitch of travel moves one entry.
+    rail.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0) return;
+      dragging = { y: event.clientY, index: active < 0 ? 0 : active, moved: false, id: event.pointerId };
+    });
+    rail.addEventListener('pointermove', (event) => {
+      if (!dragging) return;
+      // Only a real drag captures the pointer, so a plain click still reaches its dash.
+      if (!dragging.moved) {
+        if (Math.abs(event.clientY - dragging.y) < 6) return;
+        dragging.moved = true;
+        rail.setPointerCapture(dragging.id);
+      }
+      const pitch = dashes[0]?.getBoundingClientRect().height || 22;
+      const index = Math.max(0, Math.min(cards.length - 1, dragging.index + Math.round((event.clientY - dragging.y) / pitch)));
+      if (index !== active) { setActive(index); goTo(index, false); }
+    });
+    const stop = () => { dragging = undefined; update(); };
+    rail.addEventListener('pointerup', stop);
+    rail.addEventListener('pointercancel', stop);
+    update();
+  }
+</script>
+
 <style>
   .media-wall {
     position: relative;
@@ -404,7 +503,7 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
   .media-detail::backdrop { background: #000c; }
   .media-detail form { margin-block-end: var(--space-2); text-align: end; }
   .media-detail .media-visual { max-height: 65svh; }
-  .media-grid[hidden] { display: none; }
+  .timeline[hidden] { display: none; }
   .view-toggle:not([hidden]) {
     display: flex;
     gap: var(--space-1);
@@ -421,27 +520,9 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
     margin-inline: var(--gutter);
   }
 
-  .media-grid {
-    display: grid;
-    gap: 1px;
-    padding: 0;
-    list-style: none;
-    background: var(--color-rule);
-  }
-
   .media-entry:focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: -3px;
-  }
-
-  .media-grid {
-    grid-template-columns: minmax(0, 1fr);
-    margin: var(--space-4) 0 0;
-    border-block: 1px solid var(--color-rule);
-  }
-
-  .media-entry {
-    background: var(--color-background);
   }
 
   figure {
@@ -507,16 +588,178 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
     margin-block-start: var(--space-1);
   }
 
-  @media (min-width: 38rem) {
-    .media-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
 
+  /* Timeline gallery: an ordered stack of cards with a dash scrubber that follows the scroll. */
+  .timeline {
+    --pitch: 1.4rem;
+    display: grid;
+    grid-template-columns: 3.25rem minmax(0, 1fr);
+    gap: var(--space-2);
+    margin: var(--space-4) var(--gutter) 0;
+  }
+
+  .timeline-rail {
+    position: sticky;
+    inset-block-start: 0;
+    block-size: 100svh;
+    overflow: hidden;
+    touch-action: none;
+    cursor: ns-resize;
+    user-select: none;
+    /* The stack of dashes dissolves above and below, so the list reads as endless except at its real ends. */
+    mask-image: linear-gradient(to bottom, transparent, #000 28%, #000 72%, transparent);
+  }
+
+  .rail-track {
+    position: absolute;
+    inset: 50% auto auto 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    transform: translateY(calc(var(--active, 0) * var(--pitch) * -1 - var(--pitch) / 2));
+    transition: transform 360ms var(--ease-artifact, cubic-bezier(0.2, 0.8, 0.2, 1));
+  }
+
+  .rail-item {
+    block-size: var(--pitch);
+    display: block;
+    --d: 0;
+  }
+
+  .rail-dash {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    block-size: 100%;
+    color: var(--color-muted);
+    text-decoration: none;
+  }
+
+  .rail-line {
+    display: block;
+    flex: none;
+    inline-size: max(0.6rem, calc(2.6rem - var(--d) * 0.5rem));
+    block-size: 2px;
+    background: currentColor;
+    opacity: max(0.22, calc(0.9 - var(--d) * 0.16));
+    transition: inline-size 240ms var(--ease-artifact, ease), opacity 240ms ease, background-color 240ms ease;
+  }
+
+  .rail-label {
+    position: absolute;
+    inset-inline-start: 3.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .rail-dash[aria-current="true"] { color: var(--color-accent); }
+  .rail-dash[aria-current="true"] .rail-line { opacity: 1; }
+  .rail-dash:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+  .timeline-rail:hover .rail-line { opacity: max(0.4, calc(1 - var(--d) * 0.12)); }
+
+  .media-grid {
+    display: grid;
+    gap: var(--space-4);
+    margin: 0;
+    padding: 0 0 var(--space-4);
+    list-style: none;
+    min-inline-size: 0;
+  }
+
+  .media-entry {
+    border: 1px solid var(--color-rule);
+    background: var(--color-surface);
+    opacity: 0.5;
+    scroll-margin-block: 18svh;
+    transition: opacity 320ms ease, border-color 320ms ease;
+  }
+
+  .media-entry.is-active,
+  .media-entry:focus-within {
+    opacity: 1;
+    border-color: var(--color-control-edge);
+  }
+
+  figure {
+    margin: 0;
+  }
+
+  .media-visual {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 16 / 9;
+    background: var(--color-background);
+    overflow: hidden;
+  }
+
+  .media-visual :is(img, video) {
+    inline-size: 100%;
+    block-size: 100%;
+    min-block-size: 0;
+    object-fit: cover;
+  }
+
+  .media-visual video { object-fit: contain; }
+
+  .media-visual video:focus-visible,
+  .media-visual:has(video):focus-within {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
+  }
+
+  .media-visual video a:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  figcaption {
+    display: grid;
+    gap: var(--space-1);
+    padding: var(--space-2);
+    border-block-start: 1px solid var(--color-rule);
+  }
+
+  .entry-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.25rem;
+    margin: 0;
+  }
+
+  figcaption .section-title {
+    margin: 0;
+    font-family: var(--font-display);
+    letter-spacing: -0.05em;
+    font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.5rem);
+  }
+
+  figcaption .section-title:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+
+  figcaption .lead { margin: 0; }
+
+  @media (min-width: 48rem) {
+    .timeline { grid-template-columns: 9rem minmax(0, 1fr); }
+    .rail-label { opacity: 0; transition: opacity 240ms ease; }
+    .rail-dash[aria-current="true"] .rail-label { opacity: 1; color: var(--color-text); }
   }
 
   @media (min-width: 64rem) {
-    .media-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
+    .media-grid { max-inline-size: 62rem; }
+  }
+
+  @media (max-width: 47.99rem) {
+    .timeline { --pitch: 1.15rem; gap: var(--space-1); }
+    .rail-line { inline-size: max(0.4rem, calc(1.9rem - var(--d) * 0.4rem)); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rail-track, .rail-line, .media-entry { transition: none; }
   }
 </style>
