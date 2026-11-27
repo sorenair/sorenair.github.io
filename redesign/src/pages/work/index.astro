@@ -4,10 +4,14 @@ import { getCollection } from 'astro:content';
 import SiteLayout from '../../layouts/SiteLayout.astro';
 import { loadProjectCover } from '../../project-cover';
 
-const categoryLabels = { technical: 'Technical', creative: 'Creative' };
+const categoryLabels = { technical: 'Technical', creative: 'Creative', academic: 'Academic' };
 const filters = [{ value: 'all', label: 'All' }, ...Object.entries(categoryLabels).map(([value, label]) => ({ value, label }))];
 
-const editorialOrder = ['portal', 'wifi-transceiver', 'overclock'];
+const editorialOrder = [
+  'portal', 'wifi-transceiver', 'overclock', 'nighteye', 'astrogolf', 'autonomous-ev-model',
+  'puerto-rico-2025', 'dakota', 'soren-music', 'digital-photography',
+  'engr-331-microprocessors', 'engr-342-electromagnetics', 'phys-325-computational-physics', 'engr-230-digital-logic', 'engr-346-analog-electronics', 'engr-340-signals-systems', 'phys-215-modern-physics', 'engr-255-fabrication', 'lockheed-martin-intern', 'nuclear-physics-research', 'multimedia-producer',
+];
 const editorialPosition = (id: string) => {
   const index = editorialOrder.indexOf(id);
   return index === -1 ? editorialOrder.length : index;

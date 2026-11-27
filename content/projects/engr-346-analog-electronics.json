@@ -1,0 +1,26 @@
+{
+  "title": "ENGR 346: Analog Electronics",
+  "categories": [
+    "academic"
+  ],
+  "summary": "Feedback systems, amplifier circuits, op-amp topologies, and noise-aware analog design.",
+  "context": "University of St. Thomas coursework",
+  "technologies": [
+    "NI Multisim",
+    "Oscilloscopes",
+    "Signal Generators"
+  ],
+  "cover": {
+    "src": "/images/work/academic/cw.jpg",
+    "alt": "Open purple notebook with a pen beside colour-swatch cards"
+  },
+  "sections": [
+    {
+      "heading": "Overview",
+      "paragraphs": [
+        "Applied network theorems to analyze and design feedback systems and amplifier circuits, with emphasis on frequency response and stability. Explored common op-amp topologies and their real-world behaviors.",
+        "Gained foundational knowledge in switch-mode power supplies and electrical noise sources, developing insight into noise-aware analog system design."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "title": "Autonomous EV Model",
+  "categories": [
+    "technical"
+  ],
+  "summary": "A self-driving electric vehicle model built on an STM32 microcontroller and a network of sensors.",
+  "context": "Embedded systems coursework",
+  "technologies": [
+    "Microcontrollers",
+    "C",
+    "Keil uVision",
+    "SPI"
+  ],
+  "cover": {
+    "src": "/images/work/academic/projects/mp_front.png",
+    "alt": "Small wheeled robot covered in wires, a circuit board and an ultrasonic sensor on a tiled floor"
+  },
+  "sections": [
+    {
+      "heading": "Overview",
+      "paragraphs": [
+        "Designed and built a self-driving electric vehicle model using an STM32 microcontroller and a network of IR, ultrasonic, and accelerometer sensors. The robot autonomously followed a taped path, adjusted steering in real time, and performed emergency stops when detecting nearby obstacles.",
+        "Sensor fusion and feedback control enabled adaptive path correction and deceleration measurement, with system states displayed on an onboard LCD. The project demonstrated principles of embedded systems, sensor integration, and real-time robotics in a compact, fully autonomous prototype."
+      ],
+      "images": [
+        {
+          "src": "/images/work/academic/projects/mp_back.png",
+          "alt": "Back view of the wheeled robot showing its wiring and circuit board"
+        }
+      ]
+    }
+  ]
+}

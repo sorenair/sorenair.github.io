@@ -1,0 +1,29 @@
+{
+  "title": "SØREN",
+  "categories": [
+    "creative"
+  ],
+  "summary": "Published music, both independent and collaborative, produced in FL Studio.",
+  "context": "Personal project",
+  "technologies": [
+    "FL Studio"
+  ],
+  "cover": {
+    "src": "/images/work/personal/music/soren.png",
+    "alt": "Black Ø above a leafless tree on a white background"
+  },
+  "sections": [
+    {
+      "heading": "Overview",
+      "paragraphs": [
+        "My published music, both independent and collaborative. Original compositions, beats, and sound design in digital audio."
+      ]
+    }
+  ],
+  "links": [
+    {
+      "label": "Listen on Spotify",
+      "href": "https://open.spotify.com/artist/4ggpbtPned46AQGxsFwnTg"
+    }
+  ]
+}

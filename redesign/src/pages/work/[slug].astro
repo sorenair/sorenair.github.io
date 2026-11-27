@@ -18,7 +18,7 @@ interface Props {
 }
 
 const { data } = Astro.props.project;
-const disciplineLabels = { technical: 'Technical', creative: 'Creative' };
+const disciplineLabels = { technical: 'Technical', creative: 'Creative', academic: 'Academic' };
 
 async function prepareImage(src: string, maxWidth: number) {
   const image = await loadProjectImage(src);
