@@ -241,7 +241,7 @@ const desktopMedia = '(min-width: 56rem)';
       linear-gradient(90deg, #080808a6, #08080880 50%, #08080800 85%);
   }
 
-  /* Background reels use a compact icon control; the button text stays as its accessible name. */
+  /* Background reels use bare play/pause glyphs; the button text stays as its accessible name. */
   .reel--background .reel-control {
     inset: var(--space-2) var(--gutter) auto auto;
     z-index: 1;
@@ -250,7 +250,17 @@ const desktopMedia = '(min-width: 56rem)';
     inline-size: var(--tap-target);
     block-size: var(--tap-target);
     padding: 0;
+    border: 0;
+    background: none;
+    color: #fff;
     font-size: 0;
+    filter: drop-shadow(0 0 0.25rem #0009);
+    transition: opacity var(--motion-fast) var(--ease-out);
+  }
+
+  .reel--background .reel-control:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
   }
 
   .reel--background .reel-control::before {
@@ -274,10 +284,22 @@ const desktopMedia = '(min-width: 56rem)';
   }
 
   @media (hover: hover) {
+    .reel--background .reel-control:hover {
+      background: none;
+      color: #fff;
+      opacity: 0.7;
+    }
+
     .reel-control:hover {
       background: var(--color-accent);
       color: var(--color-background);
     }
+  }
+
+  .reel--background .reel-control:active {
+    background: none;
+    color: #fff;
+    opacity: 0.7;
   }
 
   .reel-control:active {
