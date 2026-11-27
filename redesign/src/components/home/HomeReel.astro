@@ -205,12 +205,13 @@ const desktopMedia = '(min-width: 56rem)';
     object-fit: cover;
   }
 
+  /* Safari refuses to autoplay a visibility:hidden video, so hide with opacity instead. */
   .reel video {
-    visibility: hidden;
+    opacity: 0;
   }
 
   .reel[data-playing] video {
-    visibility: visible;
+    opacity: 1;
   }
 
   .reel-mask {
