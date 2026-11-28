@@ -32,6 +32,8 @@ jobs:
         working-directory: redesign
       - run: npm run build
         working-directory: redesign
+      # Design studies are reference pages for review only; they are not part of the public site.
+      - run: rm -rf redesign/dist/studies
       - uses: actions/upload-pages-artifact@v3
         with:
           path: redesign/dist

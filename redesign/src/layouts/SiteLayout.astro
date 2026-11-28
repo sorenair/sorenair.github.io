@@ -25,6 +25,8 @@ const displayCss = displayFace(archivoLatin, 'U+0000-00FF,U+0131,U+0152-0153,U+0
 const { pathname } = Astro.url;
 const year = new Date().getFullYear(); // Computed at build time.
 const canonical = new URL(pathname, Astro.site);
+const summary = description ?? 'Soren Gabor builds electronic systems and creative work across video, music and games.';
+const ogImage = new URL('/og.jpg', Astro.site);
 const workCurrent = pathname === '/work/' ? 'page' : pathname.startsWith('/work/') ? 'location' : undefined;
 const project = !accentSource && workCurrent === 'location' && Astro.params.slug
   ? await getEntry('projects', Astro.params.slug)
@@ -39,7 +41,16 @@ const accent = await getCoverAccent(accentSource ?? project?.data.cover.src);
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#121212" />
     <title>{title} | Soren Gabor</title>
-    {description && <meta name="description" content={description} />}
+    <meta name="description" content={summary} />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Soren Gabor" />
+    <meta property="og:title" content={`${title} | Soren Gabor`} />
+    <meta property="og:description" content={summary} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="canonical" href={canonical} />
     <link rel="preload" href={archivoLatin} as="font" type="font/woff2" crossorigin />
     <style set:html={displayCss}></style>
