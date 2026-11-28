@@ -8,21 +8,12 @@ import { loadProjectCover } from '../../project-cover';
 const categoryLabels = { technical: 'Technical', creative: 'Creative', academic: 'Academic' };
 const filters = [{ value: 'all', label: 'All' }, ...Object.entries(categoryLabels).map(([value, label]) => ({ value, label }))];
 
-const editorialOrder = [
-  'portal', 'wifi-transceiver', 'nighteye', 'astrogolf', 'autonomous-ev-model',
-  'puerto-rico-2025', 'dakota', 'soren-music', 'digital-photography',
-  'lockheed-martin-intern', 'nuclear-physics-research', 'multimedia-producer',
-  'engr-331-microprocessors', 'engr-342-electromagnetics', 'phys-325-computational-physics', 'engr-230-digital-logic',
-  'engr-346-analog-electronics', 'engr-340-signals-systems', 'phys-215-modern-physics', 'engr-255-fabrication',
-];
-const editorialPosition = (id: string) => {
-  const index = editorialOrder.indexOf(id);
-  return index === -1 ? editorialOrder.length : index;
-};
+// Newest first. Ongoing work (end date "present") leads, then the latest end or start date; ties fall back to the title.
+const sortKey = ({ data }: { data: { date?: string; dateEnd?: string } }) =>
+  data.dateEnd === 'present' ? '9999' : (data.dateEnd ?? data.date ?? '');
 const projects = (await getCollection('projects')).sort((a, b) =>
-  editorialPosition(a.id) - editorialPosition(b.id) || a.data.title.localeCompare(b.data.title, 'en'),
+  sortKey(b).localeCompare(sortKey(a)) || (b.data.date ?? '').localeCompare(a.data.date ?? '') || a.data.title.localeCompare(b.data.title, 'en'),
 );
-const hasDates = projects.some(({ data }) => Boolean(data.date));
 const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
   const cover = await loadProjectCover(data.cover.src);
   return {
@@ -46,7 +37,6 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
     <div class="container library-top">
       <header class="library-heading">
         <h1 class="display-title" data-reveal>Work</h1>
-        <p class="terminal-label" role="status" data-project-status>{rows.length} {rows.length === 1 ? 'item' : 'items'} shown</p>
       </header>
       <div class="library-controls" data-library-controls hidden>
         <div class="category-filters" role="group" aria-label="Filter by category">
@@ -54,15 +44,7 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
             <button class="terminal-control" type="button" data-category={value} aria-pressed={value === 'all'}>{label}</button>
           ))}
         </div>
-        {hasDates && (
-          <label class="project-sort">
-            <span class="terminal-label">Sort by</span>
-            <select class="terminal-control" data-project-sort>
-              <option value="editorial">Portfolio order</option>
-              <option value="recent">Most recent</option>
-            </select>
-          </label>
-        )}
+        <p class="terminal-label project-count" role="status" data-project-status>{rows.length} {rows.length === 1 ? 'item' : 'items'} shown</p>
       </div>
     </div>
 
@@ -123,13 +105,10 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
     const previewNumber = library.querySelector<HTMLElement>('[data-preview-number]')!;
     const previewTitle = library.querySelector<HTMLElement>('[data-preview-title]')!;
     const filters = Array.from(controls.querySelectorAll<HTMLButtonElement>('[data-category]'));
-    const sort = controls.querySelector<HTMLSelectElement>('[data-project-sort]');
     const editorial = Array.from(list.querySelectorAll<HTMLElement>('[data-project-card]'));
-    const recent = [...editorial].sort((a, b) => (b.dataset.date ?? '').localeCompare(a.dataset.date ?? ''));
     const shots = Array.from(preview.querySelectorAll<HTMLElement>('[data-shot]'));
     const nodeCounter = library.querySelector<HTMLElement>('.status-line span:last-child');
     const idleTitle = previewTitle.textContent;
-    let currentSort = 'editorial';
     let currentCategory = 'all';
     let activeRow: HTMLElement | undefined;
 
@@ -175,16 +154,9 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
     function render(url: URL) {
       const requested = url.searchParams.get('category');
       const category = filters.find((filter) => filter.dataset.category === requested)?.dataset.category ?? 'all';
-      const order = sort && url.searchParams.get('sort') === 'recent' ? 'recent' : 'editorial';
 
       for (const filter of filters) {
         filter.setAttribute('aria-pressed', String(filter.dataset.category === category));
-      }
-      if (sort) sort.value = order;
-      if (order !== currentSort) {
-        list.append(...(order === 'recent' ? recent : editorial));
-        currentSort = order;
-        activateDefault();
       }
 
       let visible = 0;
@@ -219,7 +191,6 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
         updateView('category', filter.dataset.category === 'all' ? undefined : filter.dataset.category);
       });
     }
-    sort?.addEventListener('change', () => updateView('sort', sort.value === 'recent' ? 'recent' : undefined));
 
     for (const row of editorial) {
       row.addEventListener('pointerenter', (event) => { if (event.pointerType === 'mouse') activate(row); });
@@ -304,11 +275,7 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
     text-decoration: none;
   }
 
-  .project-sort {
-    display: flex;
-    align-items: center;
-    gap: var(--space-1);
-  }
+  .project-count { margin: 0; }
 
   .library-body {
     display: grid;
