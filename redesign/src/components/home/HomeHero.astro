@@ -1,4 +1,5 @@
 ---
+import CtaButton from '../CtaButton.astro';
 import HeroDecode from './HeroDecode.astro';
 import HomeReel from './HomeReel.astro';
 ---
@@ -15,10 +16,7 @@ import HomeReel from './HomeReel.astro';
     </h1>
     <p class="hero-intro">I design electronic systems and make creative work across video, music, and games.</p>
     <div class="hero-actions">
-      <a class="work-link" href="/work/" aria-label="View work" data-cta>
-        <span class="cta-label" aria-hidden="true">VIEW WORK</span>
-        <span class="cta-arrow" aria-hidden="true">→</span>
-      </a>
+      <CtaButton href="/work/" label="View work" />
     </div>
   </div>
 
@@ -71,77 +69,9 @@ import HomeReel from './HomeReel.astro';
 
   .hero-actions { pointer-events: auto; display: flex; gap: var(--space-1); }
 
-  .work-link {
-    display: inline-flex;
-    align-items: stretch;
-    border: 2px solid #fff;
-    background: #fff;
-    color: #080808;
-    font: 700 clamp(1rem, 0.9rem + 0.5vw, 1.25rem) / 1 var(--font-mono);
-    letter-spacing: 0.08em;
-    text-decoration: none;
-    transition: background-color var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out);
-  }
-
-  .cta-label {
-    display: grid;
-    align-items: center;
-    min-block-size: 3.5rem;
-    padding-inline: 1.5rem 1.25rem;
-  }
-
-  .cta-arrow {
-    display: grid;
-    place-items: center;
-    inline-size: 3.5rem;
-    background: #080808;
-    color: #fff;
-    font-size: 1.5rem;
-    overflow: hidden;
-    transition: background-color var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out);
-  }
-
-  .work-link:is(:hover, :focus-visible) { background: #080808; color: #fff; }
-  .work-link:is(:hover, :focus-visible) .cta-arrow { background: #fff; color: #080808; }
-  .work-link:active { transform: translateY(1px); }
-
-  .work-link:focus-visible {
-    outline: 3px solid #fff;
-    outline-offset: 4px;
-  }
-
   @media (prefers-reduced-motion: no-preference) {
     .hero-intro, .hero-actions { animation: rise 600ms var(--ease-out) 380ms both; }
   }
 
   @keyframes rise { from { opacity: 0; transform: translateY(0.75rem); } to { opacity: 1; transform: none; } }
 </style>
-
-<script>
-  const cta = document.querySelector<HTMLElement>('[data-cta]');
-  const label = cta?.querySelector<HTMLElement>('.cta-label');
-
-  if (cta && label && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    const text = label.textContent ?? '';
-    const glyphs = '#%@*+=-:./0Ø';
-    let frame = 0;
-
-    const scramble = () => {
-      cancelAnimationFrame(frame);
-      const start = performance.now();
-      const step = (now: number) => {
-        const t = Math.min(1, (now - start) / 420);
-        const keep = Math.floor(t * text.length);
-        label.textContent = text
-          .split('')
-          .map((c, i) => (c === ' ' || i < keep ? c : glyphs[Math.floor(Math.random() * glyphs.length)]))
-          .join('');
-        if (t < 1) frame = requestAnimationFrame(step);
-      };
-      frame = requestAnimationFrame(step);
-    };
-
-    cta.addEventListener('pointerenter', scramble);
-    cta.addEventListener('focus', scramble);
-  }
-</script>
