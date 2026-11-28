@@ -3,7 +3,6 @@ import { Image } from 'astro:assets';
 import { getEntry } from 'astro:content';
 import mark from '../../../images/o.png';
 import { getCoverAccent } from '../cover-accent';
-import StatusLine from '../components/terminal/StatusLine.astro';
 import '../styles/site.css';
 
 interface Props {
@@ -53,7 +52,7 @@ const accent = await getCoverAccent(accentSource ?? project?.data.cover.src);
     </main>
     <footer class="site-footer">
       <div class="container site-footer__inner">
-        <StatusLine />
+        <span class="terminal-label">SOREN GABOR</span>
         <a class="terminal-control" href="/about/#contact">Contact</a>
       </div>
     </footer>

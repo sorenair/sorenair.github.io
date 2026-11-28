@@ -32,7 +32,7 @@ Soren chose the **Artifact** direction from the identity study (`/studies/identi
 | `.display-title` | Oversized grotesk headline with tight tracking. |
 | `body::after` grain | Global static grain. Tune with `--grain-opacity` (0.05). Do not animate. |
 | `.bracketed` | Corner brackets that take the active accent. |
-| `StatusLine` (`components/terminal/`) | Mono readout with path and live clock. The footer already has one; pass `items` for counters. |
+| `StatusLine` (`components/terminal/`) | Mono readout with path and live clock. Not used in the footer (it shows the name only); use it where a page wants a readout. |
 | `data-reveal` | One reveal: text decode. Characters scramble (matching case, so lines don't rewrap) and resolve in a ragged left-to-right sweep the first time the element scrolls in. Applied automatically to every `.page-title` and `.section-title`; opt out with `data-no-reveal`, opt in other text with `data-reveal`. Real text is in the HTML from first paint. |
 | `data-type` | Typed reveal with a block cursor for short single-line labels and leads. Do not use on multi-line text. |
 | `glitch(el)` from `scripts/terminal.ts` | One glitch, for state changes only (filter change, new active project). |
