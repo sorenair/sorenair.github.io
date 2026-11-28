@@ -133,6 +133,16 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
     let currentCategory = 'all';
     let activeRow: HTMLElement | undefined;
 
+    // At rest (nothing hovered or focused) the first visible row is shown, so the screen is never empty.
+    const wide = matchMedia('(min-width: 60rem)');
+    function activateDefault() {
+      clearActive();
+      if (!wide.matches) return;
+      const first = Array.from(list.querySelectorAll<HTMLElement>('[data-project-card]')).find((row) => !row.hidden);
+      if (first) activate(first);
+    }
+    wide.addEventListener('change', activateDefault);
+
     function clearActive() {
       activeRow?.classList.remove('is-active');
       activeRow = undefined;
@@ -174,6 +184,7 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
       if (order !== currentSort) {
         list.append(...(order === 'recent' ? recent : editorial));
         currentSort = order;
+        activateDefault();
       }
 
       let visible = 0;
@@ -188,7 +199,7 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
       if (nodeCounter) nodeCounter.textContent = `NODE ${visible}`;
       if (category !== currentCategory) {
         currentCategory = category;
-        clearActive();
+        activateDefault();
         glitch(list);
       }
     }
@@ -215,10 +226,10 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
       row.addEventListener('focusin', () => activate(row));
     }
     list.addEventListener('pointerleave', () => {
-      if (!activeRow?.contains(document.activeElement)) clearActive();
+      if (!activeRow?.contains(document.activeElement)) activateDefault();
     });
     list.addEventListener('focusout', (event) => {
-      if (!(event.relatedTarget instanceof Node) || !list.contains(event.relatedTarget)) clearActive();
+      if (!(event.relatedTarget instanceof Node) || !list.contains(event.relatedTarget)) activateDefault();
     });
 
     list.addEventListener('click', (event) => {
@@ -231,6 +242,7 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
     });
 
     render(new URL(window.location.href));
+    activateDefault();
     controls.hidden = false;
     window.addEventListener('pageshow', (event) => {
       render(new URL(window.location.href));

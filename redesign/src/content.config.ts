@@ -26,6 +26,8 @@ const projects = defineCollection({
     date: z.string().regex(/^\d{4}(?:-\d{2}(?:-\d{2})?)?$/).optional(),
     /** End of a span: a date in the same forms as `date`, or `present` for ongoing work. */
     dateEnd: z.union([z.literal('present'), z.string().regex(/^\d{4}(?:-\d{2}(?:-\d{2})?)?$/)]).optional(),
+    /** Read year-month dates as academic terms (Fall/Spring) even outside coursework. */
+    termDates: z.boolean().optional(),
     sections: z.array(projectSection).optional(),
     links: z.array(z.object({ label: z.string().trim().min(1), href: z.httpUrl() })).optional(),
   }),
