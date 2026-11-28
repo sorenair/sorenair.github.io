@@ -91,6 +91,7 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
   interface ProjectReturnState {
     cardId: string;
     scrollY: number;
+    keyboard: boolean;
   }
 
   const library = document.querySelector<HTMLElement>('[data-work-library]');
@@ -207,7 +208,7 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
       const link = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>('a.row-link') : null;
       if (!link) return;
 
-      const workProjectReturn: ProjectReturnState = { cardId: link.id, scrollY: window.scrollY };
+      const workProjectReturn: ProjectReturnState = { cardId: link.id, scrollY: window.scrollY, keyboard: event.detail === 0 };
       history.replaceState({ ...history.state, workProjectReturn }, '');
     });
 
@@ -227,7 +228,8 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
 
       requestAnimationFrame(() => {
         window.scrollTo({ top: state.scrollY, behavior: 'instant' });
-        link.focus({ preventScroll: true });
+        // Only keyboard users get focus back on the row; after a click or tap it would draw a ring.
+        if (state.keyboard) link.focus({ preventScroll: true });
       });
     });
   }
