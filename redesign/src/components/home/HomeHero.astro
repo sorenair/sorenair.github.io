@@ -14,7 +14,7 @@ import HomeReel from './HomeReel.astro';
       <span class="line">SOREN</span>
       <span class="line">GABOR</span>
     </h1>
-    <p class="hero-intro">I design electronic systems and make creative work across video, music, and games.</p>
+    <p class="hero-intro">Electrical engineer, applied physicist, videographer, game developer, musician. <strong>I build things that work and things that move people.</strong></p>
     <div class="hero-actions">
       <CtaButton href="/work/" label="View work" />
     </div>
@@ -61,11 +61,13 @@ import HomeReel from './HomeReel.astro';
   .line { display: block; }
 
   .hero-intro {
-    max-inline-size: 34ch;
+    max-inline-size: 40ch;
     margin: var(--space-3) 0 var(--space-2);
     font-size: clamp(1.0625rem, 0.85rem + 0.9vw, 1.625rem);
     line-height: 1.3;
   }
+
+  .hero-intro strong { font-weight: 650; }
 
   .hero-actions { pointer-events: auto; display: flex; gap: var(--space-1); }
 
