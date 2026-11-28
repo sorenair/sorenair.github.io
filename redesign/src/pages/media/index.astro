@@ -84,7 +84,7 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
     <ul class="media-grid" aria-label="Media library" role="list">
       {entries.map((entry, index) => (
         <li class="media-entry" id={entry.id} tabindex="-1" data-timeline-entry>
-          <figure>
+          <figure class="media-card">
             <div class="media-visual bracketed">
               {entry.kind === 'video' ? (
                 <video
@@ -126,16 +126,10 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
               <section class="entry-section" aria-labelledby={`access-${entry.id}`}>
                 <h3 class="terminal-label" id={`access-${entry.id}`}>Access</h3>
                 {(entry.kind === 'youtube' || entry.kind === 'instagram') && entry.href && (
-                  <>
-                    <p>{entry.kind === 'youtube' ? 'Hosted on YouTube' : 'Posted on Instagram'}</p>
-                    <a class="text-link" href={entry.href} rel="noopener" aria-label={`${outboundLabels[entry.kind]}: ${entry.title}`}>{outboundLabels[entry.kind]}</a>
-                  </>
+                  <a class="text-link" href={entry.href} rel="noopener" aria-label={`${outboundLabels[entry.kind]}: ${entry.title}`}>{outboundLabels[entry.kind]}</a>
                 )}
                 {entry.kind === 'photo' && (
-                  <>
-                    <p>Stored on this site</p>
-                    <a class="text-link" href={entry.fullPhotoHref} aria-label={`View the full photo, ${entry.title}`}>View full photo</a>
-                  </>
+                  <a class="text-link" href={entry.fullPhotoHref} aria-label={`View the full photo, ${entry.title}`}>View full photo</a>
                 )}
                 {entry.kind === 'video' && <p>Plays on this page</p>}
                 {entry.kind === 'artwork' && entry.project && (
@@ -275,9 +269,13 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
 
     function settleTo(cellsX: number, cellsY: number) {
       cancelAnimationFrame(settling);
+      // cellsX/cellsY are whole cells counted from the current (uncommitted) offset. Committing moves
+      // the origin by some of those cells, so only the remainder is left to travel.
+      const doneX = Math.round(offsetX / stepX);
+      const doneY = Math.round(offsetY / stepY);
       commit();
-      const targetX = cellsX * stepX;
-      const targetY = cellsY * stepY;
+      const targetX = (cellsX - doneX) * stepX;
+      const targetY = (cellsY - doneY) * stepY;
       const fromX = offsetX;
       const fromY = offsetY;
       if (reduced.matches || (fromX === targetX && fromY === targetY)) {
@@ -314,8 +312,8 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
       settleTo(-step[0], -step[1]);
     });
 
-    let velocity = { x: 0, y: 0 };
-    let last = { x: 0, y: 0, time: 0 };
+    // Recent pointer positions, so release speed comes from the last ~100ms of motion (not an average of the whole drag).
+    let trail: { x: number; y: number; time: number }[] = [];
     let startOffset = { x: 0, y: 0 };
 
     wall.addEventListener('pointerdown', (event) => {
@@ -323,8 +321,7 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
       cancelAnimationFrame(settling);
       dragged = false;
       startOffset = { x: offsetX, y: offsetY };
-      velocity = { x: 0, y: 0 };
-      last = { x: event.clientX, y: event.clientY, time: event.timeStamp };
+      trail = [{ x: event.clientX, y: event.clientY, time: event.timeStamp }];
       drag = { x: event.clientX, y: event.clientY, id: event.pointerId };
     });
     wall.addEventListener('pointermove', (event) => {
@@ -334,12 +331,8 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
       if (Math.hypot(x, y) < 8 && !dragged) return;
       if (!dragged) wall.setPointerCapture(event.pointerId);
       dragged = true;
-      const elapsed = Math.max(1, event.timeStamp - last.time);
-      velocity = {
-        x: 0.75 * velocity.x + 0.25 * ((event.clientX - last.x) / elapsed),
-        y: 0.75 * velocity.y + 0.25 * ((event.clientY - last.y) / elapsed),
-      };
-      last = { x: event.clientX, y: event.clientY, time: event.timeStamp };
+      trail.push({ x: event.clientX, y: event.clientY, time: event.timeStamp });
+      while (trail.length > 2 && event.timeStamp - trail[0].time > 120) trail.shift();
       if (!reduced.matches) {
         offsetX = startOffset.x + x;
         offsetY = startOffset.y + y;
@@ -352,9 +345,16 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
       const y = event.clientY - drag.y;
       drag = undefined;
       if (!dragged) return;
-      // Carry some of the release velocity, then lock onto a tile (at most two tiles of throw).
-      const throwX = reduced.matches ? 0 : Math.max(-2 * stepX, Math.min(2 * stepX, velocity.x * 180));
-      const throwY = reduced.matches ? 0 : Math.max(-2 * stepY, Math.min(2 * stepY, velocity.y * 180));
+      // Release speed from the last ~100ms of motion; a pause before letting go means no throw at all.
+      const first = trail[0];
+      const final = trail[trail.length - 1];
+      const span = final && first ? final.time - first.time : 0;
+      const fresh = final ? event.timeStamp - final.time < 60 : false;
+      const speedX = fresh && span >= 16 ? (final.x - first.x) / span : 0;
+      const speedY = fresh && span >= 16 ? (final.y - first.y) / span : 0;
+      // A flick carries the grid on at most one extra cell, in the direction it was thrown.
+      const throwX = reduced.matches ? 0 : Math.max(-0.9 * stepX, Math.min(0.9 * stepX, speedX * 120));
+      const throwY = reduced.matches ? 0 : Math.max(-0.9 * stepY, Math.min(0.9 * stepY, speedY * 120));
       const currentX = reduced.matches ? x : offsetX;
       const currentY = reduced.matches ? y : offsetY;
       if (reduced.matches) {
@@ -513,7 +513,7 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
   .wall-tile:focus-visible .wall-image { outline: 2px solid var(--color-accent); outline-offset: -2px; }
 
   .media-detail {
-    width: min(92vw, 64rem);
+    width: min(94vw, 72rem);
     max-height: 90svh;
     padding: var(--space-2);
     color: var(--color-text);
@@ -521,6 +521,7 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
 
   .media-detail::backdrop { background: #000c; }
   .media-detail form { margin-block-end: var(--space-2); text-align: end; }
+  .media-detail .media-card { border: 1px solid var(--color-rule); background: var(--color-surface); }
   .media-detail .media-visual { max-height: 65svh; }
   .timeline[hidden] { display: none; }
   .view-toggle:not([hidden]) {
@@ -776,19 +777,19 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
 
   /* Wide screens: the card lies on its side, picture left and description beside it. */
   @media (min-width: 64rem) {
-    .media-entry figure {
+    .media-card {
       display: grid;
       grid-template-columns: minmax(0, 2.1fr) minmax(15rem, 1fr);
     }
 
     /* The panel runs the full height of the picture: index and title at the top, then three equal sections. */
     /* The picture stretches to the panel's height and crops to fit, so the two always line up. */
-    .media-entry .media-visual {
+    .media-card .media-visual {
       aspect-ratio: auto;
       min-block-size: 20rem;
     }
 
-    .media-entry figcaption {
+    .media-card figcaption {
       grid-template-rows: auto auto repeat(3, 1fr);
       gap: var(--space-1);
       padding: var(--space-2);
@@ -796,7 +797,7 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
       border-inline-start: 1px solid var(--color-rule);
     }
 
-    .media-entry figcaption .section-title {
+    .media-card figcaption .section-title {
       font-size: clamp(1.5rem, 0.9rem + 1.4vw, 2.5rem);
     }
   }
