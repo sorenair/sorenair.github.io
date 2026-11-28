@@ -60,7 +60,7 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
             data-accent={accent}
           >
             <a class="row-link" id={`project-${id}`} href={`/work/${id}/`} aria-labelledby={`title-${id}`}>
-              <span class="row-thumb bracketed" style={`view-transition-name: cover-${id}`}>
+              <span class="row-thumb bracketed" style={`view-transition-name: cover-${id}; view-transition-class: cover`}>
                 <Image src={cover} alt="" width={240} widths={[160, 240, 360]} sizes="7rem" loading={index < 6 ? 'eager' : 'lazy'} />
               </span>
               <span class="row-title" id={`title-${id}`}>{data.title}</span>
@@ -71,9 +71,10 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
           </li>
         ))}
       </ol>
+      <p class="list-end terminal-label" aria-hidden="true">More to come</p>
       <aside class="preview bracketed" aria-hidden="true" data-preview>
         {rows.map(({ id, cover, data }) => (
-          <figure class="shot" data-shot={id} style={`view-transition-name: cover-${id}`}>
+          <figure class="shot" data-shot={id} style={`view-transition-name: cover-${id}; view-transition-class: cover`}>
             <Image src={cover} alt="" width={960} widths={[480, 720, 960]} sizes="(min-width: 60rem) 40vw, 0px" loading="lazy" />
           </figure>
         ))}
@@ -113,11 +114,40 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
     const wide = matchMedia('(min-width: 60rem)');
     function activateDefault() {
       clearActive();
-      if (!wide.matches) return;
+      if (!wide.matches) {
+        highlightAtLine();
+        return;
+      }
       const first = Array.from(list.querySelectorAll<HTMLElement>('[data-project-card]')).find((row) => !row.hidden);
       if (first) activate(first);
     }
     wide.addEventListener('change', activateDefault);
+
+    // Without hover, the row crossing the middle of the screen is the active one.
+    function highlightAtLine() {
+      if (wide.matches) return;
+      const line = innerHeight * 0.5;
+      let best: HTMLElement | undefined;
+      let bestDistance = Infinity;
+      for (const row of list.querySelectorAll<HTMLElement>('[data-project-card]')) {
+        if (row.hidden) continue;
+        const box = row.getBoundingClientRect();
+        const distance = Math.abs(box.top + box.height / 2 - line);
+        if (distance < bestDistance) {
+          best = row;
+          bestDistance = distance;
+        }
+      }
+      if (best) activate(best);
+    }
+    let lineFrame = 0;
+    addEventListener('scroll', () => {
+      if (wide.matches || lineFrame) return;
+      lineFrame = requestAnimationFrame(() => {
+        lineFrame = 0;
+        highlightAtLine();
+      });
+    }, { passive: true });
 
     function clearActive() {
       activeRow?.classList.remove('is-active');
@@ -207,12 +237,25 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
       history.replaceState({ ...history.state, workProjectReturn }, '');
     });
 
+    // Read before anything clears it: both pagereveal and pageshow need to know where we came back from.
+    let returning: ProjectReturnState | undefined = history.state?.workProjectReturn;
     render(new URL(window.location.href));
     activateDefault();
     controls.hidden = false;
+
+    // Coming back from a project: put the page and the active row where the project's cover will land,
+    // before the browser captures the new state of the transition. Otherwise the image pops into place.
+    window.addEventListener('pagereveal', (event) => {
+      if (!returning || !(event as Event & { viewTransition?: unknown }).viewTransition) return;
+      window.scrollTo({ top: returning.scrollY, behavior: 'instant' });
+      const row = document.getElementById(returning.cardId)?.closest<HTMLElement>('[data-project-card]');
+      if (row && !row.hidden) activate(row);
+    });
+
     window.addEventListener('pageshow', (event) => {
       render(new URL(window.location.href));
-      const state: ProjectReturnState | undefined = history.state?.workProjectReturn;
+      const state: ProjectReturnState | undefined = history.state?.workProjectReturn ?? returning;
+      returning = undefined;
       if (!state) return;
       history.replaceState({ ...history.state, workProjectReturn: undefined }, '');
 
@@ -298,6 +341,50 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
     display: none;
   }
 
+  /* The accent floods the active row; the study's Artifact direction. Touch screens have no hover, so scrolling drives it. */
+  .row {
+    margin-inline: calc(var(--gutter) * -1);
+    padding-inline: var(--gutter);
+  }
+
+  .row.is-active {
+    background: var(--color-accent);
+    color: var(--color-background);
+  }
+
+  .row.is-active :is(.row-title, .row-go, .terminal-label) {
+    color: var(--color-background);
+  }
+
+  .row.is-active .row-go {
+    transform: translate(0.15rem, -0.15rem);
+  }
+
+  /* Room below the last row so it can reach the highlight line while scrolling. */
+  .list-end {
+    margin: 0;
+    padding-block: var(--space-3) 45svh;
+    color: var(--color-muted);
+    text-align: center;
+  }
+
+  @media (min-width: 60rem) {
+    .list-end { display: none; }
+  }
+
+  /* Covers morph between the index and a project page; keep the picture cropped, not stretched. */
+  ::view-transition-group(*.cover) {
+    animation-duration: 480ms;
+    animation-timing-function: var(--ease-artifact);
+  }
+
+  ::view-transition-old(*.cover),
+  ::view-transition-new(*.cover) {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
   /* Phones: each row carries a thumbnail and needs no hover. */
   .row-link {
     display: grid;
@@ -369,24 +456,6 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
     }
 
     /* The accent floods the active row; the study's Artifact direction. */
-    .row {
-      margin-inline-start: calc(var(--gutter) * -1);
-      padding-inline-start: var(--gutter);
-    }
-
-    .row.is-active {
-      background: var(--color-accent);
-      color: var(--color-background);
-    }
-
-    .row.is-active :is(.row-title, .row-go, .terminal-label) {
-      color: var(--color-background);
-    }
-
-    .row.is-active .row-go {
-      transform: translate(0.15rem, -0.15rem);
-    }
-
     .row-link {
       grid-template-columns: minmax(0, 1fr) 11rem 2rem;
       min-block-size: 6rem;

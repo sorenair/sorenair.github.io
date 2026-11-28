@@ -105,7 +105,7 @@ const sections = await Promise.all((data.sections ?? []).map(async (section) => 
           )}
         </div>
 
-        <figure class="project-visual bracketed terminal-panel" style={`view-transition-name: cover-${Astro.params.slug}`}>
+        <figure class="project-visual bracketed terminal-panel" style={`view-transition-name: cover-${Astro.params.slug}; view-transition-class: cover`}>
           <Image
             class="project-cover resolve"
             src={cover.image}
