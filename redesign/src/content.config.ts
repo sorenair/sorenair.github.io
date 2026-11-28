@@ -23,7 +23,7 @@ const projects = defineCollection({
     context: z.string().trim().min(1).optional(),
     technologies: z.array(z.string().trim().min(1)).min(1).optional(),
     cover: projectImage,
-    date: z.string().regex(/^\d{4}(?:-\d{2}-\d{2})?$/).optional(),
+    date: z.string().regex(/^\d{4}(?:-\d{2}(?:-\d{2})?)?$/).optional(),
     sections: z.array(projectSection).optional(),
     links: z.array(z.object({ label: z.string().trim().min(1), href: z.httpUrl() })).optional(),
   }),

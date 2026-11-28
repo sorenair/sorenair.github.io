@@ -46,10 +46,10 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
     <div class="container library-top">
       <header class="library-heading">
         <h1 class="display-title" data-reveal>Work</h1>
-        <p class="terminal-label" role="status" data-project-status>{rows.length} {rows.length === 1 ? 'project' : 'projects'} shown</p>
+        <p class="terminal-label" role="status" data-project-status>{rows.length} {rows.length === 1 ? 'item' : 'items'} shown</p>
       </header>
       <div class="library-controls" data-library-controls hidden>
-        <div class="category-filters" role="group" aria-label="Filter projects by category">
+        <div class="category-filters" role="group" aria-label="Filter by category">
           {filters.map(({ value, label }) => (
             <button class="terminal-control" type="button" data-category={value} aria-pressed={value === 'all'}>{label}</button>
           ))}
@@ -67,7 +67,7 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
     </div>
 
     <div class="container library-body">
-      <p class="lead" data-empty-projects hidden>No projects in this category yet.</p>
+      <p class="lead" data-empty-projects hidden>Nothing in this category yet.</p>
       <ol class="rows" role="list" data-project-grid>
         {rows.map(({ id, data, cover, number, accent }, index) => (
           <li
@@ -183,7 +183,7 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
       }
 
       empty.hidden = visible > 0;
-      const result = `${visible} ${visible === 1 ? 'project' : 'projects'} shown`;
+      const result = `${visible} ${visible === 1 ? 'item' : 'items'} shown`;
       if (status.textContent !== result) status.textContent = result;
       if (nodeCounter) nodeCounter.textContent = `NODE ${visible}`;
       if (category !== currentCategory) {
@@ -282,6 +282,14 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
     gap: var(--space-2);
     padding-block: var(--space-1);
     border-block-end: 1px solid var(--color-rule);
+  }
+
+  /* The chosen filter is inverted: filled with the accent, text in the page color. */
+  .category-filters .terminal-control[aria-pressed="true"] {
+    border-color: var(--color-accent);
+    background-color: var(--color-accent);
+    color: var(--color-background);
+    text-decoration: none;
   }
 
   .project-sort {

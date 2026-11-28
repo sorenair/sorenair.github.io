@@ -524,6 +524,13 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
   .media-detail .media-card { border: 1px solid var(--color-rule); background: var(--color-surface); }
   .media-detail .media-visual { max-height: 65svh; }
   .timeline[hidden] { display: none; }
+  .view-toggle .terminal-control[aria-pressed="true"] {
+    border-color: var(--color-accent);
+    background-color: var(--color-accent);
+    color: var(--color-background);
+    text-decoration: none;
+  }
+
   .view-toggle:not([hidden]) {
     display: flex;
     gap: var(--space-1);
