@@ -81,7 +81,7 @@ const slides = await Promise.all(items.map(async (item) => {
     const mount = carousel.querySelector<HTMLElement>('[data-lens-mount]')!;
     const lensLink = carousel.querySelector<HTMLAnchorElement>('[data-lens-link]')!;
     lensLink.addEventListener('click', (event) => {
-      // Media entries open in the page dialog; the carousel card carries that behaviour.
+      // Media entries open in the page dialog; the carousel card carries that behavior.
       if (!lensLink.getAttribute('href')?.startsWith('#') || active < 0) return;
       event.preventDefault();
       slides[active].querySelector<HTMLAnchorElement>('a.carousel-card')?.click();
@@ -233,7 +233,7 @@ const slides = await Promise.all(items.map(async (item) => {
       ]);
       carousel!.classList.add('is-lens');
       stage.hidden = false;
-      // Panels are about 16:9; keep neighbours peeking in on narrow screens.
+      // Panels are about 16:9; keep neighbors peeking in on narrow screens.
       CONFIG.PANEL_H = Math.round(Math.min(mount.clientHeight * 0.62, (mount.clientWidth * 0.78) / 1.78));
       ENTRY.enabled = false;
       // Oversized oval: its edge sits outside the frame, so only the outermost panels bend.

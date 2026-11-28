@@ -1,0 +1,42 @@
+{
+  "title": "Embedded Systems R&D Engineer",
+  "categories": [
+    "technical"
+  ],
+  "summary": "Full-time embedded systems R&D at Lockheed Martin Advanced Technology Laboratories, Spectrum Systems, in the Twin Cities, MN.",
+  "context": "Lockheed Martin ATL, Spectrum Systems",
+  "technologies": [
+    "VHDL",
+    "FPGA Verification",
+    "C++",
+    "C",
+    "Python",
+    "I2C",
+    "Signal Processing",
+    "Machine Learning",
+    "Interface Control Documents",
+    "Photonic IC Testing"
+  ],
+  "cover": {
+    "src": "/images/work/professional/lm_atl.png",
+    "alt": "White ATL lettering on black above a row of colored bars"
+  },
+  "sections": [
+    {
+      "heading": "Role",
+      "paragraphs": [
+        "Embedded systems research and development engineer at Lockheed Martin Advanced Technology Laboratories, Spectrum Systems, based in the Twin Cities, MN. I joined full time in July 2026, in the same lab where I interned.",
+        "I design FPGA logic in VHDL, with simulation and verification, including high-speed data packetizers, an I2C physical interface, and an EEPROM interface. I write low-level instrument-control software in C++, C, and Python, and prepare customer-facing interface control documents.",
+        "My work also includes testing and checkout of complex optical and photonic integrated circuits, hypersonic impact analysis of proprietary space-grade materials, and signal processing and machine-learning neural-network models for audio steganography."
+      ]
+    }
+  ],
+  "links": [
+    {
+      "label": "Learn more about LM ATL",
+      "href": "https://www.lockheedmartin.com/en-us/capabilities/research-labs/advanced-technology-labs.html"
+    }
+  ],
+  "date": "2026-07",
+  "dateEnd": "present"
+}

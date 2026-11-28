@@ -44,7 +44,7 @@
       "images": [
         {
           "src": "/images/work/academic/projects/wifi_layout.png",
-          "alt": "Two-layer PCB layout in red and blue with the ESP32-C3 at the top centre, a USB-C connector at the bottom, and the project name in the silkscreen",
+          "alt": "Two-layer PCB layout in red and blue with the ESP32-C3 at the top center, a USB-C connector at the bottom, and the project name in the silkscreen",
           "caption": "PCB layout: red is the top copper layer and blue is the bottom."
         }
       ]
@@ -52,7 +52,7 @@
     {
       "heading": "The finished board",
       "paragraphs": [
-        "The finished board was assembled with the ESP32-C3 at its centre and the Enable and Boot buttons within easy reach for flashing over USB-C."
+        "The finished board was assembled with the ESP32-C3 at its center and the Enable and Boot buttons within easy reach for flashing over USB-C."
       ],
       "images": [
         {
