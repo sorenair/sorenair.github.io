@@ -1,7 +1,6 @@
 ---
 import { Image } from 'astro:assets';
 import { getCollection, type CollectionEntry } from 'astro:content';
-import StatusLine from '../../components/terminal/StatusLine.astro';
 import SiteLayout from '../../layouts/SiteLayout.astro';
 import { loadProjectCover as loadProjectImage } from '../../project-cover';
 
@@ -45,7 +44,6 @@ const sections = await Promise.all((data.sections ?? []).map(async (section) => 
     }
   </style>
   <article class="container page-section project-detail">
-    <StatusLine items={[data.categories.map((category) => disciplineLabels[category]).join(' / ').toUpperCase()]} />
     <header class="project-header module-grid">
       <a class="text-link terminal-label" href="/work/" data-back-to-work>Back to work</a>
       <div class="project-intro">

@@ -750,8 +750,23 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
     .rail-dash[aria-current="true"] .rail-label { opacity: 1; color: var(--color-text); }
   }
 
+  /* Wide screens: the card lies on its side, picture left and description beside it. */
   @media (min-width: 64rem) {
-    .media-grid { max-inline-size: 62rem; }
+    .media-entry figure {
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(16rem, 1fr);
+    }
+
+    .media-entry figcaption {
+      align-content: end;
+      padding: var(--space-3);
+      border-block-start: 0;
+      border-inline-start: 1px solid var(--color-rule);
+    }
+
+    .media-entry figcaption .section-title {
+      font-size: clamp(1.75rem, 1rem + 1.8vw, 3rem);
+    }
   }
 
   @media (max-width: 47.99rem) {
