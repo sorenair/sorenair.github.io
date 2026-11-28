@@ -44,7 +44,7 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
             <button class="terminal-control" type="button" data-category={value} aria-pressed={value === 'all'}>{label}</button>
           ))}
         </div>
-        <p class="terminal-label project-count" role="status" data-project-status>{rows.length} {rows.length === 1 ? 'item' : 'items'} shown</p>
+        <p class="terminal-label project-count" role="status" data-project-status>{String(rows.length).padStart(2, '0')} / {String(rows.length).padStart(2, '0')} ITEMS</p>
       </div>
     </div>
 
@@ -165,7 +165,7 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
       }
 
       empty.hidden = visible > 0;
-      const result = `${visible} ${visible === 1 ? 'item' : 'items'} shown`;
+      const result = `${String(visible).padStart(2, '0')} / ${String(editorial.length).padStart(2, '0')} ITEMS`;
       if (status.textContent !== result) status.textContent = result;
       if (nodeCounter) nodeCounter.textContent = `NODE ${visible}`;
       if (category !== currentCategory) {
