@@ -1,9 +1,18 @@
 {
   "title": "PØRTAL",
-  "categories": ["technical", "creative"],
+  "categories": [
+    "technical",
+    "creative"
+  ],
   "summary": "A networked display that lets friends and family send each other images, animations, and messages from the web.",
   "context": "Personal project",
-  "technologies": ["JavaScript", "Node.js", "Python", "HTML", "CSS"],
+  "technologies": [
+    "JavaScript",
+    "Node.js",
+    "Python",
+    "HTML",
+    "CSS"
+  ],
   "cover": {
     "src": "/images/work/personal/electronics/portal.png",
     "alt": "White Ø on a dark, rectangular display"
@@ -27,5 +36,7 @@
       "label": "View PØRTAL on GitHub",
       "href": "https://github.com/sorenair/portal"
     }
-  ]
+  ],
+  "date": "2025-05",
+  "dateEnd": "2025-09"
 }

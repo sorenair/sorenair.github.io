@@ -9,7 +9,7 @@ const mediaLabels = { video: 'Video', photo: 'Photography', artwork: 'Artwork', 
 const outboundLabels = { youtube: 'Watch on YouTube', instagram: 'View on Instagram' };
 const maxFeatured = 5;
 /** Work projects whose covers stand in as Featured highlights until enough media is marked `featured`. */
-const featuredPlaceholderProjects = ['portal', 'wifi-transceiver', 'overclock', 'nighteye', 'astrogolf'];
+const featuredPlaceholderProjects = ['portal', 'wifi-transceiver', 'nighteye', 'astrogolf'];
 
 // Newest dated items first; undated items keep their file order after them.
 const collection = (await getCollection('media')).sort((a, b) => (b.data.date ?? '').localeCompare(a.data.date ?? ''));
