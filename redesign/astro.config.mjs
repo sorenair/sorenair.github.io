@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 
-// Legacy URLs (see PORTFOLIO_ROUTE_MAP.md). Astro emits static redirect pages with a visible link.
+// Legacy URLs from the pre-2026 site (docs/ARCHITECTURE.md#legacy-redirects). Astro emits static redirect pages with a visible link.
 const redirects = {
   '/about.html': '/about/',
   '/contact.html': '/about/#contact',
