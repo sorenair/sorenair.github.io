@@ -1,5 +1,5 @@
 /**
- * Shared terminal behaviours. The layout loads this once; components import `glitch` from it.
+ * Shared terminal behaviors. The layout loads this once; components import `glitch` from it.
  *
  * Text reveals are decoded, not wiped:
  *  - `[data-reveal]` (and every `.page-title` / `.section-title`, unless `data-no-reveal`) scrambles

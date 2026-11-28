@@ -1,5 +1,5 @@
 // Adapted from https://github.com/Yousuf-developer/liquid-glass-carousel (MIT, see ./LICENSE).
-// Changes: images and clear colour passed in, horizontal-only wheel capture, click selects an item,
+// Changes: images and clear color passed in, horizontal-only wheel capture, click selects an item,
 // step() and goTo() added for the HTML controls.
 // The carousel itself — three.js + GSAP, no React. An infinite flat row of
 // image panels rendered into an offscreen buffer, then drawn to screen
@@ -21,7 +21,7 @@ import { CONFIG, INTERACT, LENS, FOCUS, ENTRY } from "./config";
 export function createCarousel(mount, callbacks = {}) {
   const {
     items: PROJECTS = [], // [{ src, aspect }] - images shown in the row
-    background = 0xffffff, // clear colour; match the page so framebuffer gaps blend in
+    background = 0xffffff, // clear color; match the page so framebuffer gaps blend in
     onSelect = () => {}, // a panel was clicked or tapped (index into items)
     cursorElement = null,
     onActiveChange = () => {},
@@ -529,7 +529,7 @@ export function createCarousel(mount, callbacks = {}) {
 
         // constant-gap walk from the centered source, one copy per source.
         // Each slot uses ITS OWN current grow height, so a grown panel takes
-        // more space and pushes neighbours outward.
+        // more space and pushes neighbors outward.
         const cSrc = centerIndex(scroll);
         let di = i - cSrc;
         if (di > sources.length / 2) di -= sources.length;
@@ -717,7 +717,7 @@ export function createCarousel(mount, callbacks = {}) {
     // Kill any show/hide still in flight before starting the next one.
     // press -> release -> click queues a fade-in (release, still over the
     // panel) immediately followed by a fade-out (click opens focus). Left to
-    // GSAP's default non-overwriting behaviour both survive and the label ends
+    // GSAP's default non-overwriting behavior both survive and the label ends
     // up stuck visible. Scoped so the quickTo x/y trailing tweens are untouched.
     gsap.killTweensOf(cursorElement, "scale,autoAlpha,opacity,visibility");
     gsap.to(cursorElement, {
@@ -895,7 +895,7 @@ export function createCarousel(mount, callbacks = {}) {
     const focusPoolIdx = centeredPanel.poolIdx;
     focusState.poolIdx = focusPoolIdx;
 
-    // pull scroll precisely to center so the focused panel is dead-centre
+    // pull scroll precisely to center so the focused panel is dead-center
     target = centerForIndex(nearestIndex(scroll));
 
     // order the OTHER panels by distance from the focused card and group
