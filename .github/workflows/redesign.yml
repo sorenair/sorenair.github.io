@@ -28,4 +28,4 @@ jobs:
           name: redesign-dist
           path: redesign/dist
           retention-days: 7
-# Deployment to GitHub Pages is a separate release decision; add a deploy job at cutover.
+# Build check only. Publishing is the manual deploy.yml workflow.

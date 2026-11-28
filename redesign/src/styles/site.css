@@ -342,7 +342,7 @@ body:not(:has([data-site-header][data-overlay])) main {
 }
 
 /* ===== Artifact kit =====
-   Shared pieces from the chosen identity direction (see SHELL.md). Opt in with these classes. */
+   Shared pieces from the chosen identity direction (see docs/DESIGN.md). Opt in with these classes. */
 
 /* Fine grain over the whole page. Static, so it needs no reduced-motion variant. */
 body::after {
