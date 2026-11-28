@@ -249,6 +249,11 @@ const slides = await Promise.all(items.map(async (item) => {
         return { src: image.currentSrc || image.src, aspect: null };
       });
       let settleDelay = 0;
+      // Subtle white frame on the centered item: the one that opens on tap.
+      const outline = document.createElement('div');
+      outline.className = 'lens-outline';
+      outline.setAttribute('aria-hidden', 'true');
+      mount.append(outline);
       try {
         const engine = createCarousel(mount, {
           items,
@@ -256,6 +261,16 @@ const slides = await Promise.all(items.map(async (item) => {
           onActiveChange: (index: number) => {
             clearTimeout(settleDelay);
             settleDelay = window.setTimeout(() => settle(index), 140);
+          },
+          onCenterRect: (rect: { left: number; top: number; width: number; height: number } | null) => {
+            if (!rect) {
+              outline.style.opacity = '0';
+              return;
+            }
+            outline.style.opacity = '1';
+            outline.style.transform = `translate(${rect.left}px, ${rect.top}px)`;
+            outline.style.width = `${rect.width}px`;
+            outline.style.height = `${rect.height}px`;
           },
           onSelect: (index: number) => slides[index].querySelector<HTMLAnchorElement>('a.carousel-card')?.click(),
         });
@@ -428,6 +443,16 @@ const slides = await Promise.all(items.map(async (item) => {
     background: transparent;
     cursor: grab;
     touch-action: pan-y;
+  }
+
+  .lens-mount :global(.lens-outline) {
+    position: absolute;
+    inset: 0 auto auto 0;
+    box-sizing: border-box;
+    border: 1px solid rgb(255 255 255 / 0.7);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 200ms;
   }
 
   .lens-mount :global(canvas) {

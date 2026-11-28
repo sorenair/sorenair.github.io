@@ -25,6 +25,7 @@ export function createCarousel(mount, callbacks = {}) {
     onSelect = () => {}, // a panel was clicked or tapped (index into items)
     cursorElement = null,
     onActiveChange = () => {},
+    onCenterRect = () => {}, // per frame: canvas-relative rect {left,top,width,height} of the centered panel, or null
     onFocusChange = () => {},
     onEntryDone = () => {},
     onModeChange = () => {},
@@ -602,7 +603,11 @@ export function createCarousel(mount, callbacks = {}) {
   }
 
   // which visible panel (if any) is under a viewport point?
-  function panelAtPointer(px, py) {
+  function panelAtPointer(clientX, clientY) {
+    // Panel rects are canvas-relative; the carousel canvas is not fullscreen, so offset the client point.
+    const box = renderer.domElement.getBoundingClientRect();
+    const px = clientX - box.left;
+    const py = clientY - box.top;
     for (let i = 0; i < panelRects.length; i++) {
       const r = panelRects[i];
       if (px >= r.left && px <= r.right && py >= r.top && py <= r.bottom)
@@ -1176,6 +1181,10 @@ export function createCarousel(mount, callbacks = {}) {
     scrollEnergy += (norm - scrollEnergy) * k;
 
     layout();
+    {
+      const c = centeredPanel && panelRects.find((r) => r.poolIdx === centeredPanel.poolIdx);
+      onCenterRect(c && !focusState.active ? { left: c.left, top: c.top, width: c.right - c.left, height: c.bottom - c.top } : null);
+    }
     refreshHover(); // panels just moved — the hover state may be stale
 
     // click-to-center: once the glide has settled on the clicked panel, focus it
