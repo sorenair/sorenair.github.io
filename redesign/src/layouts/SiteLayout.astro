@@ -38,7 +38,7 @@ const accent = await getCoverAccent(accentSource ?? project?.data.cover.src);
 <html lang="en" style={accent ? { '--color-page-accent': accent } : undefined}>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#121212" />
     <title>{title} | Soren Gabor</title>
     <meta name="description" content={summary} />
