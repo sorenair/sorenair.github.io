@@ -449,7 +449,7 @@ const slides = await Promise.all(items.map(async (item) => {
     position: absolute;
     inset: 0 auto auto 0;
     box-sizing: border-box;
-    border: 1px solid rgb(255 255 255 / 0.7);
+    border: 3px solid rgb(255 255 255 / 0.85);
     pointer-events: none;
     opacity: 0;
     transition: opacity 200ms;
@@ -461,8 +461,14 @@ const slides = await Promise.all(items.map(async (item) => {
     block-size: 100%;
   }
 
+  /* Kept for keyboard and screen-reader users; hidden visually. */
   .lens-link {
-    justify-self: center;
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .is-lens .carousel-track {

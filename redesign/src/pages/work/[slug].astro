@@ -60,9 +60,13 @@ const sections = await Promise.all((data.sections ?? []).map(async (section) => 
       @view-transition { navigation: auto; }
     }
   </style>
-  <article class="container page-section project-detail">
-    <header class="project-header module-grid">
-      <a class="text-link terminal-label" href="/work/" data-back-to-work>Back to work</a>
+  <article class="project-detail">
+    <div class="project-hero module-grid">
+    <header class="container project-header">
+      <a class="back-link terminal-label" href="/work/" data-back-to-work>
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false"><path d="M10.5 2.5 5 8l5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square"/></svg>
+        Back to work
+      </a>
       <div class="project-intro">
         <div class="project-description">
           <h1 class="display-title project-title" data-reveal>{data.title}</h1>
@@ -114,9 +118,10 @@ const sections = await Promise.all((data.sections ?? []).map(async (section) => 
         </figure>
       </div>
     </header>
+    </div>
 
     {sections.length > 0 && (
-      <div class="project-story">
+      <div class="container project-story">
         {sections.map(({ heading, paragraphs, images }) => (
           <section class="project-section">
             <h2 class="section-title" data-reveal>{heading}</h2>
@@ -154,12 +159,21 @@ const sections = await Promise.all((data.sections ?? []).map(async (section) => 
 </script>
 
 <style>
-  .project-detail {
-    padding-block-start: var(--space-4);
+  .project-hero {
+    padding-block: var(--space-4) var(--space-3);
   }
 
-  .project-header {
-    margin-block-end: var(--space-3);
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+  }
+
+  .back-link:hover,
+  .back-link:focus-visible {
+    text-decoration: none;
+    color: var(--color-accent);
   }
 
   .project-intro {
@@ -255,8 +269,7 @@ const sections = await Promise.all((data.sections ?? []).map(async (section) => 
   }
 
   .project-story {
-    margin-block-start: var(--space-4);
-    border-block-end: 1px solid var(--color-rule);
+    padding-block-end: var(--space-4);
   }
 
   .project-section {

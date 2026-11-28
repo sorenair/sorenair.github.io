@@ -143,7 +143,12 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
     </ul>
     </div>
     <dialog class="media-detail terminal-panel" id="media-detail" aria-label="Media item">
-      <form method="dialog"><button class="terminal-control">Close</button></form>
+      <form method="dialog">
+        <button class="close-button terminal-label">
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false"><path d="M3 3l10 10M13 3 3 13" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square"/></svg>
+          Close
+        </button>
+      </form>
       <div data-media-detail></div>
     </dialog>
   </div>
@@ -520,6 +525,22 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
   }
 
   .media-detail::backdrop { background: #000c; }
+  .close-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .close-button:hover,
+  .close-button:focus-visible { color: var(--color-accent); }
   .media-detail form { margin-block-end: var(--space-2); text-align: end; }
   .media-detail .media-card { border: 1px solid var(--color-rule); background: var(--color-surface); }
   .media-detail .media-visual { max-height: 65svh; }
