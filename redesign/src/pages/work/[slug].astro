@@ -88,7 +88,7 @@ const sections = await Promise.all((data.sections ?? []).map(async (section) => 
             )}
             <div>
               <dt class="terminal-label">Date</dt>
-              <dd>{dateRange(data.date, data.dateEnd, data.categories.includes('academic') || /course|academic/i.test(data.context ?? '')) ?? 'Undated'}</dd>
+              <dd>{dateRange(data.date, data.dateEnd, data.termDates || data.categories.includes('academic') || /course|academic/i.test(data.context ?? '')) ?? 'Undated'}</dd>
             </div>
           </dl>
           {data.technologies && (
