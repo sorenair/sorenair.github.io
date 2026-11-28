@@ -246,6 +246,9 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
       opened?.figure.querySelector('video')?.pause();
       if (opened) opened.entry.append(opened.figure);
       opened = undefined;
+      // With no focusable opener (carousel, pointer use) the browser parks focus on <main>; clear it so no page-edge ring shows.
+      const parked = document.activeElement;
+      if (parked instanceof HTMLElement && (parked.id === 'main-content' || parked === document.body)) parked.blur();
     });
 
     for (const link of [...tiles, ...document.querySelectorAll<HTMLAnchorElement>('.featured-tile')]) {
@@ -375,6 +378,8 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
       dragged = false;
       settleTo(Math.round(offsetX / stepX), Math.round(offsetY / stepY));
     });
+    // iOS Safari: stop the page scrolling under a drag that began on the grid.
+    wall.addEventListener('touchmove', (event) => { if (drag) event.preventDefault(); }, { passive: false });
     wall.addEventListener('dragstart', (event) => event.preventDefault());
     const toggle = document.querySelector<HTMLElement>('[data-view-toggle]');
     function setView(view: 'explore' | 'gallery') {
@@ -488,12 +493,18 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
     height: clamp(26rem, 72svh, 56rem);
     margin-block-start: var(--space-3);
     overflow: hidden;
-    touch-action: pan-y pinch-zoom;
+    touch-action: none; /* the grid owns every gesture on its surface */
+    overscroll-behavior: contain;
     cursor: grab;
     background: var(--color-background);
   }
 
   .media-wall:active { cursor: grabbing; }
+
+  /* Touch: the grid holds its gestures, so leave a strip of page below it that can still be scrolled. */
+  @media (pointer: coarse) {
+    .media-wall { height: clamp(22rem, 62svh, 56rem); }
+  }
 
   .wall-tile {
     position: absolute;
