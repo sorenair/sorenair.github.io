@@ -225,7 +225,7 @@ const slides = await Promise.all(items.map(async (item) => {
     async function enableLens() {
       const canvas = document.createElement('canvas');
       const gl = canvas.getContext('webgl2') ?? canvas.getContext('webgl');
-      if (!gl || reduced.matches || innerWidth < 700) return;
+      if (!gl || reduced.matches) return;
 
       const [{ createCarousel }, { CONFIG, ENTRY, LENS }] = await Promise.all([
         import('../../media-lens/engine.js'),
@@ -233,7 +233,8 @@ const slides = await Promise.all(items.map(async (item) => {
       ]);
       carousel!.classList.add('is-lens');
       stage.hidden = false;
-      CONFIG.PANEL_H = Math.round(mount.clientHeight * 0.62);
+      // Panels are about 16:9; keep neighbours peeking in on narrow screens.
+      CONFIG.PANEL_H = Math.round(Math.min(mount.clientHeight * 0.62, (mount.clientWidth * 0.78) / 1.78));
       ENTRY.enabled = false;
       // Oversized oval: its edge sits outside the frame, so only the outermost panels bend.
       LENS.sizeX = 1.9;
@@ -249,6 +250,8 @@ const slides = await Promise.all(items.map(async (item) => {
         return { src: image.currentSrc || image.src, aspect: null };
       });
       let settleDelay = 0;
+      let framed = -1;
+      let frameTimer = 0;
       // Subtle white frame on the centered item: the one that opens on tap.
       const outline = document.createElement('div');
       outline.className = 'lens-outline';
@@ -262,12 +265,19 @@ const slides = await Promise.all(items.map(async (item) => {
             clearTimeout(settleDelay);
             settleDelay = window.setTimeout(() => settle(index), 140);
           },
-          onCenterRect: (rect: { left: number; top: number; width: number; height: number } | null) => {
+          onCenterRect: (rect: { left: number; top: number; width: number; height: number; srcIndex: number } | null) => {
             if (!rect) {
-              outline.style.opacity = '0';
+              outline.classList.remove('is-on');
+              framed = -1;
               return;
             }
-            outline.style.opacity = '1';
+            if (rect.srcIndex !== framed) {
+              // A new item reached the middle: let the frame ease out, then shrink back in.
+              framed = rect.srcIndex;
+              outline.classList.remove('is-on');
+              clearTimeout(frameTimer);
+              frameTimer = window.setTimeout(() => outline.classList.add('is-on'), 180);
+            }
             outline.style.transform = `translate(${rect.left}px, ${rect.top}px)`;
             outline.style.width = `${rect.width}px`;
             outline.style.height = `${rect.height}px`;
@@ -275,6 +285,8 @@ const slides = await Promise.all(items.map(async (item) => {
           onSelect: (index: number) => slides[index].querySelector<HTMLAnchorElement>('a.carousel-card')?.click(),
         });
         lens = engine;
+        // Let a vertical swipe scroll the page; horizontal drags still reach the engine.
+        mount.querySelector('canvas')?.style.setProperty('touch-action', 'pan-y');
         active = -1;
         settle(0);
       } catch {
@@ -438,7 +450,7 @@ const slides = await Promise.all(items.map(async (item) => {
 
   .lens-mount {
     position: relative;
-    block-size: clamp(22rem, 40vw, 34rem);
+    block-size: clamp(15rem, 40vw, 34rem);
     overflow: hidden;
     background: transparent;
     cursor: grab;
@@ -452,7 +464,13 @@ const slides = await Promise.all(items.map(async (item) => {
     border: 3px solid rgb(255 255 255 / 0.85);
     pointer-events: none;
     opacity: 0;
-    transition: opacity 200ms;
+    scale: 1.06;
+    transition: opacity 260ms var(--ease-artifact), scale 260ms var(--ease-artifact);
+  }
+
+  .lens-mount :global(.lens-outline.is-on) {
+    opacity: 1;
+    scale: 1;
   }
 
   .lens-mount :global(canvas) {
