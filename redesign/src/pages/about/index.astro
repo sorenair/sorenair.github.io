@@ -1,15 +1,7 @@
 ---
 import { Image, getImage } from 'astro:assets';
-import widePortrait from '../../../../images/info_splash.jpg';
-import portrait from '../../../../images/info_splash_mobile.png';
+import portrait from '../../../../images/headshot.webp';
 import SiteLayout from '../../layouts/SiteLayout.astro';
-
-const desktopPortrait = await getImage({
-  src: widePortrait,
-  width: 1200,
-  widths: [720, 960, 1200],
-  format: 'webp',
-});
 
 const experience = [
   {
@@ -87,17 +79,16 @@ const socials = [
         <p class="lead">I’m currently studying Electrical Engineering and Physics at the University of St. Thomas in St. Paul, Minnesota. While my work often focuses on designing and improving electronic systems, I love creative endeavors of every kind.</p>
         <a class="text-link contact-jump" href="#contact">CONTACT</a>
       </div>
-      <picture class="about-portrait bracketed">
-        <source media="(min-width: 54rem)" srcset={desktopPortrait.srcSet.attribute} sizes="(min-width: 88rem) 49rem, 56vw" />
+      <div class="about-portrait bracketed">
         <Image
           src={portrait}
-          alt="Soren Gabor in profile in front of a painted brick wall"
-          width={800}
-          widths={[400, 640, 800, 1076]}
-          sizes="100vw"
+          alt="Portrait of Soren Gabor, smiling, in a black blazer and white shirt"
+          widths={[480, 720, 848]}
+          sizes="(min-width: 54rem) 28rem, 100vw"
+          format="webp"
           loading="eager"
         />
-      </picture>
+      </div>
     </div>
 
     <section class="about-section" aria-labelledby="experience-heading">
@@ -214,13 +205,15 @@ const socials = [
 
   .about-portrait {
     display: block;
+    inline-size: 100%;
+    max-inline-size: 28rem;
   }
 
   .about-portrait img {
     inline-size: 100%;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 4 / 5;
     object-fit: cover;
-    object-position: center 38%;
+    object-position: center 12%; /* face sits in the upper third of the 2:3 source; keep it centered */
     background: var(--color-surface);
   }
 
@@ -343,13 +336,11 @@ const socials = [
 
   @media (min-width: 54rem) {
     .about-intro {
-      grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
+      grid-template-columns: minmax(0, 1fr) minmax(0, 28rem);
+      gap: var(--space-4);
     }
 
-    .about-portrait img {
-      aspect-ratio: 16 / 10;
-      object-position: 33% center;
-    }
+    .about-portrait { justify-self: end; }
 
     .about-section,
     .contact {
