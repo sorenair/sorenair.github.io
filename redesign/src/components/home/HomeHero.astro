@@ -111,11 +111,6 @@ import HomeReel from './HomeReel.astro';
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    .work-link:is(:hover, :focus-visible) .cta-arrow { animation: nudge 600ms var(--ease-out); }
-    @keyframes nudge { 0% { transform: translateX(-100%); } 100% { transform: none; } }
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
     .hero-intro, .hero-actions { animation: rise 600ms var(--ease-out) 380ms both; }
   }
 
