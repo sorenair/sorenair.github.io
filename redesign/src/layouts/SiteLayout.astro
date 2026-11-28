@@ -14,6 +14,7 @@ interface Props {
 
 const { title, description, accentSource } = Astro.props;
 const { pathname } = Astro.url;
+const year = new Date().getFullYear(); // Computed at build time.
 const canonical = new URL(pathname, Astro.site);
 const workCurrent = pathname === '/work/' ? 'page' : pathname.startsWith('/work/') ? 'location' : undefined;
 const project = !accentSource && workCurrent === 'location' && Astro.params.slug
@@ -52,7 +53,7 @@ const accent = await getCoverAccent(accentSource ?? project?.data.cover.src);
     </main>
     <footer class="site-footer">
       <div class="container site-footer__inner">
-        <span class="terminal-label">SOREN GABOR</span>
+        <span class="terminal-label">&copy; {year} SOREN GABOR</span>
         <a class="terminal-control" href="/about/#contact">Contact</a>
       </div>
     </footer>
