@@ -243,9 +243,16 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
     }
 
     dialog.addEventListener('close', () => {
-      opened?.figure.querySelector('video')?.pause();
-      if (opened) opened.entry.append(opened.figure);
+      const closing = opened;
+      closing?.figure.querySelector('video')?.pause();
       opened = undefined;
+      // Keep the card in the dialog until the exit transition has played, then send it home.
+      if (closing) {
+        window.setTimeout(() => {
+          if (opened === closing) return; // reopened in the meantime
+          closing.entry.append(closing.figure);
+        }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 320);
+      }
       // With no focusable opener (carousel, pointer use) the browser parks focus on <main>; clear it so no page-edge ring shows.
       const parked = document.activeElement;
       if (parked instanceof HTMLElement && (parked.id === 'main-content' || parked === document.body)) parked.blur();
@@ -542,7 +549,51 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
     color: var(--color-text);
   }
 
-  .media-detail::backdrop { background: #000c; }
+  /* Open and close ease in and out instead of snapping; the card rises slightly while the backdrop fades. */
+  .media-detail {
+    opacity: 0;
+    scale: 0.97;
+    translate: 0 1rem;
+    transition:
+      opacity 280ms var(--ease-artifact),
+      scale 280ms var(--ease-artifact),
+      translate 280ms var(--ease-artifact),
+      overlay 280ms allow-discrete,
+      display 280ms allow-discrete;
+  }
+
+  .media-detail[open] {
+    opacity: 1;
+    scale: 1;
+    translate: 0 0;
+  }
+
+  @starting-style {
+    .media-detail[open] {
+      opacity: 0;
+      scale: 0.97;
+      translate: 0 1rem;
+    }
+  }
+
+  .media-detail::backdrop {
+    background: #0000;
+    transition:
+      background-color 280ms var(--ease-artifact),
+      overlay 280ms allow-discrete,
+      display 280ms allow-discrete;
+  }
+
+  .media-detail[open]::backdrop { background: #000c; }
+
+  @starting-style {
+    .media-detail[open]::backdrop { background: #0000; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .media-detail,
+    .media-detail::backdrop { transition: none; }
+  }
   .close-button {
     display: inline-flex;
     align-items: center;
