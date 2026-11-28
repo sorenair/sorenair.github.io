@@ -20,7 +20,6 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
     id,
     data,
     cover,
-    number: String(index + 1).padStart(2, '0'),
     // Contrast-checked at build time. Monochrome covers have none and keep the shared accent.
     accent: (await getCoverAccent(data.cover.src)) ?? '',
   };
@@ -51,7 +50,7 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
     <div class="container library-body">
       <p class="lead" data-empty-projects hidden>Nothing in this category yet.</p>
       <ol class="rows" role="list" data-project-grid>
-        {rows.map(({ id, data, cover, number, accent }, index) => (
+        {rows.map(({ id, data, cover, accent }, index) => (
           <li
             class="row"
             data-project-card
@@ -59,7 +58,6 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
             data-categories={data.categories.join(' ')}
             data-date={data.date}
             data-accent={accent}
-            data-number={number}
           >
             <a class="row-link" id={`project-${id}`} href={`/work/${id}/`} aria-labelledby={`title-${id}`}>
               <span class="row-thumb bracketed" style={`view-transition-name: cover-${id}`}>
@@ -79,7 +77,7 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
             <Image src={cover} alt="" width={960} widths={[480, 720, 960]} sizes="(min-width: 60rem) 40vw, 0px" loading="lazy" />
           </figure>
         ))}
-        <p class="preview-meta terminal-label"><span data-preview-number>--</span> <span data-preview-title>Hover or focus a row</span></p>
+        <p class="preview-meta terminal-label"><span data-preview-title>Hover or focus a row</span></p>
       </aside>
     </div>
   </section>
@@ -102,7 +100,6 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
     const status = library.querySelector<HTMLElement>('[data-project-status]')!;
     const empty = library.querySelector<HTMLElement>('[data-empty-projects]')!;
     const preview = library.querySelector<HTMLElement>('[data-preview]')!;
-    const previewNumber = library.querySelector<HTMLElement>('[data-preview-number]')!;
     const previewTitle = library.querySelector<HTMLElement>('[data-preview-title]')!;
     const filters = Array.from(controls.querySelectorAll<HTMLButtonElement>('[data-category]'));
     const editorial = Array.from(list.querySelectorAll<HTMLElement>('[data-project-card]'));
@@ -127,7 +124,6 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
       activeRow = undefined;
       root.style.removeProperty('--color-active-accent');
       shots.forEach((shot) => shot.classList.remove('is-on'));
-      previewNumber.textContent = '--';
       previewTitle.textContent = idleTitle;
     }
 
@@ -146,7 +142,6 @@ const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
         void image.offsetWidth;
         image.classList.add('resolve');
       }
-      previewNumber.textContent = row.dataset.number ?? '';
       previewTitle.textContent = row.querySelector('.row-title')?.textContent ?? '';
       glitch(preview);
     }
