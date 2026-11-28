@@ -60,6 +60,7 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
     </div>
     <FeaturedCarousel items={highlights} />
     <div class="view-toggle" role="group" aria-label="Media view" data-view-toggle hidden>
+      <span class="terminal-label view-label" aria-hidden="true">View</span>
       <button class="terminal-control" type="button" data-view="explore" aria-pressed="true" aria-controls="media-wall">Explore</button>
       <button class="terminal-control" type="button" data-view="gallery" aria-pressed="false" aria-controls="media-gallery">Gallery</button>
     </div>
@@ -570,7 +571,12 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
   .view-toggle:not([hidden]) {
     display: flex;
     gap: var(--space-1);
+    align-items: center;
     margin: var(--space-3) var(--gutter) 0;
+  }
+
+  .view-label {
+    margin-inline-end: var(--space-1);
   }
 
   .media-gallery {
