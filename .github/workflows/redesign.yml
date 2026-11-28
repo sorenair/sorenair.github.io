@@ -1,0 +1,31 @@
+name: Redesign build
+
+on:
+  pull_request:
+    paths: ['redesign/**', 'images/**', 'content/**', '.github/workflows/redesign.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: redesign
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.19.0
+          cache: npm
+          cache-dependency-path: redesign/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: redesign-dist
+          path: redesign/dist
+          retention-days: 7
+# Deployment to GitHub Pages is a separate release decision; add a deploy job at cutover.

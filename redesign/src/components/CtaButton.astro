@@ -1,0 +1,85 @@
+---
+interface Props {
+  href: string;
+  label: string;
+  arrow?: string;
+}
+
+const { href, label, arrow = '→' } = Astro.props;
+---
+
+<a class="cta" href={href} aria-label={label} data-cta>
+  <span class="cta-label" aria-hidden="true">{label.toUpperCase()}</span>
+  <span class="cta-arrow" aria-hidden="true">{arrow}</span>
+</a>
+
+<style>
+  .cta {
+    display: inline-flex;
+    align-items: stretch;
+    border: 2px solid #fff;
+    background: #fff;
+    color: #080808;
+    font: 700 clamp(1rem, 0.9rem + 0.5vw, 1.25rem) / 1 var(--font-mono);
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    transition: background-color var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out);
+  }
+
+  .cta-label {
+    display: grid;
+    align-items: center;
+    min-block-size: 3.5rem;
+    padding-inline: 1.5rem 1.25rem;
+  }
+
+  .cta-arrow {
+    display: grid;
+    place-items: center;
+    inline-size: 3.5rem;
+    background: #080808;
+    color: #fff;
+    font-size: 1.5rem;
+    overflow: hidden;
+    transition: background-color var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out);
+  }
+
+  .cta:is(:hover, :focus-visible) { background: #080808; color: #fff; }
+  .cta:is(:hover, :focus-visible) .cta-arrow { background: #fff; color: #080808; }
+  .cta:active { transform: translateY(1px); }
+
+  .cta:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 4px;
+  }
+</style>
+
+<script>
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  document.querySelectorAll<HTMLElement>('[data-cta]').forEach((cta) => {
+    const label = cta.querySelector<HTMLElement>('.cta-label');
+    if (!label) return;
+    const text = label.textContent ?? '';
+    const glyphs = '#%@*+=-:./0Ø';
+    let frame = 0;
+
+    const scramble = () => {
+      cancelAnimationFrame(frame);
+      const start = performance.now();
+      const step = (now: number) => {
+        const t = Math.min(1, (now - start) / 420);
+        const keep = Math.floor(t * text.length);
+        label.textContent = text
+          .split('')
+          .map((c, i) => (c === ' ' || i < keep ? c : glyphs[Math.floor(Math.random() * glyphs.length)]))
+          .join('');
+        if (t < 1) frame = requestAnimationFrame(step);
+      };
+      frame = requestAnimationFrame(step);
+    };
+
+    cta.addEventListener('pointerenter', scramble);
+    cta.addEventListener('focus', scramble);
+  });
+}
+</script>

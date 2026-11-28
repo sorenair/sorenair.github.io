@@ -1,0 +1,27 @@
+{
+  "title": "ENGR 340: Signals and Systems",
+  "categories": [
+    "academic"
+  ],
+  "summary": "Fourier and Z transforms, filtering, modulation, and sampling, with an introduction to AI applications.",
+  "context": "University of St. Thomas coursework",
+  "technologies": [
+    "MATLAB",
+    "Python",
+    "AI / ML"
+  ],
+  "cover": {
+    "src": "/images/work/academic/cw.jpg",
+    "alt": "Open purple notebook with a pen beside color-swatch cards"
+  },
+  "sections": [
+    {
+      "heading": "Overview",
+      "paragraphs": [
+        "Analyzed continuous and discrete-time systems using Fourier series, Fourier and Z transforms to characterize frequency-domain behavior. Applied filtering, modulation, and sampling theory to real-world signal processing problems.",
+        "Explored foundational concepts in Artificial Intelligence, integrating signal analysis techniques with emerging AI applications."
+      ]
+    }
+  ],
+  "date": "2024-09"
+}

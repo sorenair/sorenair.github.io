@@ -1,0 +1,41 @@
+{
+  "title": "PØRTAL",
+  "categories": [
+    "technical"
+  ],
+  "summary": "A networked display that lets friends and family send each other images, animations, and messages from the web.",
+  "context": "Personal project",
+  "technologies": [
+    "JavaScript",
+    "Node.js",
+    "Python",
+    "HTML",
+    "CSS"
+  ],
+  "cover": {
+    "src": "/images/work/personal/electronics/portal.png",
+    "alt": "White Ø on a dark, rectangular display"
+  },
+  "sections": [
+    {
+      "heading": "The idea",
+      "paragraphs": [
+        "PØRTAL gives friends and family a way to leave something for each other to find later. A photo or a short message can show up on a dedicated display even when the sender and recipient aren't online at the same time."
+      ]
+    },
+    {
+      "heading": "From browser to display",
+      "paragraphs": [
+        "The sender uses a custom web interface to send a picture, animation, or message to a designated display. PØRTAL delivers the content in real time, and the display renders it when it arrives."
+      ]
+    }
+  ],
+  "links": [
+    {
+      "label": "View PØRTAL on GitHub",
+      "href": "https://github.com/sorenair/portal"
+    }
+  ],
+  "date": "2025-05",
+  "dateEnd": "2025-09"
+}

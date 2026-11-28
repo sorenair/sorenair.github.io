@@ -1,0 +1,863 @@
+---
+import { Image, getImage } from 'astro:assets';
+import { getCollection, getEntry } from 'astro:content';
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import FeaturedCarousel, { type FeaturedItem } from './_FeaturedCarousel.astro';
+import { loadProjectCover as loadCover } from '../../project-cover';
+
+const mediaLabels = { video: 'Video', photo: 'Photography', artwork: 'Artwork', youtube: 'YouTube', instagram: 'Instagram' };
+const outboundLabels = { youtube: 'Watch on YouTube', instagram: 'View on Instagram' };
+const maxFeatured = 5;
+/** Work projects whose covers stand in as Featured highlights until enough media is marked `featured`. */
+const featuredPlaceholderProjects = ['portal', 'wifi-transceiver', 'nighteye', 'astrogolf'];
+
+// Newest dated items first; undated items keep their file order after them.
+const collection = (await getCollection('media')).sort((a, b) => (b.data.date ?? '').localeCompare(a.data.date ?? ''));
+const dateLabel = (date?: string) => date ? new Date(`${date}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' }).toUpperCase() : '';
+const dateFull = (date?: string) => date ? new Date(`${date}T00:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : '';
+const entries = await Promise.all(collection.map(async ({ id, data }) => {
+  if (data.kind === 'video') {
+    return { id, kind: data.kind, title: data.title, date: dateLabel(data.date), dateFull: dateFull(data.date), description: data.description ?? '', src: data.src!, poster: data.poster! };
+  }
+
+  const cover = await loadCover(data.cover!.src);
+  const width = Math.min(900, cover.width);
+  const widths = [360, 540, 720].filter((candidate) => candidate < width).concat(width);
+  const entry = { id, kind: data.kind, title: data.title, date: dateLabel(data.date), dateFull: dateFull(data.date), alt: data.cover!.alt, caption: data.caption, href: data.href, project: data.project, cover, width, widths };
+  if (data.kind !== 'photo') return entry;
+
+  const fullPhoto = await getImage({ src: cover, width: Math.min(1600, cover.width), format: 'webp' });
+  return { ...entry, fullPhotoHref: fullPhoto.src };
+}));
+// Highlights are media entries marked `featured`; selected Work covers fill any remaining places.
+const featuredMedia: FeaturedItem[] = collection
+  .filter(({ data }) => data.featured && data.kind !== 'video' && data.cover)
+  .map(({ id, data }) => ({
+    id,
+    title: data.title,
+    label: mediaLabels[data.kind],
+    href: `#${id}`,
+    coverSrc: data.cover!.src,
+    alt: data.cover!.alt,
+  }));
+const placeholders: FeaturedItem[] = (await Promise.all(
+  featuredPlaceholderProjects.map((slug) => getEntry('projects', slug)),
+)).flatMap((project) => project ? [{
+  id: project.id,
+  title: project.data.title,
+  label: 'Work',
+  href: `/work/${project.id}/`,
+  coverSrc: project.data.cover.src,
+  alt: project.data.cover.alt,
+}] : []);
+const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
+---
+
+<SiteLayout title="Media" description="Photography, video, and artwork by Soren Gabor.">
+  <div class="page-section media-gallery module-grid">
+    <div class="media-top">
+      <h1 class="display-title" data-reveal>Media</h1>
+    </div>
+    <FeaturedCarousel items={highlights} />
+    <div class="view-toggle" role="group" aria-label="Media view" data-view-toggle hidden>
+      <span class="terminal-label view-label" aria-hidden="true">View</span>
+      <button class="terminal-control" type="button" data-view="explore" aria-pressed="true" aria-controls="media-wall">Explore</button>
+      <button class="terminal-control" type="button" data-view="gallery" aria-pressed="false" aria-controls="media-gallery">Gallery</button>
+    </div>
+    <div class="media-wall" id="media-wall" aria-label="Media library. Drag or use the arrow keys to browse." role="region" hidden>
+      {Array.from({ length: 77 }, (_, index) => (
+        <a class="wall-tile" data-wall-tile data-row={Math.floor(index / 11) - 3} data-column={index % 11 - 5} tabindex="-1"><span class="wall-image"></span></a>
+      ))}
+    </div>
+    <div class="timeline" id="media-gallery" data-timeline>
+      <nav class="timeline-rail" aria-label="Timeline" data-timeline-rail>
+        <ol class="rail-track" data-rail-track>
+          {entries.map((entry, index) => (
+            <li class="rail-item" style={`--d:${index}`}>
+              <a class="rail-dash" href={`#${entry.id}`} data-rail-dash aria-label={`${entry.title}${entry.date ? `, ${entry.date}` : ''}`}>
+                <span class="rail-line" aria-hidden="true"></span>
+                <span class="rail-label" aria-hidden="true">{entry.date || String(index + 1).padStart(2, '0')}</span>
+              </a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+    <ul class="media-grid" aria-label="Media library" role="list">
+      {entries.map((entry, index) => (
+        <li class="media-entry" id={entry.id} tabindex="-1" data-timeline-entry>
+          <figure class="media-card">
+            <div class="media-visual bracketed">
+              {entry.kind === 'video' ? (
+                <video
+                  controls
+                  playsinline
+                  preload="none"
+                  poster={entry.poster}
+                  width="1280"
+                  height="720"
+                  aria-labelledby={`title-${entry.id}`}
+                  aria-describedby={`description-${entry.id}`}
+                >
+                  <source src={entry.src} type="video/mp4" />
+                  <a href={entry.src}>Open the reel</a>
+                </video>
+              ) : (
+                <Image
+                  src={entry.cover}
+                  alt={entry.alt}
+                  width={entry.width}
+                  widths={entry.widths}
+                  sizes="(min-width: 64rem) 34vw, (min-width: 38rem) 50vw, 100vw"
+                />
+              )}
+            </div>
+            <figcaption>
+              <p class="terminal-label entry-index">{String(index + 1).padStart(2, '0')} / {String(entries.length).padStart(2, '0')}</p>
+              <h2 class="section-title" id={`title-${entry.id}`} tabindex="-1">{entry.title}</h2>
+              <section class="entry-section" aria-labelledby={`date-${entry.id}`}>
+                <h3 class="terminal-label" id={`date-${entry.id}`}>Date</h3>
+                <p>{entry.dateFull || 'Undated'}</p>
+              </section>
+              <section class="entry-section" aria-labelledby={`context-${entry.id}`}>
+                <h3 class="terminal-label" id={`context-${entry.id}`}>Context</h3>
+                <p>{mediaLabels[entry.kind]}</p>
+                {entry.kind === 'video' && <p class="lead" id={`description-${entry.id}`}>{entry.description}</p>}
+                {entry.kind !== 'video' && entry.caption && <p class="lead">{entry.caption}</p>}
+              </section>
+              <section class="entry-section" aria-labelledby={`access-${entry.id}`}>
+                <h3 class="terminal-label" id={`access-${entry.id}`}>Access</h3>
+                {(entry.kind === 'youtube' || entry.kind === 'instagram') && entry.href && (
+                  <a class="text-link" href={entry.href} rel="noopener" aria-label={`${outboundLabels[entry.kind]}: ${entry.title}`}>{outboundLabels[entry.kind]}</a>
+                )}
+                {entry.kind === 'photo' && (
+                  <a class="text-link" href={entry.fullPhotoHref} aria-label={`View the full photo, ${entry.title}`}>View full photo</a>
+                )}
+                {entry.kind === 'video' && <p>Plays on this page</p>}
+                {entry.kind === 'artwork' && entry.project && (
+                  <a class="text-link" href={`/work/${entry.project}/`} aria-label={`View the project, ${entry.title}`}>View project</a>
+                )}
+              </section>
+            </figcaption>
+          </figure>
+        </li>
+      ))}
+    </ul>
+    </div>
+    <dialog class="media-detail terminal-panel" id="media-detail" aria-label="Media item">
+      <form method="dialog">
+        <button class="close-button terminal-label">
+          Close
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false"><path d="M3 3l10 10M13 3 3 13" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square"/></svg>
+        </button>
+      </form>
+      <div data-media-detail></div>
+    </dialog>
+  </div>
+</SiteLayout>
+
+<script>
+  const wall = document.querySelector<HTMLElement>('#media-wall');
+  const gallery = document.querySelector<HTMLElement>('#media-gallery');
+  const dialog = document.querySelector<HTMLDialogElement>('#media-detail');
+  const detail = dialog?.querySelector('[data-media-detail]');
+
+  if (wall && gallery && dialog && detail && typeof dialog.showModal === 'function') {
+    const entries = [...gallery.querySelectorAll<HTMLElement>('.media-entry')].map((entry) => ({
+      entry,
+      figure: entry.querySelector('figure')!,
+      title: entry.querySelector('h2')!.textContent!,
+      image: entry.querySelector('video')?.poster ?? entry.querySelector('img')!.src,
+    }));
+    const tiles = [...wall.querySelectorAll<HTMLAnchorElement>('[data-wall-tile]')];
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    let originX = 0;
+    let originY = 0;
+    let stepX = 0;
+    let stepY = 0;
+    let drag: { x: number; y: number; id: number } | undefined;
+    let dragged = false;
+    let opened: typeof entries[number] | undefined;
+
+    function draw(dx = 0, dy = 0) {
+      if (!wall || wall.hidden) return;
+      const width = wall.clientWidth;
+      const height = wall.clientHeight;
+      // Every cell is a square of the same size, edge to edge.
+      stepX = stepY = Math.max(116, Math.min(height / 3, width / (width < 600 ? 2.5 : 5)));
+      const shiftX = Math.round(dx / stepX);
+      const shiftY = Math.round(dy / stepY);
+      // One curved surface: every cell corner goes through the same pincushion mapping (cells grow and tilt toward the edges, as when looking into a bowl), so neighboring
+      // cells share corners (they stay aligned, never overlap) and the grid bends like a lens.
+      const unit = height * 0.9;
+      const bend = 0.12;
+      const warp = (px: number, py: number): [number, number] => {
+        const nx = px / unit;
+        const ny = py / unit;
+        const k = 1 + bend * (nx * nx + ny * ny);
+        return [nx * k * unit, ny * k * unit];
+      };
+      const half = stepX / 2;
+      for (const tile of tiles) {
+        const column = Number(tile.dataset.column);
+        const row = Number(tile.dataset.row);
+        const x = (column - shiftX) * stepX + dx;
+        const y = (row - shiftY) * stepY + dy;
+        const [x0, y0] = warp(x - half, y - half);
+        const [x1, y1] = warp(x + half, y - half);
+        const [x2, y2] = warp(x + half, y + half);
+        const [x3, y3] = warp(x - half, y + half);
+        // Unit square -> quad (projective), then scale input from cell pixels to the unit square.
+        const dx1 = x1 - x2, dx2 = x3 - x2, dx3 = x0 - x1 + x2 - x3;
+        const dy1 = y1 - y2, dy2 = y3 - y2, dy3 = y0 - y1 + y2 - y3;
+        const det = dx1 * dy2 - dy1 * dx2;
+        const g = det ? (dx3 * dy2 - dy3 * dx2) / det : 0;
+        const h = det ? (dx1 * dy3 - dy1 * dx3) / det : 0;
+        const a = x1 - x0 + g * x1, b = x3 - x0 + h * x3;
+        const d = y1 - y0 + g * y1, e = y3 - y0 + h * y3;
+        const m = 1 / stepX;
+        tile.style.width = `${stepX}px`;
+        tile.style.height = `${stepY}px`;
+        tile.style.transform = `matrix3d(${a * m},${d * m},0,${g * m},${b * m},${e * m},0,${h * m},0,0,1,0,${x0},${y0},0,1)`;
+        const centerX = Math.hypot(x, y) / unit;
+        tile.style.setProperty('--wall-dim', String(Math.min(0.55, centerX * centerX * 0.18)));
+        const offset = originX + column - shiftX + 2 * (originY + row - shiftY);
+        const item = entries[((offset % entries.length) + entries.length) % entries.length];
+        const image = tile.firstElementChild as HTMLElement;
+        if (tile.dataset.src !== item.image) {
+          tile.dataset.src = item.image;
+          image.style.backgroundImage = `url("${item.image}")`;
+          tile.href = `#${item.entry.id}`;
+          tile.setAttribute('aria-label', item.title);
+        }
+        tile.tabIndex = row === 0 && column >= 0 && column < entries.length && (width >= 600 || column === 0) ? 0 : -1;
+      }
+    }
+
+    function openItem(id: string) {
+      if (!dialog || !detail) return;
+      opened = entries.find(({ entry }) => `#${entry.id}` === id);
+      if (!opened) return;
+      detail.append(opened.figure);
+      dialog.setAttribute('aria-label', opened.title);
+      dialog.showModal();
+    }
+
+    dialog.addEventListener('close', () => {
+      opened?.figure.querySelector('video')?.pause();
+      if (opened) opened.entry.append(opened.figure);
+      opened = undefined;
+    });
+
+    for (const link of [...tiles, ...document.querySelectorAll<HTMLAnchorElement>('.featured-tile')]) {
+      link.addEventListener('click', (event) => {
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        if (!link.hash || link.pathname !== location.pathname) return;
+        event.preventDefault();
+        if (!wall.contains(link) || !dragged) openItem(link.hash);
+      });
+    }
+
+    // The wall keeps one continuous offset. Dragging moves it directly; on release it eases to the
+    // nearest tile, and only then is the move committed to the tile origin (the layout repeats, so
+    // committing at a whole tile does not change what is on screen).
+    let offsetX = 0;
+    let offsetY = 0;
+    let settling = 0;
+
+    function commit() {
+      const cellsX = Math.round(offsetX / stepX);
+      const cellsY = Math.round(offsetY / stepY);
+      originX -= cellsX;
+      originY -= cellsY;
+      offsetX -= cellsX * stepX;
+      offsetY -= cellsY * stepY;
+    }
+
+    function settleTo(cellsX: number, cellsY: number) {
+      cancelAnimationFrame(settling);
+      // cellsX/cellsY are whole cells counted from the current (uncommitted) offset. Committing moves
+      // the origin by some of those cells, so only the remainder is left to travel.
+      const doneX = Math.round(offsetX / stepX);
+      const doneY = Math.round(offsetY / stepY);
+      commit();
+      const targetX = (cellsX - doneX) * stepX;
+      const targetY = (cellsY - doneY) * stepY;
+      const fromX = offsetX;
+      const fromY = offsetY;
+      if (reduced.matches || (fromX === targetX && fromY === targetY)) {
+        offsetX = targetX;
+        offsetY = targetY;
+        commit();
+        draw(offsetX, offsetY);
+        return;
+      }
+      const distance = Math.hypot(targetX - fromX, targetY - fromY);
+      const duration = Math.min(900, 420 + distance * 0.6);
+      const start = performance.now();
+      const step = (now: number) => {
+        const progress = Math.min(1, (now - start) / duration);
+        const eased = 1 - (1 - progress) ** 4;
+        offsetX = fromX + (targetX - fromX) * eased;
+        offsetY = fromY + (targetY - fromY) * eased;
+        draw(offsetX, offsetY);
+        if (progress < 1) settling = requestAnimationFrame(step);
+        else {
+          commit();
+          draw(offsetX, offsetY);
+        }
+      };
+      settling = requestAnimationFrame(step);
+    }
+
+    wall.addEventListener('keydown', (event) => {
+      const direction: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+      const step = direction[event.key];
+      if (!step) return;
+      event.preventDefault();
+      // Ease one tile in the arrow's direction; the move is committed when it comes to rest.
+      settleTo(-step[0], -step[1]);
+    });
+
+    // Recent pointer positions, so release speed comes from the last ~100ms of motion (not an average of the whole drag).
+    let trail: { x: number; y: number; time: number }[] = [];
+    let startOffset = { x: 0, y: 0 };
+
+    wall.addEventListener('pointerdown', (event) => {
+      if (!event.isPrimary || event.button !== 0) return;
+      cancelAnimationFrame(settling);
+      dragged = false;
+      startOffset = { x: offsetX, y: offsetY };
+      trail = [{ x: event.clientX, y: event.clientY, time: event.timeStamp }];
+      drag = { x: event.clientX, y: event.clientY, id: event.pointerId };
+    });
+    wall.addEventListener('pointermove', (event) => {
+      if (drag?.id !== event.pointerId) return;
+      const x = event.clientX - drag.x;
+      const y = event.clientY - drag.y;
+      if (Math.hypot(x, y) < 8 && !dragged) return;
+      if (!dragged) wall.setPointerCapture(event.pointerId);
+      dragged = true;
+      trail.push({ x: event.clientX, y: event.clientY, time: event.timeStamp });
+      while (trail.length > 2 && event.timeStamp - trail[0].time > 120) trail.shift();
+      if (!reduced.matches) {
+        offsetX = startOffset.x + x;
+        offsetY = startOffset.y + y;
+        draw(offsetX, offsetY);
+      }
+    });
+    wall.addEventListener('pointerup', (event) => {
+      if (drag?.id !== event.pointerId) return;
+      const x = event.clientX - drag.x;
+      const y = event.clientY - drag.y;
+      drag = undefined;
+      if (!dragged) return;
+      // Release speed from the last ~100ms of motion; a pause before letting go means no throw at all.
+      const first = trail[0];
+      const final = trail[trail.length - 1];
+      const span = final && first ? final.time - first.time : 0;
+      const fresh = final ? event.timeStamp - final.time < 60 : false;
+      const speedX = fresh && span >= 16 ? (final.x - first.x) / span : 0;
+      const speedY = fresh && span >= 16 ? (final.y - first.y) / span : 0;
+      // A flick carries the grid on at most one extra cell, in the direction it was thrown.
+      const throwX = reduced.matches ? 0 : Math.max(-0.9 * stepX, Math.min(0.9 * stepX, speedX * 120));
+      const throwY = reduced.matches ? 0 : Math.max(-0.9 * stepY, Math.min(0.9 * stepY, speedY * 120));
+      const currentX = reduced.matches ? x : offsetX;
+      const currentY = reduced.matches ? y : offsetY;
+      if (reduced.matches) {
+        offsetX = currentX;
+        offsetY = currentY;
+      }
+      settleTo(Math.round((currentX + throwX) / stepX), Math.round((currentY + throwY) / stepY));
+      setTimeout(() => { dragged = false; }, 0);
+    });
+    wall.addEventListener('pointercancel', () => {
+      drag = undefined;
+      dragged = false;
+      settleTo(Math.round(offsetX / stepX), Math.round(offsetY / stepY));
+    });
+    wall.addEventListener('dragstart', (event) => event.preventDefault());
+    const toggle = document.querySelector<HTMLElement>('[data-view-toggle]');
+    function setView(view: 'explore' | 'gallery') {
+      wall!.hidden = view !== 'explore';
+      gallery!.hidden = view !== 'gallery';
+      toggle?.querySelectorAll<HTMLButtonElement>('[data-view]').forEach((button) => {
+        button.setAttribute('aria-pressed', String(button.dataset.view === view));
+      });
+      if (view === 'explore') draw(offsetX, offsetY);
+    }
+    toggle?.addEventListener('click', (event) => {
+      const button = (event.target as Element).closest<HTMLButtonElement>('[data-view]');
+      if (button) setView(button.dataset.view === 'gallery' ? 'gallery' : 'explore');
+    });
+    if (toggle) toggle.hidden = false;
+    setView(reduced.matches ? 'gallery' : 'explore');
+    new ResizeObserver(() => draw(offsetX, offsetY)).observe(wall);
+    if (location.hash) openItem(location.hash);
+  }
+</script>
+
+
+<script>
+  // Timeline: the dash rail follows the entry nearest the reading line, and can be clicked or dragged.
+  const timeline = document.querySelector<HTMLElement>('[data-timeline]');
+  if (timeline) {
+    const rail = timeline.querySelector<HTMLElement>('[data-timeline-rail]')!;
+    const track = timeline.querySelector<HTMLElement>('[data-rail-track]')!;
+    const dashes = [...timeline.querySelectorAll<HTMLAnchorElement>('[data-rail-dash]')];
+    const cards = [...timeline.querySelectorAll<HTMLElement>('[data-timeline-entry]')];
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    let active = -1;
+    let frame = 0;
+    let dragging: { y: number; index: number; moved: boolean; id: number } | undefined;
+
+    function setActive(index: number) {
+      if (index === active) return;
+      active = index;
+      track.style.setProperty('--active', String(index));
+      dashes.forEach((dash, position) => {
+        dash.parentElement!.style.setProperty('--d', String(Math.abs(position - index)));
+        if (position === index) dash.setAttribute('aria-current', 'true');
+        else dash.removeAttribute('aria-current');
+        cards[position].classList.toggle('is-active', position === index);
+      });
+    }
+
+    function nearest() {
+      const line = innerHeight * 0.42;
+      let best = 0;
+      let bestDistance = Infinity;
+      cards.forEach((card, position) => {
+        const box = card.getBoundingClientRect();
+        const distance = box.top <= line && box.bottom >= line ? 0 : Math.min(Math.abs(box.top - line), Math.abs(box.bottom - line));
+        if (distance < bestDistance) { best = position; bestDistance = distance; }
+      });
+      return best;
+    }
+
+    function update() {
+      frame = 0;
+      if (timeline!.hidden || dragging) return;
+      setActive(nearest());
+    }
+
+    function goTo(index: number, smooth = !reduced.matches) {
+      const card = cards[Math.max(0, Math.min(cards.length - 1, index))];
+      const top = card.getBoundingClientRect().top + scrollY - innerHeight * 0.18;
+      scrollTo({ top, behavior: smooth ? 'smooth' : 'instant' });
+    }
+
+    addEventListener('scroll', () => { if (!frame) frame = requestAnimationFrame(update); }, { passive: true });
+    addEventListener('resize', update);
+    new MutationObserver(update).observe(timeline, { attributes: true, attributeFilter: ['hidden'] });
+
+    dashes.forEach((dash, index) => {
+      dash.addEventListener('click', (event) => {
+        event.preventDefault();
+        goTo(index);
+        history.replaceState(null, '', dash.hash);
+      });
+    });
+
+    // Drag the rail like a scrubber: one dash pitch of travel moves one entry.
+    rail.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0) return;
+      dragging = { y: event.clientY, index: active < 0 ? 0 : active, moved: false, id: event.pointerId };
+    });
+    rail.addEventListener('pointermove', (event) => {
+      if (!dragging) return;
+      // Only a real drag captures the pointer, so a plain click still reaches its dash.
+      if (!dragging.moved) {
+        if (Math.abs(event.clientY - dragging.y) < 6) return;
+        dragging.moved = true;
+        rail.setPointerCapture(dragging.id);
+      }
+      const pitch = dashes[0]?.getBoundingClientRect().height || 22;
+      const index = Math.max(0, Math.min(cards.length - 1, dragging.index + Math.round((event.clientY - dragging.y) / pitch)));
+      if (index !== active) { setActive(index); goTo(index, false); }
+    });
+    const stop = () => { dragging = undefined; update(); };
+    rail.addEventListener('pointerup', stop);
+    rail.addEventListener('pointercancel', stop);
+    update();
+  }
+</script>
+
+<style>
+  .media-wall {
+    position: relative;
+    height: clamp(26rem, 72svh, 56rem);
+    margin-block-start: var(--space-3);
+    overflow: hidden;
+    touch-action: pan-y pinch-zoom;
+    cursor: grab;
+    background: var(--color-background);
+  }
+
+  .media-wall:active { cursor: grabbing; }
+
+  .wall-tile {
+    position: absolute;
+    inset: 50% auto auto 50%;
+    transform-origin: 0 0;
+    box-sizing: border-box;
+    padding: 0.5rem;
+    border-right: 1px solid var(--color-rule);
+    border-bottom: 1px solid var(--color-rule);
+    cursor: inherit;
+  }
+
+  /* A square window onto the picture: it covers the square and crops the overflow, never stretching. */
+  .wall-image {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    background: var(--color-surface) center / cover no-repeat;
+    filter: brightness(calc(1 - var(--wall-dim, 0)));
+  }
+
+  /* The frame shrinks in from the tile edge on hover/focus and eases back out. */
+  .wall-image {
+    outline: 2px solid transparent;
+    outline-offset: 0;
+    transition: outline-color 220ms var(--ease-artifact), outline-offset 220ms var(--ease-artifact);
+  }
+  .wall-tile:hover .wall-image,
+  .wall-tile:focus-visible .wall-image { outline-color: var(--color-accent); outline-offset: -3px; }
+
+  .media-detail {
+    width: min(94vw, 72rem);
+    max-height: 90svh;
+    padding: var(--space-2);
+    color: var(--color-text);
+  }
+
+  .media-detail::backdrop { background: #000c; }
+  .close-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .close-button:hover,
+  .close-button:focus-visible { color: var(--color-accent); }
+  /* Opening and closing the overlay moves focus programmatically; never draw a ring for that. */
+  .close-button,
+  .close-button:focus,
+  .close-button:focus-visible,
+  .media-detail,
+  .media-detail:focus,
+  .media-detail:focus-visible { outline: none; }
+  :global(#main-content:focus),
+  :global(#main-content:focus-visible) { outline: none; }
+  .media-detail form { margin-block-end: var(--space-2); text-align: end; }
+  .media-detail .media-card { border: 1px solid var(--color-rule); background: var(--color-surface); }
+  .media-detail .media-visual { max-height: 65svh; }
+  .timeline[hidden] { display: none; }
+  .view-toggle .terminal-control[aria-pressed="true"] {
+    border-color: var(--color-accent);
+    background-color: var(--color-accent);
+    color: var(--color-background);
+    text-decoration: none;
+  }
+
+  .view-toggle:not([hidden]) {
+    display: flex;
+    gap: var(--space-1);
+    align-items: center;
+    margin: var(--space-3) var(--gutter) 0;
+  }
+
+  .view-label {
+    margin-inline-end: var(--space-1);
+  }
+
+  .media-gallery {
+    padding-block-start: var(--space-4);
+  }
+
+  .media-top {
+    display: grid;
+    gap: var(--space-2);
+    margin-inline: var(--gutter);
+  }
+
+  .media-entry:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -3px;
+  }
+
+  figure {
+    margin: 0;
+  }
+
+  .media-visual {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 8 / 5;
+    background: var(--color-surface);
+    overflow: hidden;
+  }
+
+  .media-visual :is(img, video) {
+    inline-size: 100%;
+    block-size: 100%;
+    min-block-size: 0;
+    object-fit: contain;
+  }
+
+  .media-visual video {
+    background: var(--color-background);
+  }
+
+  .media-visual video:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
+  }
+
+  .media-visual video a:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  /* Native video controls take focus inside the shadow tree, so mark the frame. */
+  .media-visual:has(video):focus-within {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
+  }
+
+  figcaption {
+    padding: var(--space-2) var(--gutter);
+  }
+
+  figcaption .terminal-label {
+    margin-block-end: 0.25rem;
+  }
+
+  figcaption .section-title {
+    font-family: var(--font-display);
+    letter-spacing: -0.05em;
+    margin-block-start: var(--space-1);
+    font-size: clamp(1.375rem, 1.15rem + 1vw, 2rem);
+  }
+
+  figcaption .section-title:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+
+  figcaption .lead {
+    margin-block-start: var(--space-1);
+  }
+
+
+  /* Timeline gallery: an ordered stack of cards with a dash scrubber that follows the scroll. */
+  .timeline {
+    --pitch: 1.4rem;
+    display: grid;
+    grid-template-columns: 3.25rem minmax(0, 1fr);
+    gap: var(--space-2);
+    margin: var(--space-4) var(--gutter) 0;
+  }
+
+  .timeline-rail {
+    position: sticky;
+    inset-block-start: var(--header-height, 0px);
+    block-size: calc(100svh - var(--header-height, 0px));
+    overflow: hidden;
+    touch-action: none;
+    cursor: ns-resize;
+    user-select: none;
+    /* The stack of dashes dissolves above and below, so the list reads as endless except at its real ends. */
+    mask-image: linear-gradient(to bottom, transparent, #000 28%, #000 72%, transparent);
+  }
+
+  .rail-track {
+    position: absolute;
+    inset: 50% auto auto 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    transform: translateY(calc(var(--active, 0) * var(--pitch) * -1 - var(--pitch) / 2));
+    transition: transform 360ms var(--ease-artifact, cubic-bezier(0.2, 0.8, 0.2, 1));
+  }
+
+  .rail-item {
+    block-size: var(--pitch);
+    display: block;
+    --d: 0;
+  }
+
+  .rail-dash {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    block-size: 100%;
+    min-inline-size: 2.75rem; /* touch target width; the height is bound by the dash pitch */
+    color: var(--color-muted);
+    text-decoration: none;
+  }
+
+  .rail-line {
+    display: block;
+    flex: none;
+    inline-size: max(0.6rem, calc(2.6rem - var(--d) * 0.5rem));
+    block-size: 2px;
+    background: currentColor;
+    opacity: max(0.22, calc(0.9 - var(--d) * 0.16));
+    transition: inline-size 240ms var(--ease-artifact, ease), opacity 240ms ease, background-color 240ms ease;
+  }
+
+  .rail-label {
+    position: absolute;
+    inset-inline-start: 3.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .rail-dash[aria-current="true"] { color: var(--color-accent); }
+  .rail-dash[aria-current="true"] .rail-line { opacity: 1; }
+  .rail-dash:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+  .timeline-rail:hover .rail-line { opacity: max(0.4, calc(1 - var(--d) * 0.12)); }
+
+  .media-grid {
+    display: grid;
+    gap: var(--space-4);
+    margin: 0;
+    padding: 0 0 var(--space-4);
+    list-style: none;
+    min-inline-size: 0;
+  }
+
+  .media-entry {
+    border: 1px solid var(--color-rule);
+    background: var(--color-surface);
+    opacity: 0.5;
+    scroll-margin-block: 18svh;
+    transition: opacity 320ms ease, border-color 320ms ease;
+  }
+
+  .media-entry.is-active,
+  .media-entry:focus-within {
+    opacity: 1;
+    border-color: var(--color-control-edge);
+  }
+
+  figure {
+    margin: 0;
+  }
+
+  .media-visual {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 16 / 9;
+    background: var(--color-background);
+    overflow: hidden;
+  }
+
+  .media-visual :is(img, video) {
+    inline-size: 100%;
+    block-size: 100%;
+    min-block-size: 0;
+    object-fit: cover;
+  }
+
+  .media-visual video { object-fit: contain; }
+
+  .media-visual video:focus-visible,
+  .media-visual:has(video):focus-within {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
+  }
+
+  .media-visual video a:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  figcaption {
+    display: grid;
+    gap: var(--space-1);
+    padding: var(--space-2);
+    border-block-start: 1px solid var(--color-rule);
+  }
+
+  .entry-index { margin: 0; }
+
+  .entry-section {
+    display: grid;
+    gap: 0.35rem;
+    align-content: start;
+    padding-block-start: var(--space-1);
+    border-block-start: 1px solid var(--color-rule);
+  }
+
+  .entry-section :is(h3, p) { margin: 0; }
+
+  figcaption .section-title {
+    margin: 0;
+    font-family: var(--font-display);
+    letter-spacing: -0.05em;
+    font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.5rem);
+  }
+
+  figcaption .section-title:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+
+  figcaption .lead { margin: 0; }
+
+  @media (min-width: 48rem) {
+    .timeline { grid-template-columns: 9rem minmax(0, 1fr); }
+    .rail-label { opacity: 0; transition: opacity 240ms ease; }
+    .rail-dash[aria-current="true"] .rail-label { opacity: 1; color: var(--color-text); }
+  }
+
+  /* Wide screens: the card lies on its side, picture left and description beside it. */
+  @media (min-width: 64rem) {
+    .media-card {
+      display: grid;
+      grid-template-columns: minmax(0, 2.1fr) minmax(15rem, 1fr);
+    }
+
+    /* The panel runs the full height of the picture: index and title at the top, then three equal sections. */
+    /* The picture stretches to the panel's height and crops to fit, so the two always line up. */
+    .media-card .media-visual {
+      aspect-ratio: auto;
+      min-block-size: 20rem;
+    }
+
+    .media-card figcaption {
+      grid-template-rows: auto auto repeat(3, 1fr);
+      gap: var(--space-1);
+      padding: var(--space-2);
+      border-block-start: 0;
+      border-inline-start: 1px solid var(--color-rule);
+    }
+
+    .media-card figcaption .section-title {
+      font-size: clamp(1.5rem, 0.9rem + 1.4vw, 2.5rem);
+    }
+  }
+
+  @media (max-width: 47.99rem) {
+    .timeline { --pitch: 1.15rem; gap: var(--space-1); }
+    .rail-line { inline-size: max(0.4rem, calc(1.9rem - var(--d) * 0.4rem)); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rail-track, .rail-line, .media-entry { transition: none; }
+  }
+</style>

@@ -1,0 +1,21 @@
+---
+import SiteLayout from '../layouts/SiteLayout.astro';
+---
+
+<SiteLayout title="Page not found" description="This page does not exist.">
+  <meta slot="head" name="robots" content="noindex" />
+  <section class="container page-section">
+    <p class="terminal-label">Error / 404</p>
+    <h1 class="display-title">Lost signal</h1>
+    <p class="lead">That page isn’t here. It may have moved when the site was rebuilt.</p>
+    <p class="actions">
+      <a class="terminal-control" href="/work/">View work</a>
+      <a class="terminal-control" href="/">Home</a>
+    </p>
+  </section>
+</SiteLayout>
+
+<style>
+  .lead { margin-block: var(--space-3); }
+  .actions { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: 0; }
+</style>

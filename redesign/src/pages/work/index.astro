@@ -1,0 +1,466 @@
+---
+import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import { getCoverAccent } from '../../cover-accent';
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import { loadProjectCover } from '../../project-cover';
+
+const categoryLabels = { technical: 'Technical', creative: 'Creative', academic: 'Academic' };
+const filters = [{ value: 'all', label: 'All' }, ...Object.entries(categoryLabels).map(([value, label]) => ({ value, label }))];
+
+// Newest first. Ongoing work (end date "present") leads, then the latest end or start date; ties fall back to the title.
+const sortKey = ({ data }: { data: { date?: string; dateEnd?: string } }) =>
+  data.dateEnd === 'present' ? '9999' : (data.dateEnd ?? data.date ?? '');
+const projects = (await getCollection('projects')).sort((a, b) =>
+  sortKey(b).localeCompare(sortKey(a)) || (b.data.date ?? '').localeCompare(a.data.date ?? '') || a.data.title.localeCompare(b.data.title, 'en'),
+);
+const rows = await Promise.all(projects.map(async ({ id, data }, index) => {
+  const cover = await loadProjectCover(data.cover.src);
+  return {
+    id,
+    data,
+    cover,
+    // Contrast-checked at build time. Monochrome covers have none and keep the shared accent.
+    accent: (await getCoverAccent(data.cover.src)) ?? '',
+  };
+}));
+---
+
+<SiteLayout title="Work" description="Technical and creative projects by Soren Gabor.">
+  <style slot="head" is:global>
+    @media (prefers-reduced-motion: no-preference) {
+      @view-transition { navigation: auto; }
+    }
+  </style>
+  <section class="work-library module-grid" data-work-library>
+    <div class="container library-top">
+      <header class="library-heading">
+        <h1 class="display-title" data-reveal>Work</h1>
+      </header>
+      <div class="library-controls" data-library-controls hidden>
+        <div class="category-filters" role="group" aria-label="Filter by category">
+          {filters.map(({ value, label }) => (
+            <button class="terminal-control" type="button" data-category={value} aria-pressed={value === 'all'}>{label}</button>
+          ))}
+        </div>
+        <p class="terminal-label project-count" role="status" data-project-status>{String(rows.length).padStart(2, '0')} / {String(rows.length).padStart(2, '0')} ITEMS</p>
+      </div>
+    </div>
+
+    <div class="container library-body">
+      <p class="lead" data-empty-projects hidden>Nothing in this category yet.</p>
+      <ol class="rows" role="list" data-project-grid>
+        {rows.map(({ id, data, cover, accent }, index) => (
+          <li
+            class="row"
+            data-project-card
+            data-id={id}
+            data-categories={data.categories.join(' ')}
+            data-date={data.date}
+            data-accent={accent}
+          >
+            <a class="row-link" id={`project-${id}`} href={`/work/${id}/`} aria-labelledby={`title-${id}`}>
+              <span class="row-thumb bracketed" style={`view-transition-name: cover-${id}`}>
+                <Image src={cover} alt="" width={240} widths={[160, 240, 360]} sizes="7rem" loading={index < 6 ? 'eager' : 'lazy'} />
+              </span>
+              <span class="row-title" id={`title-${id}`}>{data.title}</span>
+              <span class="row-context terminal-label">{data.context ?? data.categories.map((category) => categoryLabels[category]).join(' / ')}</span>
+              <span class="row-discipline terminal-label">{data.categories.map((category) => categoryLabels[category]).join(' / ')}</span>
+              <span class="row-go" aria-hidden="true">↗</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+      <aside class="preview bracketed" aria-hidden="true" data-preview>
+        {rows.map(({ id, cover, data }) => (
+          <figure class="shot" data-shot={id} style={`view-transition-name: cover-${id}`}>
+            <Image src={cover} alt="" width={960} widths={[480, 720, 960]} sizes="(min-width: 60rem) 40vw, 0px" loading="lazy" />
+          </figure>
+        ))}
+        <p class="preview-meta terminal-label"><span data-preview-title>Hover or focus a row</span></p>
+      </aside>
+    </div>
+  </section>
+</SiteLayout>
+
+<script>
+  import { glitch } from '../../scripts/terminal';
+
+  interface ProjectReturnState {
+    cardId: string;
+    scrollY: number;
+    keyboard: boolean;
+  }
+
+  const library = document.querySelector<HTMLElement>('[data-work-library]');
+  if (library) {
+    const root = document.documentElement;
+    const controls = library.querySelector<HTMLElement>('[data-library-controls]')!;
+    const list = library.querySelector<HTMLElement>('[data-project-grid]')!;
+    const status = library.querySelector<HTMLElement>('[data-project-status]')!;
+    const empty = library.querySelector<HTMLElement>('[data-empty-projects]')!;
+    const preview = library.querySelector<HTMLElement>('[data-preview]')!;
+    const previewTitle = library.querySelector<HTMLElement>('[data-preview-title]')!;
+    const filters = Array.from(controls.querySelectorAll<HTMLButtonElement>('[data-category]'));
+    const editorial = Array.from(list.querySelectorAll<HTMLElement>('[data-project-card]'));
+    const shots = Array.from(preview.querySelectorAll<HTMLElement>('[data-shot]'));
+    const nodeCounter = library.querySelector<HTMLElement>('.status-line span:last-child');
+    const idleTitle = previewTitle.textContent;
+    let currentCategory = 'all';
+    let activeRow: HTMLElement | undefined;
+
+    // At rest (nothing hovered or focused) the first visible row is shown, so the screen is never empty.
+    const wide = matchMedia('(min-width: 60rem)');
+    function activateDefault() {
+      clearActive();
+      if (!wide.matches) return;
+      const first = Array.from(list.querySelectorAll<HTMLElement>('[data-project-card]')).find((row) => !row.hidden);
+      if (first) activate(first);
+    }
+    wide.addEventListener('change', activateDefault);
+
+    function clearActive() {
+      activeRow?.classList.remove('is-active');
+      activeRow = undefined;
+      root.style.removeProperty('--color-active-accent');
+      shots.forEach((shot) => shot.classList.remove('is-on'));
+      previewTitle.textContent = idleTitle;
+    }
+
+    // Hovering or focusing a row shows its preview, and the interface accent follows the project.
+    function activate(row: HTMLElement) {
+      if (row === activeRow) return;
+      clearActive();
+      activeRow = row;
+      row.classList.add('is-active');
+      if (row.dataset.accent) root.style.setProperty('--color-active-accent', row.dataset.accent);
+      const shot = shots.find((candidate) => candidate.dataset.shot === row.dataset.id);
+      shot?.classList.add('is-on');
+      const image = shot?.querySelector('img');
+      if (image) {
+        image.classList.remove('resolve');
+        void image.offsetWidth;
+        image.classList.add('resolve');
+      }
+      previewTitle.textContent = row.querySelector('.row-title')?.textContent ?? '';
+      glitch(preview);
+    }
+
+    function render(url: URL) {
+      const requested = url.searchParams.get('category');
+      const category = filters.find((filter) => filter.dataset.category === requested)?.dataset.category ?? 'all';
+
+      for (const filter of filters) {
+        filter.setAttribute('aria-pressed', String(filter.dataset.category === category));
+      }
+
+      let visible = 0;
+      for (const row of editorial) {
+        row.hidden = category !== 'all' && !row.dataset.categories?.split(' ').includes(category);
+        if (!row.hidden) visible += 1;
+      }
+
+      empty.hidden = visible > 0;
+      const result = `${String(visible).padStart(2, '0')} / ${String(editorial.length).padStart(2, '0')} ITEMS`;
+      if (status.textContent !== result) status.textContent = result;
+      if (nodeCounter) nodeCounter.textContent = `NODE ${visible}`;
+      if (category !== currentCategory) {
+        currentCategory = category;
+        activateDefault();
+        glitch(list);
+      }
+    }
+
+    function updateView(key: string, value?: string) {
+      const url = new URL(window.location.href);
+      if (value) url.searchParams.set(key, value);
+      else url.searchParams.delete(key);
+      if (url.href === window.location.href) return;
+
+      history.replaceState(history.state, '', url);
+      render(url);
+    }
+
+    for (const filter of filters) {
+      filter.addEventListener('click', () => {
+        updateView('category', filter.dataset.category === 'all' ? undefined : filter.dataset.category);
+      });
+    }
+
+    for (const row of editorial) {
+      row.addEventListener('pointerenter', (event) => { if (event.pointerType === 'mouse') activate(row); });
+      row.addEventListener('focusin', () => activate(row));
+    }
+    list.addEventListener('pointerleave', () => {
+      if (!activeRow?.contains(document.activeElement)) activateDefault();
+    });
+    list.addEventListener('focusout', (event) => {
+      if (!(event.relatedTarget instanceof Node) || !list.contains(event.relatedTarget)) activateDefault();
+    });
+
+    list.addEventListener('click', (event) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const link = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>('a.row-link') : null;
+      if (!link) return;
+
+      const workProjectReturn: ProjectReturnState = { cardId: link.id, scrollY: window.scrollY, keyboard: event.detail === 0 };
+      history.replaceState({ ...history.state, workProjectReturn }, '');
+    });
+
+    render(new URL(window.location.href));
+    activateDefault();
+    controls.hidden = false;
+    window.addEventListener('pageshow', (event) => {
+      render(new URL(window.location.href));
+      const state: ProjectReturnState | undefined = history.state?.workProjectReturn;
+      if (!state) return;
+      history.replaceState({ ...history.state, workProjectReturn: undefined }, '');
+
+      const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+      if (!event.persisted && navigation?.type !== 'back_forward') return;
+      const link = document.getElementById(state.cardId);
+      if (!link || !list.contains(link) || link.closest('[hidden]')) return;
+
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: state.scrollY, behavior: 'instant' });
+        // Only keyboard users get focus back on the row; after a click or tap it would draw a ring.
+        if (state.keyboard) link.focus({ preventScroll: true });
+      });
+    });
+  }
+</script>
+
+<style>
+  .work-library {
+    padding-block: var(--space-4) var(--space-5);
+  }
+
+  .library-top {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .library-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: var(--space-1) var(--space-2);
+  }
+
+  .library-controls:not([hidden]),
+  .category-filters {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
+
+  .library-controls:not([hidden]) {
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding-block: var(--space-1);
+    border-block-end: 1px solid var(--color-rule);
+  }
+
+  /* The chosen filter is inverted: filled with the accent, text in the page color. */
+  .category-filters .terminal-control[aria-pressed="true"] {
+    border-color: var(--color-accent);
+    background-color: var(--color-accent);
+    color: var(--color-background);
+    text-decoration: none;
+  }
+
+  .project-count { margin: 0; }
+
+  .library-body {
+    display: grid;
+    gap: var(--space-3);
+    margin-block-start: var(--space-2);
+  }
+
+  [data-empty-projects] {
+    margin-block-start: var(--space-2);
+  }
+
+  .rows {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .row {
+    border-block-end: 1px solid var(--color-rule);
+    transition: background-color var(--motion-fast) var(--ease-artifact), color var(--motion-fast) var(--ease-artifact);
+  }
+
+  .row[hidden] {
+    display: none;
+  }
+
+  /* Phones: each row carries a thumbnail and needs no hover. */
+  .row-link {
+    display: grid;
+    grid-template-columns: 5rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0 var(--space-2);
+    min-block-size: 5rem;
+    padding-block: var(--space-1);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .row-thumb {
+    display: block;
+    grid-row: span 2;
+    inline-size: 5rem;
+    aspect-ratio: 4 / 3;
+    background: var(--color-surface);
+    overflow: hidden;
+  }
+
+  .row-thumb img {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .row-title {
+    grid-column: 2;
+    font-family: var(--font-display);
+    font-size: clamp(1.25rem, 1rem + 1.2vw, 1.75rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    overflow-wrap: anywhere;
+  }
+
+  .row-context,
+  .row-discipline {
+    grid-column: 2;
+    font-size: 0.75rem;
+  }
+
+  .row-discipline {
+    display: none;
+  }
+
+  .row-go {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+    transition: transform var(--motion-fast) var(--ease-artifact), color var(--motion-fast) var(--ease-artifact);
+  }
+
+  .row-link:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
+  }
+
+  .preview {
+    display: none;
+  }
+
+  @media (min-width: 60rem) {
+    .library-body {
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      align-items: start;
+    }
+
+    /* The accent floods the active row; the study's Artifact direction. */
+    .row {
+      margin-inline-start: calc(var(--gutter) * -1);
+      padding-inline-start: var(--gutter);
+    }
+
+    .row.is-active {
+      background: var(--color-accent);
+      color: var(--color-background);
+    }
+
+    .row.is-active :is(.row-title, .row-go, .terminal-label) {
+      color: var(--color-background);
+    }
+
+    .row.is-active .row-go {
+      transform: translate(0.15rem, -0.15rem);
+    }
+
+    .row-link {
+      grid-template-columns: minmax(0, 1fr) 11rem 2rem;
+      min-block-size: 6rem;
+    }
+
+    .row-title,
+    .row-context,
+    .row-go {
+      grid-row: auto;
+    }
+
+    .row-thumb {
+      display: none;
+    }
+
+    .row-title {
+      grid-column: 1;
+      font-size: clamp(1.6rem, 1rem + 2.4vw, 3.5rem);
+      letter-spacing: -0.06em;
+      line-height: 0.95;
+    }
+
+    .row-context {
+      grid-column: 2;
+    }
+
+    .row-discipline {
+      display: none;
+    }
+
+    .row-go {
+      grid-column: 3;
+    }
+
+    .row-link:focus-visible {
+      outline-color: var(--color-background);
+    }
+
+    .preview {
+      position: sticky;
+      inset-block-start: calc(var(--header-height, 0px) + var(--space-3));
+      display: block;
+      aspect-ratio: 4 / 3;
+      border: 1px solid var(--color-rule);
+      background: var(--color-surface);
+    }
+
+    .shot {
+      position: absolute;
+      inset: 0;
+      margin: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition: opacity var(--motion-fast) var(--ease-artifact);
+    }
+
+    .shot img {
+      inline-size: 100%;
+      block-size: 100%;
+      object-fit: cover;
+    }
+
+    .shot.is-on {
+      opacity: 1;
+    }
+
+    .preview-meta {
+      position: absolute;
+      inset: auto 0 0;
+      z-index: 2;
+      margin: 0;
+      padding: 0.5rem 0.75rem;
+      background: linear-gradient(transparent, rgb(0 0 0 / 0.75));
+      color: var(--color-text);
+    }
+  }
+</style>

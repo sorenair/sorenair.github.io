@@ -1,0 +1,337 @@
+---
+import { Image } from 'astro:assets';
+import { getCollection, type CollectionEntry } from 'astro:content';
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import { loadProjectCover as loadProjectImage } from '../../project-cover';
+
+export async function getStaticPaths() {
+  const projects = await getCollection('projects');
+
+  return projects.map((project) => ({
+    params: { slug: project.id },
+    props: { project },
+  }));
+}
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+}
+
+const { data } = Astro.props.project;
+/** Full dates read as dates; a year-month is a term for coursework and a month otherwise; a bare year stays a year. */
+const dateLabel = (date: string, term = false) => {
+  if (date === 'present') return 'Present';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return new Date(`${date}T00:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  if (/^\d{4}-\d{2}$/.test(date)) {
+    if (!term) return new Date(`${date}-01T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+    return `${Number(date.slice(5)) <= 6 ? 'Spring' : 'Fall'} ${date.slice(0, 4)}`;
+  }
+  return date;
+};
+const dateRange = (date?: string, end?: string, term = false) => {
+  if (!date) return end === 'present' ? 'Ongoing' : undefined;
+  const start = dateLabel(date, term);
+  if (!end) return start;
+  const finish = dateLabel(end, term);
+  return finish === start ? start : `${start} – ${finish}`;
+};
+const disciplineLabels = { technical: 'Technical', creative: 'Creative', academic: 'Academic' };
+
+async function prepareImage(src: string, maxWidth: number) {
+  const image = await loadProjectImage(src);
+  const width = Math.min(image.width, maxWidth);
+  const widths = [480, 720, 960].filter((candidate) => candidate < width).concat(width);
+  return { image, width, widths };
+}
+
+const cover = await prepareImage(data.cover.src, 1440);
+const sections = await Promise.all((data.sections ?? []).map(async (section) => ({
+  ...section,
+  images: await Promise.all((section.images ?? []).map(async (image) => ({
+    ...image,
+    ...await prepareImage(image.src, 960),
+  }))),
+})));
+---
+
+<SiteLayout title={data.title} description={data.summary} accentSource={data.cover.src}>
+  <style slot="head" is:global>
+    @media (prefers-reduced-motion: no-preference) {
+      @view-transition { navigation: auto; }
+    }
+  </style>
+  <article class="project-detail">
+    <div class="project-hero module-grid">
+    <header class="container project-header">
+      <a class="back-link terminal-label" href="/work/" data-back-to-work>
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false"><path d="M10.5 2.5 5 8l5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square"/></svg>
+        Back to work
+      </a>
+      <div class="project-intro">
+        <div class="project-description">
+          <h1 class="display-title project-title" data-reveal>{data.title}</h1>
+          <p class="lead">{data.summary}</p>
+          {data.links && data.links.length > 0 && (
+            <nav class="project-links" aria-label="Project links">
+              {data.links.map(({ label, href }) => <a class="terminal-control" href={href}>{label}</a>)}
+            </nav>
+          )}
+        </div>
+
+        <div class="project-information terminal-panel">
+          <dl class="project-facts" aria-label="Project facts">
+            <div>
+              <dt class="terminal-label">Discipline</dt>
+              <dd>{data.categories.map((category) => disciplineLabels[category]).join(' and ')}</dd>
+            </div>
+            {data.context && (
+              <div>
+                <dt class="terminal-label">Context</dt>
+                <dd>{data.context}</dd>
+              </div>
+            )}
+            <div>
+              <dt class="terminal-label">Date</dt>
+              <dd>{dateRange(data.date, data.dateEnd, data.termDates || data.categories.includes('academic') || /course|academic/i.test(data.context ?? '')) ?? 'Undated'}</dd>
+            </div>
+          </dl>
+          {data.technologies && (
+            <div class="project-tools">
+              <p class="terminal-label" id="project-tools-label">Applied skills</p>
+              <ul role="list" aria-labelledby="project-tools-label">
+                {data.technologies.map((technology) => <li>{technology}</li>)}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        <figure class="project-visual bracketed terminal-panel" style={`view-transition-name: cover-${Astro.params.slug}`}>
+          <Image
+            class="project-cover resolve"
+            src={cover.image}
+            alt={data.cover.alt}
+            width={cover.width}
+            widths={cover.widths}
+            sizes="(min-width: 88rem) 48rem, (min-width: 60rem) 55vw, 90vw"
+            loading="eager"
+          />
+        </figure>
+      </div>
+    </header>
+    </div>
+
+    {sections.length > 0 && (
+      <div class="container project-story">
+        {sections.map(({ heading, paragraphs, images }) => (
+          <section class="project-section">
+            <h2 class="section-title" data-reveal>{heading}</h2>
+            <div class="section-body">
+              {paragraphs?.map((paragraph) => <p>{paragraph}</p>)}
+              {images.map(({ image, alt, caption, width, widths }) => (
+                <figure>
+                  <Image class="terminal-panel" src={image} alt={alt} width={width} widths={widths} sizes="(min-width: 56rem) 65vw, 94vw" />
+                  {caption && <figcaption>{caption}</figcaption>}
+                </figure>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    )}
+  </article>
+</SiteLayout>
+
+<script>
+  const backToWork = document.querySelector<HTMLAnchorElement>('[data-back-to-work]');
+  if (backToWork && document.referrer && history.length > 1) {
+    const referrer = new URL(document.referrer);
+    const library = new URL(backToWork.href);
+
+    if (referrer.origin === library.origin && referrer.pathname === library.pathname) {
+      backToWork.href = referrer.href;
+      backToWork.addEventListener('click', (event) => {
+        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        history.back();
+      });
+    }
+  }
+</script>
+
+<style>
+  .project-hero {
+    padding-block: var(--space-4) var(--space-3);
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 2.75rem;
+    gap: 0.5rem;
+    text-decoration: none;
+  }
+
+  .back-link:hover,
+  .back-link:focus-visible {
+    text-decoration: none;
+    color: var(--color-accent);
+  }
+
+  .project-intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: var(--space-3);
+    margin-block-start: var(--space-2);
+  }
+
+  .project-title {
+    font-size: clamp(2.75rem, 1rem + 7vw, 8rem);
+  }
+
+  .project-description .lead {
+    margin-block-start: var(--space-2);
+    font-size: clamp(1.125rem, 1rem + 0.65vw, 1.5rem);
+  }
+
+  .project-information {
+    padding: var(--space-2) clamp(1rem, 0.625rem + 0.75vw, 1.5rem);
+  }
+
+  /* One label column sized to the longest label, with a real gap, so a wider mono never runs into the value. */
+  .project-facts {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 0.375rem var(--space-3);
+    margin: 0;
+  }
+
+  .project-facts > div {
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-column: 1 / -1;
+    align-items: baseline;
+  }
+
+  .project-facts dd {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .project-facts time {
+    font-family: var(--font-mono);
+  }
+
+  .project-tools {
+    margin-block-start: var(--space-2);
+    padding-block-start: var(--space-1);
+    border-block-start: 1px solid var(--color-rule);
+  }
+
+  .project-tools ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    min-inline-size: 0;
+    margin: 0.375rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .project-tools li {
+    padding: 0.1875rem 0.625rem;
+    border: 1px solid var(--color-rule);
+    border-radius: 1rem;
+    background: var(--color-background);
+    font-size: 0.875rem;
+    overflow-wrap: anywhere;
+  }
+
+  img {
+    inline-size: 100%;
+  }
+
+  .project-visual {
+    position: relative;
+    display: grid;
+    place-items: center;
+    inline-size: 100%;
+    min-inline-size: 0;
+    aspect-ratio: 8 / 5;
+    padding: clamp(1rem, 0.6rem + 1.5vw, 2.25rem);
+    background-color: var(--color-background);
+    background-image: radial-gradient(var(--color-rule) 0.5px, transparent 0.5px);
+    background-size: 0.5rem 0.5rem;
+  }
+
+  .project-cover {
+    border: 1px solid var(--color-rule);
+    background: var(--color-background);
+  }
+
+  .project-story {
+    padding-block-end: var(--space-4);
+  }
+
+  .project-section {
+    display: grid;
+    gap: var(--space-2) var(--space-3);
+    padding-block: var(--space-3);
+    border-block-start: 1px solid var(--color-rule);
+  }
+
+  .project-section h2 {
+    font-family: var(--font-display);
+    letter-spacing: -0.05em;
+    line-height: 1;
+    font-size: clamp(1.375rem, 1.2rem + 0.9vw, 2rem);
+  }
+
+  .section-body {
+    display: grid;
+    gap: var(--space-2);
+    min-inline-size: 0;
+  }
+
+  .section-body p {
+    max-inline-size: var(--readable-width);
+  }
+
+  figure {
+    margin: 0;
+  }
+
+  figcaption {
+    margin-block-start: var(--space-1);
+    color: var(--color-muted);
+    font-size: 0.9375rem;
+  }
+
+  .project-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    margin-block-start: var(--space-2);
+  }
+
+  @media (min-width: 56rem) {
+    .project-section {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    }
+  }
+
+  @media (min-width: 60rem) {
+    .project-intro {
+      grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+      grid-template-rows: auto 1fr;
+    }
+
+    .project-visual {
+      grid-column: 2;
+      grid-row: 1 / 3;
+      align-self: stretch;
+    }
+  }
+</style>

@@ -1,0 +1,34 @@
+{
+  "title": "Music Production",
+  "categories": [
+    "creative"
+  ],
+  "summary": "Ambient electronic and other genres, produced, written, mixed and recorded end to end, solo and with other artists.",
+  "context": "Personal project",
+  "technologies": [
+    "FL Studio",
+    "TouchDesigner",
+    "Mixing & Mastering"
+  ],
+  "cover": {
+    "src": "/images/work/personal/music/soren.png",
+    "alt": "Black Ø above a leafless tree on a white background"
+  },
+  "sections": [
+    {
+      "heading": "Overview",
+      "paragraphs": [
+        "I make ambient electronic music, among other genres. I handle the whole process myself: producing, composing, writing, mixing, and recording my own voice and instruments.",
+        "The work is for personal projects, both solo and alongside other artists, and it is released on Spotify."
+      ]
+    }
+  ],
+  "links": [
+    {
+      "label": "Listen on Spotify",
+      "href": "https://open.spotify.com/artist/4ggpbtPned46AQGxsFwnTg"
+    }
+  ],
+  "date": "2024",
+  "dateEnd": "2025"
+}

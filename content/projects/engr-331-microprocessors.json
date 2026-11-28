@@ -1,0 +1,30 @@
+{
+  "title": "ENGR 331: Designing with Microprocessors",
+  "categories": [
+    "academic"
+  ],
+  "summary": "Embedded applications on an STM32: memory-mapped I/O, timers, ADC/DAC, interrupts, and serial protocols.",
+  "context": "University of St. Thomas coursework",
+  "technologies": [
+    "Microcontrollers",
+    "C",
+    "Assembly",
+    "Keil uVision",
+    "I2C / SPI / UART"
+  ],
+  "cover": {
+    "src": "/images/work/academic/cw.jpg",
+    "alt": "Open purple notebook with a pen beside color-swatch cards"
+  },
+  "sections": [
+    {
+      "heading": "Overview",
+      "paragraphs": [
+        "Developed embedded applications involving memory-mapped I/O, timers, ADC/DAC conversion, interrupts, and serial communication protocols. Emphasized low-power design and real-world interfacing with sensors and actuators.",
+        "Led a major project building an autonomous line-following robot using an STM32 microcontroller, integrating infrared and ultrasonic sensors for obstacle detection and an accelerometer for impact measurement, demonstrating real-time control, sensor fusion, and robust system integration.",
+        "Related project: see /work/autonomous-ev-model/."
+      ]
+    }
+  ],
+  "date": "2024-01"
+}

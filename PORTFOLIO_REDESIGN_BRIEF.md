@@ -17,6 +17,18 @@ Use the current projects, media, and About copy as the starting content. Soren w
 - **Ordinary Folk.** The strongest overall reference for motion, typography, clean visuals, and the relationship between the homepage and the project archive. Some compositions feel more playful than the target. Favor aligned grids and orderly rows of media with a consistent rhythm. [Ordinary Folk homepage](https://www.ordinaryfolk.co/) · [Work archive](https://www.ordinaryfolk.co/work)
 - **Andy Cavatorta.** A reference for case-study depth and for interleaving process images with explanations. Use that editorial approach within the portfolio’s own visual system. [Gravity Harps](https://andycavatorta.com/gravityharps.html)
 
+### Decision: visual identity (Artifact)
+
+After the identity study, the direction is **Artifact**: oversized type on a visible Ø grid, grayscale with one content-driven accent that floods the active row, plus digital grain and stepped textures. Signal's scanlines, CRT and glow are out. Home keeps a large, full-frame video hero. The Work index is the primary browsing surface. Details are recorded in the [shared style guide](redesign/SHELL.md#chosen-direction-artifact-with-texture).
+
+### Visual language to explore
+
+Explore a retro-futurist alien terminal. The portfolio should feel like accessing an unfamiliar digital artifact that responds to the visitor. Give Home, Work, project pages, and About a recognizable visual language through the Ø, precise typography, aligned layouts, and consistent control behavior. Keep the interface grayscale with one content-driven accent. Let the project media carry its own color.
+
+Explore grain and electronic noise, brief glitch effects, animated type and digital elements, and ASCII art that shifts or responds to input. Give these experiments a purpose, such as establishing the mood of the opening or showing a change in state. The opening can be expressive. Browsing, reading, and getting in touch should feel immediate and steady. Soren’s name, the work, and the way into it should be easy to find on arrival.
+
+Use the [shared style guide](redesign/SHELL.md) to apply this direction to reusable components and interaction states. The [design references](PORTFOLIO_DESIGN_REFERENCES.md) record the component studies, what to borrow from each, and how to test them in Astro. Review the language across the existing demos before committing to individual effects.
+
 ## Site structure
 
 Start with three primary destinations. The Ø links to **Home**, **Work** opens the project library, and **About** holds the bio, experience, and a clearly marked contact section. Give **Contact** a direct link to `/about/#contact` in the shared footer and place direct email and relevant social links in the contact section. The current Contact page is primarily an email address and social links, which fits this structure. Plan a path from the existing `/contact.html` URL to the new contact section.
@@ -27,9 +39,13 @@ Start with three primary destinations. The Ø links to **Home**, **Work** opens 
 | **Work-led home with About and Contact sections** | Worth comparing if a compact introduction can flow straight into the library without crowding the opening on mobile. Projects can still have individual URLs. [Brittany Chiang](https://brittanychiang.com/) puts bio and selected projects on the homepage and links to a full archive. |
 | **Home, Work, About, and separate Contact** | Makes sense if contact later needs an inquiry form or substantial information for different audiences. [Adham Dannaway](https://www.adhamdannaway.com/contact) uses a dedicated page with a form. His [homepage](https://www.adhamdannaway.com/) also gives design and development equal prominence. |
 
+Add a Media gallery for Soren’s photos, videos, and art. Prototype it at `/media/` with a regular gallery and room for a more exploratory view. Work continues to serve visitors looking for a specific project or case study. [Work and Media design references](PORTFOLIO_DESIGN_REFERENCES.md#work-and-media)
+
 ## Homepage and motion
 
-Prototype an opening that gives the existing video a focal role alongside Soren’s name, a short introduction that speaks to both disciplines, and a visible route into the work. Pair the motion with a tangible engineering project image or preview close to the opening so both sides of the portfolio register early. Compare that with a project-led opening that gives the video a place further down the page. The video’s placement is open.
+Use a screen-wide Home opening that presents the existing reel in two states. On arrival, show a still derived from its opening frame, treated with charcoal grain, stepped tones, and selective ASCII or other digital artifacts. Resolve that image into the moving reel in the same frame so the first impression carries the terminal aesthetic and the footage quickly shows Soren’s creative work. Compare the reveal with the existing full-width reel, combined ASCII, and ShaderGradient studies.
+
+Keep Soren’s name, a short introduction, **View work**, and a direct **Play reel** control legible and accessible during the reveal. Keep a tangible engineering project preview close to the opening. Compose the initial still for desktop and phone so it also works for reduced motion, slow media, and playback failure.
 
 ### Motion principles
 

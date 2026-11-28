@@ -1,0 +1,49 @@
+name: Deploy to GitHub Pages
+
+# Manual only. Do not add push/schedule triggers until the release is approved.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type DEPLOY to publish the redesign to sorengabor.com'
+        required: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: inputs.confirm == 'DEPLOY'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.19.0
+          cache: npm
+          cache-dependency-path: redesign/package-lock.json
+      - run: npm ci
+        working-directory: redesign
+      - run: npm run build
+        working-directory: redesign
+      # Design studies are reference pages for review only; they are not part of the public site.
+      - run: rm -rf redesign/dist/studies
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: redesign/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

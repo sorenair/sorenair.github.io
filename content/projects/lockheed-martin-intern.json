@@ -1,0 +1,39 @@
+{
+  "title": "Embedded Systems R&D Intern",
+  "categories": [
+    "technical"
+  ],
+  "summary": "Internship at Lockheed Martin Advanced Technology Laboratories, Spectrum Systems.",
+  "context": "Lockheed Martin ATL, Spectrum Systems",
+  "technologies": [
+    "Python",
+    "HDL / FPGAs",
+    "Xilinx Vivado",
+    "Questasim",
+    "MATLAB",
+    "C",
+    "Microcontrollers",
+    "Creo"
+  ],
+  "cover": {
+    "src": "/images/work/professional/lm_atl.png",
+    "alt": "White ATL lettering on black above a row of colored bars"
+  },
+  "sections": [
+    {
+      "heading": "Role",
+      "paragraphs": [
+        "Developed Python-based automation tools to interface with a wide range of lab equipment via I2C, SPI, and Ethernet, significantly improving the speed and consistency of embedded system characterization workflows.",
+        "Supported system bring-up and firmware deployment for novel devices bound for client delivery, ensuring proper initialization and configuration. Contributed to hardware design by writing and simulating AXI Stream cores using VHDL and SystemVerilog, with verification in QuestaSim prior to FPGA implementation. Performed large-scale data processing and analysis using custom MATLAB scripts."
+      ]
+    }
+  ],
+  "links": [
+    {
+      "label": "Learn more about LM ATL",
+      "href": "https://www.lockheedmartin.com/en-us/capabilities/research-labs/advanced-technology-labs.html"
+    }
+  ],
+  "date": "2024",
+  "dateEnd": "2025-08"
+}

@@ -1,0 +1,41 @@
+{
+  "title": "Nuclear Physics Research Assistant",
+  "categories": [
+    "technical"
+  ],
+  "summary": "A custom high-voltage splitter circuit for measuring NIM power supplies in the University of St. Thomas physics labs.",
+  "context": "University of St. Thomas, Physics Department",
+  "technologies": [
+    "Multisim",
+    "Nuclear Instrumentation Modules (NIMs)",
+    "Soldering",
+    "Microsoft Office"
+  ],
+  "cover": {
+    "src": "/images/work/professional/ust_nims.jpg",
+    "alt": "Black and white photo of a group of nuclear instrumentation modules"
+  },
+  "sections": [
+    {
+      "heading": "Role",
+      "paragraphs": [
+        "Designed and implemented a custom high-voltage splitter circuit for use in nuclear physics labs, enabling safe and accurate measurement of high-voltage power supplies used with NIM systems. Led the full development process, from researching prior designs and selecting components to schematic design, fabrication, and deployment across all lab stations.",
+        "Conducted experimental validation using radiation detection equipment and ensured long-term functionality through rigorous testing. Additionally, organized and cataloged the lab’s complete inventory of nuclear instrumentation modules and related hardware to streamline future experimental work."
+      ],
+      "images": [
+        {
+          "src": "/images/work/professional/ust_schematic.png",
+          "alt": "Voltage divider schematic with a 9.99 megaohm and a 10 kilohm resistor giving a 1:1000 ratio for a 1500 volt maximum input"
+        }
+      ]
+    }
+  ],
+  "links": [
+    {
+      "label": "Learn more about Physics at UST",
+      "href": "https://cas.stthomas.edu/departments/areas-of-study/physics/"
+    }
+  ],
+  "date": "2022",
+  "dateEnd": "2025"
+}

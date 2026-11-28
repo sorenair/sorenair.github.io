@@ -1,0 +1,38 @@
+{
+  "title": "ASTROGOLF",
+  "categories": [
+    "technical"
+  ],
+  "summary": "A space-themed golf game driven by a custom Python N-body simulation engine.",
+  "context": "Academic project",
+  "technologies": [
+    "Python",
+    "PyGame"
+  ],
+  "cover": {
+    "src": "/images/work/academic/projects/ag_lvl.png",
+    "alt": "Game screen with an astronaut, two glowing orange and blue gravity wells and a power meter in space"
+  },
+  "sections": [
+    {
+      "heading": "Overview",
+      "paragraphs": [
+        "Built a space-themed golf game driven by a custom Python-based N-body simulation engine. Players launch an astronaut through gravitationally complex galactic courses, using orbital mechanics to slingshot around massive bodies.",
+        "Developed with object-oriented design, the engine numerically solves Newtonian dynamics for realistic motion. Features include 10 handcrafted levels, endless multiplayer survival mode, and animated visualizations of gravitational interactions."
+      ],
+      "images": [
+        {
+          "src": "/images/work/academic/projects/ag_mp.png",
+          "alt": "ASTROGOLF multiplayer survival mode screen"
+        }
+      ]
+    }
+  ],
+  "links": [
+    {
+      "label": "View ASTROGOLF on GitHub",
+      "href": "https://github.com/sorenair/astrogolf"
+    }
+  ],
+  "date": "2025-01"
+}

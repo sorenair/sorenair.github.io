@@ -1,0 +1,27 @@
+{
+  "title": "PHYS 325: Methods of Computational Physics",
+  "categories": [
+    "academic"
+  ],
+  "summary": "A Python physics simulation engine using numerical methods for differential equations and N-body dynamics.",
+  "context": "University of St. Thomas coursework",
+  "technologies": [
+    "Python",
+    "Anaconda",
+    "PyGame"
+  ],
+  "cover": {
+    "src": "/images/work/academic/cw.jpg",
+    "alt": "Open purple notebook with a pen beside color-swatch cards"
+  },
+  "sections": [
+    {
+      "heading": "Overview",
+      "paragraphs": [
+        "Focused on building a functional physics simulation engine in Python using object-oriented programming principles. Implemented numerical methods for solving differential equations, optimization techniques for parameter estimation, and algorithms for simulating Newtonian dynamics and N-body interactions.",
+        "Emphasized clean, modular code design and effective data visualization to model and animate complex physical systems."
+      ]
+    }
+  ],
+  "date": "2025-01"
+}

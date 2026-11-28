@@ -1,0 +1,29 @@
+{
+  "title": "ENGR 342: Electromagnetic Fields and Waves",
+  "categories": [
+    "academic"
+  ],
+  "summary": "Maxwell’s equations in practice: wave propagation, transmission lines, antennas, and RF design.",
+  "context": "University of St. Thomas coursework",
+  "technologies": [
+    "NI Ultiboard",
+    "KiCad",
+    "ESP32",
+    "RF Instrumentation"
+  ],
+  "cover": {
+    "src": "/images/work/academic/cw.jpg",
+    "alt": "Open purple notebook with a pen beside color-swatch cards"
+  },
+  "sections": [
+    {
+      "heading": "Overview",
+      "paragraphs": [
+        "Studied the practical implications of Maxwell’s equations in high-frequency systems, including wave propagation, reflection, transmission lines, and antenna design. Gained experience analyzing electromagnetic interference and designing systems for RF integrity.",
+        "The final project was a Wi-Fi-enabled microcontroller system using an ESP32, with an optimized board layout and impedance-controlled traces to minimize signal reflection and parasitic effects.",
+        "Related project: see /work/wifi-transceiver/."
+      ]
+    }
+  ],
+  "date": "2025-01"
+}

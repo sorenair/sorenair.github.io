@@ -1,0 +1,329 @@
+---
+import DecodePoster from './DecodePoster.astro';
+
+interface Props {
+  autoplay?: boolean;
+  background?: boolean;
+  decode?: boolean;
+  playTriggerId?: string;
+}
+
+const { autoplay = false, background = false, decode = false, playTriggerId } = Astro.props;
+const hasMask = Astro.slots.has('mask');
+const eagerPoster = autoplay || hasMask;
+const desktopMedia = '(min-width: 56rem)';
+---
+
+<div
+  class:list={['reel', { 'reel--background': background }]}
+  data-desktop-media={desktopMedia}
+  data-autoplay={autoplay ? '' : undefined}
+  data-decode={decode ? '' : undefined}
+  data-play-trigger-id={playTriggerId}
+>
+  <picture>
+    <source media={desktopMedia} srcset="/home/reel-desktop.webp" width="1280" height="720" />
+    <img src="/home/reel-mobile.webp" width="720" height="540" alt="" loading={eagerPoster ? "eager" : "lazy"} fetchpriority={decode ? 'low' : eagerPoster ? 'high' : undefined} />
+  </picture>
+  <video muted loop playsinline preload={autoplay ? "auto" : "none"} aria-hidden="true"></video>
+  {decode && <DecodePoster {desktopMedia} />}
+  {hasMask && <div class="reel-mask" aria-hidden="true"><slot name="mask" /></div>}
+  <button class="reel-control" type="button" hidden>Play reel</button>
+</div>
+
+<script>
+  const reel = document.querySelector<HTMLElement>('.reel');
+  const video = reel?.querySelector('video');
+  const control = reel?.querySelector('button');
+  const desktopMedia = reel?.dataset.desktopMedia;
+  const mask = reel?.querySelector<HTMLElement>('.reel-mask');
+
+  if (reel && video && control && desktopMedia) {
+    const desktop = matchMedia(desktopMedia);
+    const motion = matchMedia('(prefers-reduced-motion: reduce)');
+    const decode = reel.hasAttribute('data-decode');
+    let wantsPlayback = reel.hasAttribute('data-autoplay') && !motion.matches;
+    let arrivalTimer: number | undefined;
+
+    const cancelArrival = () => {
+      window.clearTimeout(arrivalTimer);
+      arrivalTimer = undefined;
+    };
+
+    const showPoster = () => {
+      reel.removeAttribute('data-playing');
+      reel.removeAttribute('data-mask-cleared');
+    };
+
+    const playbackFailed = () => {
+      wantsPlayback = false;
+      cancelArrival();
+      showPoster();
+      if (mask || decode) reel.setAttribute('data-playback-failed', '');
+      control.textContent = mask || decode ? 'Retry reel' : 'Play reel';
+    };
+
+    const prepareReel = () => {
+      const src = desktop.matches ? '/home/reel-desktop.mp4' : '/home/reel-mobile.mp4';
+
+      if (video.getAttribute('src') !== src) {
+        showPoster();
+        video.src = src;
+        if (decode) video.currentTime = 0.25;
+      } else if (video.error) {
+        video.load();
+        if (decode) video.currentTime = 0.25;
+      }
+    };
+
+    const playReel = () => {
+      cancelArrival();
+      prepareReel();
+      if (mask && motion.matches) reel.setAttribute('data-mask-cleared', '');
+
+      video.play().catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+        if (wantsPlayback && video.paused) {
+          if (error instanceof DOMException && error.name === 'NotAllowedError' && autoplayRetry) return autoplayRetry();
+          playbackFailed();
+        }
+      });
+    };
+
+    // Browsers may block the first autoplay attempt; retry once media is ready or on first interaction.
+    const autoplayRetry = () => {
+      const retry = () => {
+        if (wantsPlayback && video.paused) {
+          video.muted = true;
+          video.play().catch(() => {});
+        }
+      };
+      video.addEventListener('canplay', retry, { once: true });
+      for (const type of ['pointerdown', 'keydown', 'touchstart', 'scroll'])
+        window.addEventListener(type, retry, { once: true, passive: true });
+      control.hidden = false;
+    };
+
+    video.muted = true;
+    video.addEventListener('playing', () => {
+      reel.setAttribute('data-playing', '');
+      reel.removeAttribute('data-playback-failed');
+      control.textContent = 'Pause reel';
+      control.dataset.state = 'playing';
+    });
+    video.addEventListener('pause', () => {
+      if (!reel.hasAttribute('data-playback-failed')) control.textContent = 'Play reel';
+      control.dataset.state = 'paused';
+    });
+    video.addEventListener('error', playbackFailed);
+    control.addEventListener('click', () => {
+      wantsPlayback = video.paused;
+      if (wantsPlayback) {
+        playReel();
+      } else {
+        video.pause();
+      }
+    });
+    const triggerId = reel.dataset.playTriggerId;
+    const trigger = triggerId ? document.getElementById(triggerId) : null;
+    trigger?.addEventListener('click', (event) => {
+      if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || !video.paused) return;
+      wantsPlayback = true;
+      playReel();
+    });
+    desktop.addEventListener('change', () => {
+      if (arrivalTimer !== undefined) prepareReel();
+      else if (wantsPlayback) playReel();
+      else showPoster();
+    });
+    motion.addEventListener('change', () => {
+      if (motion.matches) {
+        cancelArrival();
+        wantsPlayback = false;
+        video.pause();
+        showPoster();
+      }
+    });
+
+    if (mask) {
+      const hover = matchMedia('(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)');
+      const clearReveal = () => mask.style.removeProperty('--reel-reveal');
+
+      reel.addEventListener('pointermove', (event) => {
+        if (!hover.matches || event.pointerType !== 'mouse' || reel.hasAttribute('data-playing')) return;
+
+        const art = mask.querySelector<HTMLElement>(desktop.matches ? '.desktop' : '.mobile');
+        if (!art) return;
+
+        const columns = Number(art.dataset.columns);
+        const rows = Number(art.dataset.rows);
+        const frame = reel.getBoundingClientRect();
+        const column = Math.floor((event.clientX - frame.left) / frame.width * columns);
+        const row = Math.floor((event.clientY - frame.top) / frame.height * rows);
+        const width = Math.round(columns * 0.12);
+        const height = Math.round(rows * 0.16);
+        const startColumn = Math.max(0, Math.min(columns - width, column - Math.floor(width / 2)));
+        const startRow = Math.max(0, Math.min(rows - height, row - Math.floor(height / 2)));
+        const left = `${startColumn / columns * 100}%`;
+        const right = `${(startColumn + width) / columns * 100}%`;
+        const top = `${startRow / rows * 100}%`;
+        const bottom = `${(startRow + height) / rows * 100}%`;
+
+        // The second ring cuts a cell-aligned window out of the outer rectangle.
+        mask.style.setProperty('--reel-reveal', `polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, ${left} ${top}, ${right} ${top}, ${right} ${bottom}, ${left} ${bottom}, ${left} ${top})`);
+      });
+
+      reel.addEventListener('pointerleave', clearReveal);
+      hover.addEventListener('change', clearReveal);
+      desktop.addEventListener('change', clearReveal);
+      video.addEventListener('playing', clearReveal);
+      video.addEventListener('error', clearReveal);
+    }
+
+    control.hidden = false;
+    if (wantsPlayback && decode) {
+      video.preload = 'auto';
+      prepareReel();
+      arrivalTimer = window.setTimeout(playReel, 1000);
+    } else if (wantsPlayback) playReel();
+  }
+</script>
+
+<style>
+  .reel {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    background: var(--color-surface);
+  }
+
+  .reel img,
+  .reel video {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  /* Safari refuses to autoplay a visibility:hidden video, so hide with opacity instead. */
+  .reel video {
+    opacity: 0;
+  }
+
+  .reel[data-playing]:not([data-decode-pending]) video {
+    opacity: 1;
+  }
+
+  .reel-mask {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    clip-path: var(--reel-reveal, none);
+    transition: opacity var(--motion-project) var(--ease-out);
+  }
+
+  .reel:is([data-playing], [data-mask-cleared], [data-playback-failed]) .reel-mask {
+    opacity: 0;
+  }
+
+  .reel[data-mask-cleared] .reel-mask {
+    transition-duration: 0ms;
+  }
+
+  .reel-control {
+    position: absolute;
+    inset: auto var(--space-2) var(--space-2) auto;
+    min-block-size: var(--tap-target);
+    border: 1px solid var(--color-muted);
+    padding: var(--space-1) var(--space-2);
+    background: var(--color-background);
+    color: var(--color-text);
+    font: 650 0.9375rem / 1.3 var(--font-body);
+    cursor: pointer;
+    transition: color var(--motion-fast) var(--ease-out), background-color var(--motion-fast) var(--ease-out);
+  }
+
+  .reel--background {
+    position: absolute;
+    inset: 0;
+    aspect-ratio: auto;
+    overflow: hidden;
+  }
+
+  .reel--background::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(0deg, #080808d9, #0808085c 41%, #08080808 74%),
+      linear-gradient(90deg, #0808088c, #08080866 50%, #08080800 85%);
+  }
+
+  /* Background reels use bare play/pause glyphs; the button text stays as its accessible name. */
+  .reel--background .reel-control {
+    inset: calc(var(--header-height) + var(--space-2)) auto auto var(--gutter); /* clear of the overlay nav */
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    inline-size: var(--tap-target);
+    block-size: var(--tap-target);
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #fff;
+    font-size: 0;
+    filter: drop-shadow(0 0 0.25rem #0009);
+    transition: opacity var(--motion-fast) var(--ease-out);
+  }
+
+  .reel--background .reel-control:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  .reel--background .reel-control::before {
+    content: '';
+    inline-size: 0.875rem;
+    block-size: 1rem;
+    background: currentColor;
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+  }
+
+  .reel--background .reel-control[data-state='playing']::before {
+    inline-size: 0.625rem;
+    background: linear-gradient(90deg, currentColor 0 0.2rem, transparent 0.2rem 0.425rem, currentColor 0.425rem);
+    clip-path: none;
+  }
+
+  @media (min-width: 56rem) {
+    .reel:not(.reel--background) {
+      aspect-ratio: 16 / 9;
+    }
+  }
+
+  @media (hover: hover) {
+    .reel--background .reel-control:hover {
+      background: none;
+      color: #fff;
+      opacity: 0.7;
+    }
+
+    .reel-control:hover {
+      background: var(--color-accent);
+      color: var(--color-background);
+    }
+  }
+
+  .reel--background .reel-control:active {
+    background: none;
+    color: #fff;
+    opacity: 0.7;
+  }
+
+  .reel-control:active {
+    background: var(--color-accent);
+    color: var(--color-background);
+    transition-duration: 0ms;
+  }
+</style>
