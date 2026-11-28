@@ -7,7 +7,7 @@ The Work library, project pages, and homepage previews use the same project entr
 | Field | Use |
 | --- | --- |
 | `title` | Public project name, including original spelling and accents. |
-| `categories` | One or both of `technical` and `creative`. A project with both appears in both views. |
+| `categories` | Exactly one of `technical`, `creative` or `academic` (academic is reserved for coursework). |
 | `summary` | One short sentence for cards and previews. |
 | `cover` | An image object with `src` (a site-root path such as `/images/work/example.jpg`) and `alt` (a description of the image). |
 

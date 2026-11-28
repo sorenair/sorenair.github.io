@@ -1,8 +1,7 @@
 {
   "title": "ASTROGOLF",
   "categories": [
-    "technical",
-    "creative"
+    "technical"
   ],
   "summary": "A space-themed golf game driven by a custom Python N-body simulation engine.",
   "context": "Academic project",

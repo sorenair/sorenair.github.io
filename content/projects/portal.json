@@ -1,8 +1,7 @@
 {
   "title": "PØRTAL",
   "categories": [
-    "technical",
-    "creative"
+    "technical"
   ],
   "summary": "A networked display that lets friends and family send each other images, animations, and messages from the web.",
   "context": "Personal project",
