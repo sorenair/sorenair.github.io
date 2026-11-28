@@ -217,12 +217,23 @@ html {
   position: fixed;
   inset: 0 0 auto 0;
   z-index: 40;
+  /* Backing runs up behind the notch / status bar; padding keeps content below it. */
+  padding-block-start: env(safe-area-inset-top, 0px);
   background-color: color-mix(in srgb, var(--color-background) 82%, transparent);
   backdrop-filter: blur(14px) saturate(1.1);
   -webkit-backdrop-filter: blur(14px) saturate(1.1);
   transition: transform var(--motion-project) var(--ease-artifact),
     background-color var(--motion-project) var(--ease-out),
     border-color var(--motion-project) var(--ease-out);
+}
+
+/* Extra backing above the viewport so rubber-band overscroll never exposes content. */
+.site-header::before {
+  content: '';
+  position: absolute;
+  inset: -100vh 0 100% 0;
+  background: color-mix(in srgb, var(--color-background) 90%, transparent);
+  pointer-events: none;
 }
 
 @supports not (backdrop-filter: blur(1px)) {
