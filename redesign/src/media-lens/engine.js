@@ -1183,7 +1183,7 @@ export function createCarousel(mount, callbacks = {}) {
     layout();
     {
       const c = centeredPanel && panelRects.find((r) => r.poolIdx === centeredPanel.poolIdx);
-      onCenterRect(c && !focusState.active ? { left: c.left, top: c.top, width: c.right - c.left, height: c.bottom - c.top } : null);
+      onCenterRect(c && !focusState.active ? { left: c.left, top: c.top, width: c.right - c.left, height: c.bottom - c.top, srcIndex: c.srcIndex } : null);
     }
     refreshHover(); // panels just moved — the hover state may be stale
 

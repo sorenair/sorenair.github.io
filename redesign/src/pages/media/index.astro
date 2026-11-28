@@ -145,8 +145,8 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
     <dialog class="media-detail terminal-panel" id="media-detail" aria-label="Media item">
       <form method="dialog">
         <button class="close-button terminal-label">
-          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false"><path d="M3 3l10 10M13 3 3 13" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square"/></svg>
           Close
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false"><path d="M3 3l10 10M13 3 3 13" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square"/></svg>
         </button>
       </form>
       <div data-media-detail></div>
@@ -514,8 +514,14 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
     filter: brightness(calc(1 - var(--wall-dim, 0)));
   }
 
+  /* The frame shrinks in from the tile edge on hover/focus and eases back out. */
+  .wall-image {
+    outline: 2px solid transparent;
+    outline-offset: 0;
+    transition: outline-color 220ms var(--ease-artifact), outline-offset 220ms var(--ease-artifact);
+  }
   .wall-tile:hover .wall-image,
-  .wall-tile:focus-visible .wall-image { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+  .wall-tile:focus-visible .wall-image { outline-color: var(--color-accent); outline-offset: -3px; }
 
   .media-detail {
     width: min(94vw, 72rem);
@@ -541,6 +547,15 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
   }
   .close-button:hover,
   .close-button:focus-visible { color: var(--color-accent); }
+  /* Opening and closing the overlay moves focus programmatically; never draw a ring for that. */
+  .close-button,
+  .close-button:focus,
+  .close-button:focus-visible,
+  .media-detail,
+  .media-detail:focus,
+  .media-detail:focus-visible { outline: none; }
+  :global(#main-content:focus),
+  :global(#main-content:focus-visible) { outline: none; }
   .media-detail form { margin-block-end: var(--space-2); text-align: end; }
   .media-detail .media-card { border: 1px solid var(--color-rule); background: var(--color-surface); }
   .media-detail .media-visual { max-height: 65svh; }
