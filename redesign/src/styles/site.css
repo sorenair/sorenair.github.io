@@ -183,7 +183,7 @@ a {
 
 .skip-link {
   position: fixed;
-  z-index: 2;
+  z-index: 60;
   inset-block-start: var(--space-1);
   inset-inline-start: var(--gutter);
   padding: var(--space-1) var(--space-2);
@@ -201,6 +201,53 @@ a {
 
 .site-header {
   border-block-end: 1px solid var(--color-rule);
+}
+
+/* Sticky nav: fixed, hides on scroll down and returns on scroll up (see scripts/terminal.ts).
+   --header-height is measured by the script; the rem value is the no-JS fallback. */
+:root {
+  --header-height: 4.625rem;
+}
+
+html {
+  scroll-padding-block-start: calc(var(--header-height) + var(--space-2));
+}
+
+.site-header {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 40;
+  background-color: color-mix(in srgb, var(--color-background) 72%, transparent);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  transition: transform var(--motion-project) var(--ease-artifact),
+    background-color var(--motion-project) var(--ease-out),
+    border-color var(--motion-project) var(--ease-out);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .site-header { background-color: color-mix(in srgb, var(--color-background) 94%, transparent); }
+}
+
+.site-header[data-hidden] {
+  transform: translateY(-100%);
+}
+
+/* Home: transparent over the hero, backing fades in after the hero. */
+.site-header[data-overlay]:not([data-solid]) {
+  border-color: transparent;
+  background-color: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Pages without an overlay hero start below the fixed header. */
+body:not(:has([data-site-header][data-overlay])) main {
+  padding-block-start: var(--header-height);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header { transition: none; }
 }
 
 .site-header__inner,

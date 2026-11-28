@@ -172,7 +172,46 @@ function fitWords() {
   document.fonts?.ready.then(fit);
 }
 
+/**
+ * Sticky nav: measure its height into --header-height, hide it on scroll down, bring it back on
+ * scroll up, and on pages with an overlay hero (Home) fade its backing in after the hero.
+ */
+function stickyHeader() {
+  const header = document.querySelector<HTMLElement>('[data-site-header]');
+  if (!header) return;
+  const overlay = header.hasAttribute('data-overlay');
+  let height = header.offsetHeight;
+  let threshold = Infinity;
+  const measure = () => {
+    height = header.offsetHeight;
+    document.documentElement.style.setProperty('--header-height', `${height}px`);
+    const hero = document.querySelector<HTMLElement>('.hero');
+    threshold = overlay && hero ? hero.getBoundingClientRect().bottom + scrollY - height * 1.5 : -1;
+  };
+  measure();
+  addEventListener('resize', measure);
+  document.fonts?.ready.then(measure);
+
+  let last = scrollY;
+  let frame = 0;
+  const update = () => {
+    frame = 0;
+    const y = Math.max(0, scrollY);
+    const delta = y - last;
+    if (overlay) header.toggleAttribute('data-solid', y > threshold);
+    if (y <= 8) header.removeAttribute('data-hidden');
+    else if (delta > 6 && y > height * 1.5 && !header.contains(document.activeElement)) header.setAttribute('data-hidden', '');
+    else if (delta < -6) header.removeAttribute('data-hidden');
+    if (Math.abs(delta) > 6) last = y;
+  };
+  addEventListener('scroll', () => { if (!frame) frame = requestAnimationFrame(update); }, { passive: true });
+  // Keyboard users who tab into the nav always see it.
+  header.addEventListener('focusin', () => header.removeAttribute('data-hidden'));
+  update();
+}
+
 startClocks();
+stickyHeader();
 fitHeaders();
 fitWords();
 startReveals();
