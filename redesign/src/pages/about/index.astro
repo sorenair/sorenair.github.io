@@ -72,8 +72,8 @@ const socials = [
 ---
 
 <SiteLayout title="About" description="About Soren Gabor, with experience in electrical engineering, physics, and multimedia design.">
-  <div class="container about">
-    <div class="about-intro module-grid">
+  <div class="about-hero module-grid">
+    <div class="container about-intro">
       <div class="about-bio">
         <h1 class="page-title display-title">ABOUT</h1>
         <p class="bio-opening">Hello, my name is Soren Gabor.</p>
@@ -91,7 +91,9 @@ const socials = [
         />
       </div>
     </div>
+  </div>
 
+  <div class="container about">
     <section class="about-section" aria-labelledby="experience-heading">
       <h2 class="section-title" id="experience-heading">EXPERIENCE</h2>
       <ul class="details-list">
@@ -177,6 +179,11 @@ const socials = [
 </script>
 
 <style>
+  /* The grid layer spans the full page width; the content inside stays in the container. */
+  .about-hero {
+    padding-block: var(--space-4);
+  }
+
   .about {
     display: grid;
     gap: var(--space-4);
