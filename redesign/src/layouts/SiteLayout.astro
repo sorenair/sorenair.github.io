@@ -3,6 +3,10 @@ import { Image } from 'astro:assets';
 import { getEntry } from 'astro:content';
 import mark from '../../../images/o.png';
 import { getCoverAccent } from '../cover-accent';
+import '@fontsource-variable/inter';
+import '@fontsource-variable/martian-mono';
+import archivoLatin from '@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2?url';
+import archivoLatinExt from '@fontsource-variable/archivo/files/archivo-latin-ext-wdth-normal.woff2?url';
 import '../styles/site.css';
 
 interface Props {
@@ -13,6 +17,11 @@ interface Props {
 }
 
 const { title, description, accentSource } = Astro.props;
+// "Archivo Display" pins Archivo's width axis to 118% (extended) so every display heading runs wide
+// without per-element font-stretch. Weight stays variable. Text-sized type uses Inter instead.
+const displayFace = (src: string, range: string) => `@font-face{font-family:'Archivo Display';font-style:normal;font-display:swap;font-weight:100 900;font-stretch:118% 118%;src:url(${src}) format('woff2');unicode-range:${range}}`;
+const displayCss = displayFace(archivoLatin, 'U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD')
+  + displayFace(archivoLatinExt, 'U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF');
 const { pathname } = Astro.url;
 const year = new Date().getFullYear(); // Computed at build time.
 const canonical = new URL(pathname, Astro.site);
@@ -32,6 +41,8 @@ const accent = await getCoverAccent(accentSource ?? project?.data.cover.src);
     <title>{title} | Soren Gabor</title>
     {description && <meta name="description" content={description} />}
     <link rel="canonical" href={canonical} />
+    <link rel="preload" href={archivoLatin} as="font" type="font/woff2" crossorigin />
+    <style set:html={displayCss}></style>
     <slot name="head" />
   </head>
   <body>

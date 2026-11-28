@@ -13,6 +13,10 @@ Use the [design references](../PORTFOLIO_DESIGN_REFERENCES.md) for examples of t
 - **Feedback and reuse.** Use shared spacing, color, focus, and motion tokens for controls, card states, and media frames. Tie responsive effects to real actions such as selecting a category or opening a project. Keep feedback immediate for pointer, touch, and keyboard. Share treatments that recur across pages so each instance behaves consistently.
 - **Static states.** Keep essential text, links, and project media present while effects initialize or load. Give motion-led treatments a composed still for reduced motion, keep decorative glyphs out of the accessibility tree, and avoid rapid flashing. Focus, selection, and navigation should remain clear in the static state.
 
+## Typography
+
+Self-hosted via Fontsource (run `npm install` after pulling when dependencies change). Display is **Archivo** pinned to its extended width (family `Archivo Display`, defined in `SiteLayout.astro`), body is **Inter**, mono is **Martian Mono**. Use the `--font-display`, `--font-body` and `--font-mono` tokens only. Chosen from the `/studies/type/` study.
+
 ## Chosen direction: Artifact with texture
 
 Soren chose the **Artifact** direction from the identity study (`/studies/identity/artifact/`, source in `redesign/src/components/studies/IdentityStudy.astro`), combined with the digital grain and texture from the other studies. The study's Signal direction (scanlines, CRT, phosphor glow, all-mono) is rejected as too much, and Instrument is a fallback reference for quieter surfaces.

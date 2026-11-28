@@ -9,9 +9,9 @@
   /* Interactive views may set --color-active-accent on the document root on selection. */
   --color-accent: var(--color-active-accent, var(--color-page-accent, #ffffff));
 
-  --font-body: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-display: "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --font-body: "Inter Variable", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: "Archivo Display", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Martian Mono Variable", ui-monospace, "SFMono-Regular", Consolas, monospace;
   --text-body: clamp(1rem, 0.95rem + 0.22vw, 1.125rem);
   --text-title: clamp(2.75rem, 1.55rem + 6vw, 7.5rem);
   --text-heading: clamp(1.5rem, 1.15rem + 1.75vw, 2.75rem);
