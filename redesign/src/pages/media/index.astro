@@ -700,6 +700,7 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
     align-items: center;
     gap: 0.6rem;
     block-size: 100%;
+    min-inline-size: 2.75rem; /* touch target width; the height is bound by the dash pitch */
     color: var(--color-muted);
     text-decoration: none;
   }
