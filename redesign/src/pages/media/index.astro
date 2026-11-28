@@ -14,15 +14,16 @@ const featuredPlaceholderProjects = ['portal', 'wifi-transceiver', 'overclock', 
 // Newest dated items first; undated items keep their file order after them.
 const collection = (await getCollection('media')).sort((a, b) => (b.data.date ?? '').localeCompare(a.data.date ?? ''));
 const dateLabel = (date?: string) => date ? new Date(`${date}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' }).toUpperCase() : '';
+const dateFull = (date?: string) => date ? new Date(`${date}T00:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : '';
 const entries = await Promise.all(collection.map(async ({ id, data }) => {
   if (data.kind === 'video') {
-    return { id, kind: data.kind, title: data.title, date: dateLabel(data.date), description: data.description ?? '', src: data.src!, poster: data.poster! };
+    return { id, kind: data.kind, title: data.title, date: dateLabel(data.date), dateFull: dateFull(data.date), description: data.description ?? '', src: data.src!, poster: data.poster! };
   }
 
   const cover = await loadCover(data.cover!.src);
   const width = Math.min(900, cover.width);
   const widths = [360, 540, 720].filter((candidate) => candidate < width).concat(width);
-  const entry = { id, kind: data.kind, title: data.title, date: dateLabel(data.date), alt: data.cover!.alt, caption: data.caption, href: data.href, project: data.project, cover, width, widths };
+  const entry = { id, kind: data.kind, title: data.title, date: dateLabel(data.date), dateFull: dateFull(data.date), alt: data.cover!.alt, caption: data.caption, href: data.href, project: data.project, cover, width, widths };
   if (data.kind !== 'photo') return entry;
 
   const fullPhoto = await getImage({ src: cover, width: Math.min(1600, cover.width), format: 'webp' });
@@ -110,19 +111,37 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
               )}
             </div>
             <figcaption>
-              <p class="terminal-label entry-meta"><span>{String(index + 1).padStart(2, '0')} / {String(entries.length).padStart(2, '0')}</span><span>{entry.date}</span><span>{mediaLabels[entry.kind]}</span></p>
+              <p class="terminal-label entry-index">{String(index + 1).padStart(2, '0')} / {String(entries.length).padStart(2, '0')}</p>
               <h2 class="section-title" id={`title-${entry.id}`} tabindex="-1">{entry.title}</h2>
-              {entry.kind === 'video' && <p class="lead" id={`description-${entry.id}`}>{entry.description}</p>}
-              {entry.kind !== 'video' && entry.caption && <p class="lead">{entry.caption}</p>}
-              {entry.kind === 'photo' && (
-                <a class="text-link" href={entry.fullPhotoHref} aria-label={`View the full photo, ${entry.title}`}>View full photo</a>
-              )}
-              {(entry.kind === 'youtube' || entry.kind === 'instagram') && entry.href && (
-                <a class="text-link" href={entry.href} rel="noopener" aria-label={`${outboundLabels[entry.kind]}: ${entry.title}`}>{outboundLabels[entry.kind]}</a>
-              )}
-              {entry.kind === 'artwork' && entry.project && (
-                <a class="text-link" href={`/work/${entry.project}/`} aria-label={`View the project, ${entry.title}`}>View project</a>
-              )}
+              <section class="entry-section" aria-labelledby={`date-${entry.id}`}>
+                <h3 class="terminal-label" id={`date-${entry.id}`}>Date</h3>
+                <p>{entry.dateFull || 'Undated'}</p>
+              </section>
+              <section class="entry-section" aria-labelledby={`context-${entry.id}`}>
+                <h3 class="terminal-label" id={`context-${entry.id}`}>Context</h3>
+                <p>{mediaLabels[entry.kind]}</p>
+                {entry.kind === 'video' && <p class="lead" id={`description-${entry.id}`}>{entry.description}</p>}
+                {entry.kind !== 'video' && entry.caption && <p class="lead">{entry.caption}</p>}
+              </section>
+              <section class="entry-section" aria-labelledby={`access-${entry.id}`}>
+                <h3 class="terminal-label" id={`access-${entry.id}`}>Access</h3>
+                {(entry.kind === 'youtube' || entry.kind === 'instagram') && entry.href && (
+                  <>
+                    <p>{entry.kind === 'youtube' ? 'Hosted on YouTube' : 'Posted on Instagram'}</p>
+                    <a class="text-link" href={entry.href} rel="noopener" aria-label={`${outboundLabels[entry.kind]}: ${entry.title}`}>{outboundLabels[entry.kind]}</a>
+                  </>
+                )}
+                {entry.kind === 'photo' && (
+                  <>
+                    <p>Stored on this site</p>
+                    <a class="text-link" href={entry.fullPhotoHref} aria-label={`View the full photo, ${entry.title}`}>View full photo</a>
+                  </>
+                )}
+                {entry.kind === 'video' && <p>Plays on this page</p>}
+                {entry.kind === 'artwork' && entry.project && (
+                  <a class="text-link" href={`/work/${entry.project}/`} aria-label={`View the project, ${entry.title}`}>View project</a>
+                )}
+              </section>
             </figcaption>
           </figure>
         </li>
@@ -723,12 +742,17 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
     border-block-start: 1px solid var(--color-rule);
   }
 
-  .entry-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem 1.25rem;
-    margin: 0;
+  .entry-index { margin: 0; }
+
+  .entry-section {
+    display: grid;
+    gap: 0.35rem;
+    align-content: start;
+    padding-block-start: var(--space-1);
+    border-block-start: 1px solid var(--color-rule);
   }
+
+  .entry-section :is(h3, p) { margin: 0; }
 
   figcaption .section-title {
     margin: 0;
@@ -754,18 +778,26 @@ const highlights = [...featuredMedia, ...placeholders].slice(0, maxFeatured);
   @media (min-width: 64rem) {
     .media-entry figure {
       display: grid;
-      grid-template-columns: minmax(0, 1.7fr) minmax(16rem, 1fr);
+      grid-template-columns: minmax(0, 2.1fr) minmax(15rem, 1fr);
+    }
+
+    /* The panel runs the full height of the picture: index and title at the top, then three equal sections. */
+    /* The picture stretches to the panel's height and crops to fit, so the two always line up. */
+    .media-entry .media-visual {
+      aspect-ratio: auto;
+      min-block-size: 20rem;
     }
 
     .media-entry figcaption {
-      align-content: end;
-      padding: var(--space-3);
+      grid-template-rows: auto auto repeat(3, 1fr);
+      gap: var(--space-1);
+      padding: var(--space-2);
       border-block-start: 0;
       border-inline-start: 1px solid var(--color-rule);
     }
 
     .media-entry figcaption .section-title {
-      font-size: clamp(1.75rem, 1rem + 1.8vw, 3rem);
+      font-size: clamp(1.5rem, 0.9rem + 1.4vw, 2.5rem);
     }
   }
 
