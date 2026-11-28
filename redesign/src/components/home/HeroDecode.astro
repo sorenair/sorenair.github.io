@@ -33,6 +33,7 @@
     const AHEAD = 0.5;       // distance over which the field thickens ahead of the edge
     const FIELD_MS = 90;     // the held field refreshes like a terminal, not at 60 fps
 
+    let rest = REST;         // per-layout: phones rest toward the top-right instead
     let cols = 0, rows = 0, cell = 14, cellH = 18, dpr = 1;
     let diag = new Float32Array(0);
     let lum = new Uint8ClampedArray(0);
@@ -57,10 +58,15 @@
       sample.height = rows;
       diag = new Float32Array(cols * rows);
       energy = new Float32Array(cols * rows);
+      const phone = rect.width < 640;
+      rest = phone ? 0.66 : REST;
       for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
         const i = y * cols + x;
-        // Ragged diagonal: further right at the top, further left at the bottom.
-        diag[i] = (x / cols) * 0.62 + (y / rows) * 0.2 + hash(i) * 0.18;
+        // Ragged diagonal. Desktop: starts top-left, rests bottom-right. Phone: the copy sits
+        // along the bottom, so start there and rest in the top-right corner.
+        diag[i] = phone
+          ? (1 - y / rows) * 0.45 + (x / cols) * 0.55 + hash(i) * 0.12
+          : (x / cols) * 0.62 + (y / rows) * 0.2 + hash(i) * 0.18;
       }
       lum = new Uint8ClampedArray(cols * rows);
     };
@@ -161,7 +167,7 @@
       const elapsed = now - startTime;
       const u = Math.min(1, elapsed / TRAVEL);
       const eased = 1 - (1 - u) ** 3;
-      return { front: eased * (REST + BAND), boot: 1 - smooth(elapsed / 900), settled: u >= 1 };
+      return { front: eased * (rest + BAND), boot: 1 - smooth(elapsed / 900), settled: u >= 1 };
     };
 
     const draw = (now: number) => {
@@ -205,7 +211,7 @@
 
     function stillFrame() {
       readLuminance();
-      drawField(0, REST + BAND, 0, true);
+      drawField(0, rest + BAND, 0, true);
     }
 
     if (!motion.matches) {
