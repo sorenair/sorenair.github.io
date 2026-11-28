@@ -141,6 +141,38 @@ function fitHeaders() {
   document.fonts?.ready.then(fit);
 }
 
+/**
+ * Multi-word titles (project names) may wrap between words but never inside one. Shrink the type
+ * until the longest word fits, measuring each word in a hidden copy that matches the title's styles.
+ */
+function fitWords() {
+  const titles = document.querySelectorAll<HTMLElement>('h1.project-title, [data-fit-words]');
+  if (!titles.length) return;
+  const fit = () => titles.forEach((title) => {
+    title.style.fontSize = '';
+    const available = title.clientWidth;
+    if (!available) return;
+    const probe = document.createElement('span');
+    probe.setAttribute('aria-hidden', 'true');
+    probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;pointer-events:none';
+    title.append(probe);
+    let widest = 0;
+    for (const word of (title.textContent ?? '').split(/\s+/)) {
+      if (!word) continue;
+      probe.textContent = word;
+      widest = Math.max(widest, probe.getBoundingClientRect().width);
+    }
+    probe.remove();
+    if (widest > available) {
+      title.style.fontSize = `${parseFloat(getComputedStyle(title).fontSize) * (available / widest) * 0.97}px`;
+    }
+  });
+  fit();
+  addEventListener('resize', fit);
+  document.fonts?.ready.then(fit);
+}
+
 startClocks();
 fitHeaders();
+fitWords();
 startReveals();
