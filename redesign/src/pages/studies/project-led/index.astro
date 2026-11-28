@@ -6,7 +6,7 @@ import SiteLayout from '../../../layouts/SiteLayout.astro';
 import { loadProjectCover } from '../../../project-cover';
 
 const projects = await Promise.all(
-  (['portal', 'wifi-transceiver', 'overclock'] as const).map(async (slug) => {
+  (['portal', 'wifi-transceiver', 'nighteye'] as const).map(async (slug) => {
     const { id, data } = await getEntry('projects', slug);
     return { id, data, cover: await loadProjectCover(data.cover.src) };
   }),
